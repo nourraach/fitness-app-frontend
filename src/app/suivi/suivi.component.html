@@ -1,0 +1,265 @@
+<div class="suivi-container">
+  <div class="header">
+    <h2>Mon Suivi Journalier</h2>
+    <input type="date" [(ngModel)]="dateSelectionnee" (change)="changerDate()" class="date-input">
+  </div>
+
+  <div *ngIf="message" [class]="'alert alert-' + messageType">{{ message }}</div>
+
+  <!-- Bilan Global -->
+  <div *ngIf="bilanJournalier" class="bilan-global">
+    <div class="bilan-card calories-in">
+      <div class="icon">🍽️</div>
+      <div class="info">
+        <span class="label">Calories Consommées</span>
+        <span class="value">{{ bilanJournalier.caloriesConsommees | number:'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <div class="bilan-card calories-out">
+      <div class="icon">🔥</div>
+      <div class="info">
+        <span class="label">Calories Brûlées</span>
+        <span class="value">{{ bilanJournalier.caloriesBrulees | number:'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <div class="bilan-card bilan-net" [class.positif]="bilanJournalier.bilanNet > 0" [class.negatif]="bilanJournalier.bilanNet < 0">
+      <div class="icon">⚖️</div>
+      <div class="info">
+        <span class="label">Bilan Net</span>
+        <span class="value">{{ bilanJournalier.bilanNet > 0 ? '+' : '' }}{{ bilanJournalier.bilanNet | number:'1.0-0' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections Repas et Activités côte à côte -->
+  <div class="sections-grid">
+    <!-- Section Repas -->
+    <div class="section">
+      <div class="section-header">
+        <h3>🍴 Mes Repas</h3>
+        <button class="btn-add" (click)="ouvrirModalRepas()">+ Ajouter un repas</button>
+      </div>
+
+      <div *ngIf="totauxRepas && totauxRepas.repas.length > 0" class="repas-list">
+        <div *ngFor="let repas of totauxRepas.repas" class="repas-card">
+          <div class="repas-header">
+            <h4>{{ repas.nom }}</h4>
+            <button class="btn-delete" (click)="supprimerRepas(repas.id!)">×</button>
+          </div>
+          <div class="repas-totaux">
+            <span>{{ repas.caloriesTotal | number:'1.0-0' }} kcal</span>
+            <span>P: {{ repas.proteinesTotal | number:'1.1-1' }}g</span>
+            <span>L: {{ repas.lipidesTotal | number:'1.1-1' }}g</span>
+            <span>G: {{ repas.glucidesTotal | number:'1.1-1' }}g</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!totauxRepas || totauxRepas.repas.length === 0" class="empty-state">
+        <p>Aucun repas enregistré aujourd'hui</p>
+      </div>
+    </div>
+
+    <!-- Section Activités -->
+    <div class="section">
+      <div class="section-header">
+        <h3>🏃 Mes Activités</h3>
+        <button class="btn-add" (click)="ouvrirModalActivite()">+ Ajouter une activité</button>
+      </div>
+
+      <div *ngIf="totauxActivites && totauxActivites.activites.length > 0" class="activites-list">
+        <div *ngFor="let activite of totauxActivites.activites" class="activite-card">
+          <div class="activite-header">
+            <h4>{{ activite.typeActivite }}</h4>
+            <button class="btn-delete" (click)="supprimerActivite(activite.id!)">×</button>
+          </div>
+          <div class="activite-details">
+            <span>⏱️ {{ activite.dureeMinutes }} min</span>
+            <span>💪 {{ activite.intensite }}</span>
+            <span class="calories-brulees">🔥 {{ activite.caloriesBrulees | number:'1.0-0' }} kcal</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!totauxActivites || totauxActivites.activites.length === 0" class="empty-state">
+        <p>Aucune activité enregistrée aujourd'hui</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Calculateur de Calories -->
+  <div class="section calculator-section">
+    <div class="section-header">
+      <h3>Calculateur de calories</h3>
+    </div>
+    
+    <div class="calculator-container">
+      <div class="calculator-form">
+        <form (ngSubmit)="calculerCalories()">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Sexe</label>
+              <select class="form-select" [(ngModel)]="calculateur.sexe" name="sexe">
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Âge</label>
+              <input type="number" class="form-control" placeholder="25" [(ngModel)]="calculateur.age" name="age">
+            </div>
+          </div>
+          <div class="row g-3 mt-1">
+            <div class="col-6">
+              <label class="form-label">Taille (cm)</label>
+              <input type="number" class="form-control" placeholder="170" [(ngModel)]="calculateur.taille" name="taille">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Poids (kg)</label>
+              <input type="number" class="form-control" placeholder="70" [(ngModel)]="calculateur.poids" name="poids">
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Niveau d'activité</label>
+            <select class="form-select" [(ngModel)]="calculateur.activite" name="activite">
+              <option value="1.2">Sédentaire</option>
+              <option value="1.375">Légèrement actif</option>
+              <option value="1.55">Modérément actif</option>
+              <option value="1.725">Très actif</option>
+              <option value="1.9">Extrêmement actif</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success w-100 mt-4">Calculer</button>
+        </form>
+        
+        <div *ngIf="resultatCalories" class="result-card mt-4">
+          <h5 class="text-center mb-3">Vos besoins caloriques</h5>
+          <div class="calorie-result">
+            <div class="result-item">
+              <span class="result-label">Métabolisme de base (BMR)</span>
+              <span class="result-value">{{ resultatCalories.bmr | number:'1.0-0' }} kcal</span>
+            </div>
+            <div class="result-item main-result">
+              <span class="result-label">Besoins quotidiens</span>
+              <span class="result-value">{{ resultatCalories.tdee | number:'1.0-0' }} kcal</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Perte de poids</span>
+              <span class="result-value">{{ resultatCalories.pertePoids | number:'1.0-0' }} kcal</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Prise de masse</span>
+              <span class="result-value">{{ resultatCalories.priseMasse | number:'1.0-0' }} kcal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- Modal Repas -->
+  <div *ngIf="afficherModalRepas" class="modal-overlay" (click)="fermerModalRepas()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter un repas</h3>
+        <button class="btn-close" (click)="fermerModalRepas()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Type de repas</label>
+          <select [(ngModel)]="typeRepasSelectionne" class="form-control">
+            <option *ngFor="let type of typesRepas" [value]="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Rechercher un aliment</label>
+          <input type="text" [(ngModel)]="rechercheTexte" (input)="rechercherAliments()" 
+                 class="form-control" placeholder="Tapez au moins 2 caractères...">
+        </div>
+
+        <div class="aliments-disponibles">
+          <div *ngIf="rechercheTexte.length >= 2 && alimentsRecherche.length === 0" class="empty-message">
+            Aucun aliment trouvé
+          </div>
+          <div *ngIf="rechercheTexte.length > 0 && rechercheTexte.length < 2" class="info-message">
+            Tapez au moins 2 caractères pour rechercher
+          </div>
+          <div *ngFor="let aliment of alimentsRecherche.slice(0, 10)" 
+               class="aliment-item" 
+               [class.selected]="alimentAjout?.id === aliment.id"
+               (click)="selectionnerAliment(aliment)">
+            <div class="aliment-info">
+              <strong>{{ aliment.nom }}</strong>
+              <span *ngIf="aliment.marque" class="aliment-marque">{{ aliment.marque }}</span>
+            </div>
+            <span class="aliment-calories">{{ aliment.calories }} kcal / {{ aliment.portionStandard }}{{ aliment.unite }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="alimentAjout" class="ajout-portion">
+          <input type="number" [(ngModel)]="portionAjout" class="form-control" placeholder="Portion (g)">
+          <button class="btn-secondary" (click)="ajouterAlimentAuRepas()">Ajouter</button>
+        </div>
+
+        <div *ngIf="alimentsSelectionnes.length > 0" class="aliments-selectionnes">
+          <h4>Aliments ajoutés</h4>
+          <div *ngFor="let item of alimentsSelectionnes; let i = index" class="aliment-selectionne">
+            <span>{{ item.aliment.nom }} ({{ item.portion }}g)</span>
+            <button class="btn-remove" (click)="retirerAliment(i)">×</button>
+          </div>
+          <div class="totaux">
+            Total: {{ calculerTotauxRepas().calories }} kcal
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fermerModalRepas()">Annuler</button>
+        <button class="btn-primary" (click)="enregistrerRepas()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Activité -->
+  <div *ngIf="afficherModalActivite" class="modal-overlay" (click)="fermerModalActivite()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter une activité</h3>
+        <button class="btn-close" (click)="fermerModalActivite()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Type d'activité</label>
+          <select [(ngModel)]="typeActivite" class="form-control">
+            <option value="">Sélectionner...</option>
+            <option *ngFor="let type of typesActivites" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Durée (minutes)</label>
+          <input type="number" [(ngModel)]="dureeMinutes" class="form-control" min="1">
+        </div>
+
+        <div class="form-group">
+          <label>Intensité</label>
+          <select [(ngModel)]="intensite" class="form-control">
+            <option *ngFor="let int of intensites" [value]="int.value">{{ int.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fermerModalActivite()">Annuler</button>
+        <button class="btn-primary" (click)="enregistrerActivite()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>

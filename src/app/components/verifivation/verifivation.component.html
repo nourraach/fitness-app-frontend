@@ -1,0 +1,17 @@
+<div class="verification-container">
+  <h2>Vérification du Code</h2>
+
+  <form [formGroup]="verificationForm" (ngSubmit)="verifyCode()">
+    <div class="form-group">
+      <label for="code">Code de vérification :</label>
+      <input type="text" id="code" formControlName="code" placeholder="Entrez le code reçu" />
+      <div *ngIf="verificationForm.controls['code'].invalid && verificationForm.controls['code'].touched" class="error">
+        Le code doit contenir entre 4 et 6 chiffres.
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="verificationForm.invalid">Vérifier</button>
+  </form>
+
+  <p *ngIf="message" [ngClass]="{'success': !isError, 'error': isError}">{{ message }}</p>
+</div>

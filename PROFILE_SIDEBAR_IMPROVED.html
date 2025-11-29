@@ -1,0 +1,165 @@
+<!-- Remplacer la section images-column par ce code amélioré -->
+
+      <!-- Colonne droite - Contenu inspirant et dynamique -->
+      <div class="images-column">
+        <div class="inspiration-grid">
+          
+          <!-- Progress Card -->
+          <div class="progress-card">
+            <div class="progress-header">
+              <div class="progress-icon-wrapper">
+                <i class="pi pi-chart-line"></i>
+              </div>
+              <div>
+                <h4>Votre Progression</h4>
+                <p>Continuez comme ça !</p>
+              </div>
+            </div>
+            <div class="progress-stats">
+              <div class="progress-item">
+                <div class="progress-label">
+                  <span>Profil complété</span>
+                  <span class="progress-percent">{{ hasProfile ? '100%' : '0%' }}</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar teal" [style.width.%]="hasProfile ? 100 : 0"></div>
+                </div>
+              </div>
+              <div class="progress-item">
+                <div class="progress-label">
+                  <span>Objectifs définis</span>
+                  <span class="progress-percent">{{ profile.objectif ? '100%' : '0%' }}</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar pink" [style.width.%]="profile.objectif ? 100 : 0"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image principale avec badge -->
+          <div class="image-card large featured">
+            <div class="image-badge">
+              <i class="pi pi-star-fill"></i>
+              <span>Recommandé</span>
+            </div>
+            <img src="assets/images/4.jpg" alt="Alimentation saine" class="inspiration-image">
+            <div class="image-overlay-modern">
+              <div class="image-content-modern">
+                <div class="content-icon-modern">
+                  <i class="pi pi-apple"></i>
+                </div>
+                <h4>Nutrition Équilibrée</h4>
+                <p>Des repas sains et délicieux pour atteindre vos objectifs</p>
+                <div class="image-tags">
+                  <span class="tag">Santé</span>
+                  <span class="tag">Nutrition</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid 2 images -->
+          <div class="images-grid-2">
+            <div class="image-card medium">
+              <img src="assets/images/3.jpg" alt="Entraînement" class="inspiration-image">
+              <div class="image-overlay-modern">
+                <div class="image-content-modern compact">
+                  <div class="content-icon-modern">
+                    <i class="pi pi-bolt"></i>
+                  </div>
+                  <h4>Entraînement</h4>
+                  <p>Restez actif</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-card medium">
+              <img src="assets/images/1.jpg" alt="Bien-être" class="inspiration-image">
+              <div class="image-overlay-modern">
+                <div class="image-content-modern compact">
+                  <div class="content-icon-modern">
+                    <i class="pi pi-heart"></i>
+                  </div>
+                  <h4>Bien-être</h4>
+                  <p>Prenez soin</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Card moderne -->
+          <div class="stats-card-premium">
+            <div class="stats-header-premium">
+              <h4>Notre Communauté</h4>
+              <span class="live-badge">
+                <span class="live-dot"></span>
+                En direct
+              </span>
+            </div>
+            <div class="stats-grid-premium">
+              <div class="stat-item-premium">
+                <div class="stat-icon-premium">
+                  <i class="pi pi-users"></i>
+                </div>
+                <h3>10K+</h3>
+                <p>Membres</p>
+              </div>
+              <div class="stat-item-premium">
+                <div class="stat-icon-premium">
+                  <i class="pi pi-heart-fill"></i>
+                </div>
+                <h3>50K+</h3>
+                <p>Objectifs</p>
+              </div>
+              <div class="stat-item-premium">
+                <div class="stat-icon-premium">
+                  <i class="pi pi-star-fill"></i>
+                </div>
+                <h3>4.9/5</h3>
+                <p>Note</p>
+              </div>
+              <div class="stat-item-premium">
+                <div class="stat-icon-premium">
+                  <i class="pi pi-trophy"></i>
+                </div>
+                <h3>98%</h3>
+                <p>Satisfaction</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tips Card -->
+          <div class="tips-card-modern">
+            <div class="tips-icon-modern">
+              <i class="pi pi-lightbulb"></i>
+            </div>
+            <div class="tips-content">
+              <h4>💡 Conseil du jour</h4>
+              <p>Buvez au moins 2 litres d'eau par jour pour rester hydraté et optimiser vos performances.</p>
+              <div class="tips-category">
+                <i class="pi pi-check-circle"></i>
+                <span>Hydratation</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quote Card premium -->
+          <div class="quote-card-premium">
+            <div class="quote-decoration-top"></div>
+            <div class="quote-decoration-bottom"></div>
+            <i class="pi pi-quote-right quote-icon-premium"></i>
+            <p class="quote-text-premium">"Votre santé est votre plus grande richesse. Investissez en elle chaque jour."</p>
+            <div class="quote-author-premium">
+              <div class="author-avatar-premium">
+                <i class="pi pi-heart-fill"></i>
+              </div>
+              <div class="author-info">
+                <strong>HealthFit Team</strong>
+                <span>Experts en santé & bien-être</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>

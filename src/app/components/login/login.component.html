@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+</head>
+<body>
+<div class="container" id="container">
+  <p-toast></p-toast>
+  <div class="form-container sign-in-container">
+  <form [formGroup]="loginForm" (ngSubmit)="submitForm()">
+    <h1>{{ 'Login' | translate }}</h1>
+    
+    <p-floatLabel variant="in">
+      <input
+      pInputText id="email"
+        type="email"
+        formControlName="email"
+        autocomplete="off"
+      />
+      <label for="email" >{{ 'Email' | translate }}</label>
+    </p-floatLabel>
+
+    <span *ngIf="loginForm.controls['email'].invalid && (loginForm.controls['email'].dirty || loginForm.controls['email'].touched)" class="block p-error">
+      <div *ngIf="loginForm.controls['email'].errors?.['required']">{{ 'EmailRequired' | translate }}</div>
+  </span>
+    
+    <p-floatLabel variant="in">
+      <input
+      pInputText id="password"
+        type="password"
+        formControlName="password"
+      />
+      <label for="password" >{{ 'Password' | translate }}</label>
+    </p-floatLabel>
+    <span *ngIf="loginForm.controls['password'].invalid && (loginForm.controls['password'].dirty || loginForm.controls['password'].touched)" class="block p-error">
+      <div *ngIf="loginForm.controls['password'].errors?.['required']">{{ 'PasswordRequired' | translate }}</div>
+  </span>
+
+    <!-- Forgot Password Link Added Here -->
+    <div style="text-align: right; margin: 10px 0;">
+      <a routerLink="/forgot-password" style="color: #441752; text-decoration: none; font-size: 14px;">
+        {{ 'Forgot Password?' | translate }}
+      </a>
+    </div>
+    
+    <p-floatLabel variant="in">
+    <div class="form-group" *ngIf="showReCaptcha">
+      <ngx-recaptcha2
+        #captchaElem
+        [siteKey]="siteKey"
+        formControlName="captchaToken"
+      ></ngx-recaptcha2>
+      <div *ngIf="loginForm.get('captchaToken')?.touched && loginForm.get('captchaToken')?.invalid" class="text-danger">
+        <small>{{ 'ReCaptchaRequired' | translate }}</small>
+      </div>
+    </div>
+  </p-floatLabel>
+
+    <button
+      type="submit"
+      class="button-81"
+      [disabled]="loginForm.invalid || isSubmitting"
+    >
+      {{ isSubmitting ? ('LoggingIn' | translate) : ('LoginButton' | translate) }}
+    </button>
+
+  </form>
+</div> 
+
+<div class="overlay-container">
+    <div class="overlay">
+        <div class="overlay-panel overlay-right">
+            <h1 class="h1">{{ 'Welcome' | translate }}</h1>
+            <img src="assets/images/backg.png" style="width: 300px;height: 200px;">
+            <p>{{ 'NoAccount' | translate }}</p>
+            <p-button label="{{ 'CreateAccount' | translate }}" routerLink="/register" class="button-72" role="button"></p-button>
+        </div>
+    </div>
+</div>
+
+</div>
+</body>
+</html>

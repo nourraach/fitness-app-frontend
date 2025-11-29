@@ -1,0 +1,49 @@
+<nav class="coach-navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <!-- LOGO -->
+      <div class="nav-left">
+        <div class="logo-box">
+          <i class="pi pi-heart-fill logo-icon"></i>
+          <span class="brand">HEALTH<span class="brand-accent">FIT</span></span>
+          <span class="coach-badge">COACH</span>
+        </div>
+      </div>
+
+      <!-- MENU COACH -->
+      <div class="nav-links">
+        <a routerLink="/coach-home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+          <i class="pi pi-home"></i>
+          <span>Accueil</span>
+        </a>
+        <a routerLink="/gestion-programmes" routerLinkActive="active">
+          <i class="pi pi-calendar"></i>
+          <span>Programmes</span>
+        </a>
+      </div>
+
+      <!-- PROFIL -->
+      <div class="nav-right">
+        <div class="user-dropdown">
+          <button class="user-btn" (click)="toggleUserMenu()">
+            <i class="pi pi-user"></i>
+            <span class="username">{{ coachName }}</span>
+            <i class="pi pi-angle-down"></i>
+          </button>
+          
+          <div class="dropdown-menu" *ngIf="showUserMenu">
+            <a routerLink="/profile" class="dropdown-item">
+              <i class="pi pi-user"></i>
+              <span>Mon Profil</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item logout-item" (click)="logout()">
+              <i class="pi pi-sign-out"></i>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

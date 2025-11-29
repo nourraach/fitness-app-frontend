@@ -1,0 +1,112 @@
+<div class="card p-6 user-management-card">
+  <!-- Header avec recherche et bouton -->
+  <div class="flex justify-between items-center mb-6 table-header">
+    <div class="search-container">
+      <span class="search-icon">
+        <i class="pi pi-search"></i>
+      </span>
+      <input 
+        pInputText 
+        type="text" 
+        class="p-inputtext-sm search-input w-full md:w-80" 
+        (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+        placeholder="{{ 'SEARCH_USER' | translate }}"
+      />
+    </div>
+  </div>
+
+  <!-- Table -->
+  <p-table 
+    #dt 
+    [value]="paginatedUsers" 
+    responsiveLayout="scroll" 
+    [globalFilterFields]="['name', 'email', 'role', 'phoneNumber', 'structure.name']"
+    [loading]="loading"
+    styleClass="custom-table"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="name" class="text-left">
+          {{ 'NAME' | translate }} 
+          <p-sortIcon field="name"></p-sortIcon>
+        </th>
+        <th pSortableColumn="email" class="text-left">
+          {{ 'EMAIL' | translate }} 
+          <p-sortIcon field="email"></p-sortIcon>
+        </th>
+        <th pSortableColumn="role" class="text-left">
+          {{ 'ROLE' | translate }} 
+          <p-sortIcon field="role"></p-sortIcon>
+        </th>
+        <th pSortableColumn="phoneNumber" class="text-left">
+          {{ 'PHONE' | translate }} 
+          <p-sortIcon field="phoneNumber"></p-sortIcon>
+        </th>
+        <th class="text-center">{{ 'ACTIONS' | translate }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td class="font-medium text-gray-900">{{ user.name }}</td>
+        <td class="text-gray-600">{{ user.email }}</td>
+        <td>
+          <span 
+            [ngClass]="{
+              'role-badge badge-admin': user.role === 'Admin', 
+              'role-badge badge-user': user.role === 'User'
+            }">
+            {{ user.role }}
+          </span>
+        </td>
+        <td class="text-gray-600">{{ user.phoneNumber || ('NOT_DEFINED' | translate) }}</td>
+        <td class="text-center">
+          <div class="action-buttons flex justify-center gap-2">
+            <button 
+              pButton 
+              type="button"
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-sm action-btn action-btn-edit" 
+              (click)="editUser(user.id)"
+            ></button>
+            <button 
+              pButton 
+              type="button" 
+              icon="pi pi-trash" 
+              class="p-button-rounded p-button-sm action-btn action-btn-delete" 
+              (click)="deleteUser(user.id)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="empty-message">
+          <i class="pi pi-inbox mr-2"></i>
+          {{ 'NO_USER_FOUND' | translate }}
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Pagination -->
+  <div class="flex justify-center mt-6 space-x-2 pagination-container">
+    <button 
+      *ngFor="let page of [].constructor(totalPages); let i = index" 
+      (click)="onPageChange(i + 1)"
+      [class.active]="i + 1 === currentPage"
+      class="pagination-btn">
+      {{ i + 1 }}
+    </button>
+  </div>
+
+  <!-- Dialog de confirmation -->
+  <p-confirmDialog 
+    header="{{ 'CONFIRMATION' | translate }}" 
+    message="{{ 'DELETE_USER_CONFIRM' | translate }}" 
+    icon="pi pi-exclamation-triangle"
+    styleClass="custom-confirm-dialog">
+  </p-confirmDialog>
+</div>

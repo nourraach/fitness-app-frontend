@@ -1,0 +1,204 @@
+<div class="rapports-container">
+  <div class="header">
+    <h2>📊 Rapports de Progrès</h2>
+    <button *ngIf="isCoach" class="btn-primary" (click)="toggleGenerateForm()">
+      {{ showGenerateForm ? 'Annuler' : '+ Générer un rapport' }}
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Formulaire de génération (Coach uniquement) -->
+  <div *ngIf="isCoach && showGenerateForm" class="generate-form">
+    <h3>Générer un nouveau rapport</h3>
+    <div class="form-group">
+      <label>ID du client *</label>
+      <input type="number" [(ngModel)]="clientId" placeholder="Ex: 2" class="form-control">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date de début *</label>
+        <input type="date" [(ngModel)]="dateDebut" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Date de fin *</label>
+        <input type="date" [(ngModel)]="dateFin" class="form-control">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-secondary" (click)="genererRapportSemaineCourante()" [disabled]="loading || !clientId">
+        Semaine courante
+      </button>
+      <button class="btn-primary" (click)="genererRapport()" [disabled]="loading">
+        Générer le rapport
+      </button>
+    </div>
+  </div>
+
+  <!-- Liste des rapports -->
+  <div *ngIf="loading && rapports.length === 0" class="loading">
+    Chargement des rapports...
+  </div>
+
+  <div *ngIf="!loading && rapports.length === 0" class="empty-state">
+    <p>Aucun rapport disponible</p>
+    <p *ngIf="isCoach" class="text-muted">Générez votre premier rapport pour suivre les progrès de vos clients</p>
+  </div>
+
+  <div class="rapports-grid" *ngIf="rapports.length > 0">
+    <div *ngFor="let rapport of rapports" class="rapport-card" (click)="voirDetails(rapport)">
+      <div class="rapport-header">
+        <h3>{{ rapport.nomUtilisateur }}</h3>
+        <span class="date">{{ rapport.dateGeneration | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="rapport-periode">
+        📅 {{ rapport.dateDebutSemaine | date:'dd/MM' }} - {{ rapport.dateFinSemaine | date:'dd/MM/yyyy' }}
+      </div>
+      <div class="rapport-stats">
+        <div class="stat" *ngIf="rapport.statistiques?.variationPoids !== undefined">
+          <span class="label">Poids:</span>
+          <span [class]="getVariationPoidsClass(rapport.statistiques?.variationPoids)">
+            {{ (rapport.statistiques?.variationPoids || 0) > 0 ? '+' : '' }}{{ rapport.statistiques?.variationPoids | number:'1.2-2' }} kg
+          </span>
+        </div>
+        <div class="stat" *ngIf="rapport.statistiques?.joursActifs !== undefined">
+          <span class="label">Jours actifs:</span>
+          <span [class]="getJoursActifsClass(rapport.statistiques?.joursActifs)">
+            {{ rapport.statistiques?.joursActifs }}/7
+          </span>
+        </div>
+        <div class="stat" *ngIf="rapport.statistiques?.nombreRepas">
+          <span class="label">Repas:</span>
+          <span>{{ rapport.statistiques?.nombreRepas }}</span>
+        </div>
+      </div>
+      <div class="rapport-tendance" *ngIf="rapport.statistiques?.tendanceGenerale">
+        {{ rapport.statistiques?.tendanceGenerale }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal détails du rapport -->
+  <div *ngIf="rapportSelectionne" class="modal-overlay" (click)="fermerDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Rapport détaillé</h2>
+        <button class="btn-close" (click)="fermerDetails()">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="rapport-info">
+          <h3>{{ rapportSelectionne.nomUtilisateur }}</h3>
+          <p class="periode">
+            Période: {{ rapportSelectionne.dateDebutSemaine | date:'dd/MM/yyyy' }} - 
+            {{ rapportSelectionne.dateFinSemaine | date:'dd/MM/yyyy' }}
+          </p>
+          <p class="coach" *ngIf="rapportSelectionne.nomCoach">
+            Coach: {{ rapportSelectionne.nomCoach }}
+          </p>
+        </div>
+
+        <div class="stats-section" *ngIf="rapportSelectionne.statistiques">
+          <!-- Poids et IMC -->
+          <div class="stats-card">
+            <h4>⚖️ Poids et IMC</h4>
+            <div class="stats-grid">
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.poidsDebut">
+                <span class="label">Poids début:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.poidsDebut | number:'1.2-2' }} kg</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.poidsFin">
+                <span class="label">Poids fin:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.poidsFin | number:'1.2-2' }} kg</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.variationPoids !== undefined">
+                <span class="label">Variation:</span>
+                <span class="value" [class]="getVariationPoidsClass(rapportSelectionne.statistiques.variationPoids)">
+                  {{ rapportSelectionne.statistiques.variationPoids > 0 ? '+' : '' }}{{ rapportSelectionne.statistiques.variationPoids | number:'1.2-2' }} kg
+                </span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.imcActuel">
+                <span class="label">IMC actuel:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.imcActuel | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nutrition -->
+          <div class="stats-card">
+            <h4>🍽️ Nutrition</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="label">Nombre de repas:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.nombreRepas || 0 }}</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.caloriesMoyennesJour">
+                <span class="label">Calories/jour:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.caloriesMoyennesJour | number:'1.0-0' }} kcal</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.proteinesMoyennesJour">
+                <span class="label">Protéines/jour:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.proteinesMoyennesJour | number:'1.1-1' }} g</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.lipidesMoyennesJour">
+                <span class="label">Lipides/jour:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.lipidesMoyennesJour | number:'1.1-1' }} g</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.glucidesMoyennesJour">
+                <span class="label">Glucides/jour:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.glucidesMoyennesJour | number:'1.1-1' }} g</span>
+              </div>
+              <div class="stat-item" *ngIf="rapportSelectionne.statistiques.tauxRespectObjectifCalories">
+                <span class="label">Respect objectif:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.tauxRespectObjectifCalories | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activité physique -->
+          <div class="stats-card">
+            <h4>💪 Activité Physique</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="label">Nombre d'activités:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.nombreActivites || 0 }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">Jours actifs:</span>
+                <span class="value" [class]="getJoursActifsClass(rapportSelectionne.statistiques.joursActifs)">
+                  {{ rapportSelectionne.statistiques.joursActifs || 0 }}/7
+                </span>
+              </div>
+              <div class="stat-item">
+                <span class="label">Durée totale:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.minutesTotalesActivite || 0 }} min</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">Calories brûlées:</span>
+                <span class="value">{{ rapportSelectionne.statistiques.caloriesBrulees | number:'1.0-0' }} kcal</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analyse -->
+          <div class="stats-card analyse" *ngIf="rapportSelectionne.statistiques.tendanceGenerale">
+            <h4>📈 Analyse</h4>
+            <p>{{ rapportSelectionne.statistiques.tendanceGenerale }}</p>
+          </div>
+        </div>
+
+        <!-- Résumé textuel -->
+        <div class="resume-section" *ngIf="rapportSelectionne.resume">
+          <h4>📝 Résumé complet</h4>
+          <pre>{{ rapportSelectionne.resume }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

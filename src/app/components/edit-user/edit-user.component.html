@@ -1,0 +1,49 @@
+<div class="login-root">
+  <div class="box-root flex-flex flex-direction--column" style="min-height: 100vh;flex-grow: 1;">
+    <div class="loginbackground box-background--white padding-top--64">
+      <div class="loginbackground-gridContainer">
+        <div class="box-root flex-flex" style="grid-area: top / start / 8 / end;">
+          <div class="box-root" style="background-image: linear-gradient(white 0%, rgb(247, 250, 252) 33%); flex-grow: 1;">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="box-root padding-top--24 flex-flex flex-direction--column" style="flex-grow: 1; z-index: 9;">
+      <div class="formbg-outer">
+        <div class="formbg">
+          <div class="formbg-inner padding-horizontal--48">
+            <span class="padding-bottom--15">{{ 'EditUser' | translate }}</span>
+            <form (ngSubmit)="saveUser()">
+              <div class="field padding-bottom--24">
+                <label for="name">{{ 'Name' | translate }}</label>
+                <input type="text" id="name" [(ngModel)]="user.name" name="name" required>
+              </div>
+              <div class="field padding-bottom--24">
+                <label for="email">{{ 'Email' | translate }}</label>
+                <input type="email" id="email" [(ngModel)]="user.email" name="email" required>
+              </div>
+              <div class="field padding-bottom--24">
+                <label for="phoneNumber">{{ 'PhoneNumber' | translate }}</label>
+                <input type="text" id="phoneNumber" [(ngModel)]="user.phoneNumber" name="phoneNumber" required>
+              </div>
+
+              <div class="field padding-bottom--24">
+                <label for="role">{{ 'Role' | translate }}</label>
+                <select id="role" [(ngModel)]="user.profile.role" name="role" required>
+                  <option value="user">{{ 'User' | translate }}</option>
+                  <option value="admin">{{ 'Admin' | translate }}</option>
+                </select>
+              </div>
+
+          
+
+              <div class="field padding-bottom--24">
+                <button type="submit" class="btn">{{ 'Save' | translate }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

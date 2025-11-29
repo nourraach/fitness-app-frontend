@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+</head>
+<body>
+  
+<div class="container" id="container">
+  
+  <div class="form-container sign-in-container">
+  <form [formGroup]="registerForm" (ngSubmit)="submitForm()">
+    <h1>{{ 'Register' | translate }}</h1>
+
+    <p-floatLabel variant="in">
+      <input
+        pInputText id="name"
+        type="text"
+        formControlName="name"
+        autocomplete="off"
+      />
+      <label for="name">{{ 'Name' | translate }}</label>
+    </p-floatLabel>
+    <div *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.invalid" class="block p-error">
+      <div *ngIf="registerForm.get('name')?.hasError('required')">{{ 'NameRequired' | translate }}</div>
+      <div *ngIf="registerForm.get('name')?.hasError('pattern')">{{ 'NamePattern' | translate }}</div>
+    </div>
+
+    <p-floatLabel variant="in">
+      <input
+        pInputText id="email"
+        type="email"
+        formControlName="email"
+        autocomplete="off"
+      />
+      <label for="email">{{ 'Email' | translate }}</label>
+    </p-floatLabel>
+    <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" class="block p-error">
+      <div *ngIf="registerForm.get('email')?.hasError('required')">{{ 'EmailRequired' | translate }}</div>
+      <div *ngIf="registerForm.get('email')?.hasError('pattern')">{{ 'EmailPattern' | translate }}</div>
+    </div>
+
+    <p-floatLabel variant="in">
+      <input
+        pInputText id="phoneNumber"
+        type="number"
+        formControlName="phoneNumber"
+        autocomplete="off"
+      />
+      <label for="phoneNumber">{{ 'PhoneNumber' | translate }}</label>
+    </p-floatLabel>
+    <div *ngIf="registerForm.get('phoneNumber')?.touched && registerForm.get('phoneNumber')?.invalid" class="block p-error">
+      <div *ngIf="registerForm.get('phoneNumber')?.hasError('required')">{{ 'PhoneNumberRequired' | translate }}</div>
+      <div *ngIf="registerForm.get('phoneNumber')?.hasError('pattern')">{{ 'PhoneNumberPattern' | translate }}</div>
+      <div *ngIf="registerForm.get('phoneNumber')?.hasError('maxlength')">{{ 'PhoneNumberMaxLength' | translate }}</div>
+    </div>
+
+    <p-floatLabel variant="in">
+      <input
+        pInputText id="password"
+        type="password"
+        formControlName="password"
+      />
+      <label for="password">{{ 'Password' | translate }}</label>
+    </p-floatLabel>
+    <div *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid" class="block p-error">
+      <div *ngIf="registerForm.get('password')?.hasError('required')">{{ 'PasswordRequired' | translate }}</div>
+      <div *ngIf="registerForm.get('password')?.hasError('minlength')">{{ 'PasswordMinLength' | translate }}</div>
+      <div *ngIf="registerForm.get('password')?.hasError('passwordComplexity')">{{ 'PasswordComplexity' | translate }}</div>
+    </div>
+
+    <p-floatLabel variant="in">
+      <input
+        pInputText id="confirmPassword"
+        type="password"
+        formControlName="confirmPassword"
+      />
+      <label for="confirmPassword">{{ 'ConfirmPassword' | translate }}</label>
+    </p-floatLabel>
+    <div *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.invalid" class="block p-error">
+      <div *ngIf="registerForm.get('confirmPassword')?.hasError('required')">{{ 'ConfirmPasswordRequired' | translate }}</div>
+      <div *ngIf="registerForm.get('confirmPassword')?.hasError('passwordMismatch')">{{ 'PasswordMismatch' | translate }}</div>
+    </div>
+
+    <button type="submit" class="button-72" [disabled]="registerForm.invalid">{{ 'RegisterButton' | translate }}</button>
+
+  </form>
+</div> 
+
+<div class="overlay-container">
+  <div class="overlay">
+    <div class="overlay-panel overlay-right">
+      <h1>{{ 'Welcome' | translate }}</h1>
+            <img src="assets/images/backg.png" style="width: 300px;height: 200px;">
+      <p>{{ 'AlreadyHaveAccount' | translate }}</p>
+      <p-button label="{{ 'LoginButton' | translate }}" routerLink="/login" class="button-72" role="button"></p-button>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

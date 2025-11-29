@@ -1,0 +1,120 @@
+/* === Global Layout === */
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f9f6ff, #ffffff);
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Page Container === */
+.login-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.login-root h3 {
+  font-size: 1.8rem;
+  color: #6d28d9;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* === Form Container === */
+.formbg {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(168, 85, 247, 0.1);
+  width: 100%;
+  max-width: 480px;
+  padding: 2.5rem;
+  transition: 0.3s ease;
+  border: 1px solid #f2f2f2;
+}
+
+.formbg:hover {
+  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15);
+  transform: translateY(-2px);
+}
+
+/* === Form Fields === */
+.field {
+  margin-bottom: 1.2rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.25s ease;
+  background-color: #fafafa;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.25);
+  background-color: #fff;
+}
+
+/* === Error messages === */
+.text-danger {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+/* === Submit Button === */
+.btn {
+  width: 100%;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2);
+}
+
+.btn:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(168, 85, 247, 0.25);
+}
+
+.btn:disabled {
+  background: #d4d4d8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .formbg {
+    padding: 1.8rem;
+  }
+
+  .login-root h3 {
+    font-size: 1.5rem;
+  }
+}

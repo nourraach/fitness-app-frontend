@@ -1,0 +1,104 @@
+<nav class="navbar" *ngIf="showNavbar" [class.navbar-hidden]="isScrolled">
+  <div class="container">
+    <div class="nav-inner">
+      <!-- LOGO -->
+      <div class="nav-left">
+        <div class="logo-box">
+          <i class="pi pi-heart-fill logo-icon"></i>
+          <span class="brand">HEALTH<span class="brand-accent">FIT</span></span>
+        </div>
+      </div>
+
+      <!-- MENU PRINCIPAL -->
+      <div class="nav-links">
+        <!-- Menu COACH uniquement (simplifié) -->
+        <ng-container *ngIf="isCoach">
+          <a routerLink="/coach-home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <i class="pi pi-home"></i>
+            <span>Accueil</span>
+          </a>
+          <a routerLink="/coach-clients" routerLink Active="active">
+            <i class="pi pi-users"></i>
+            <span>Mes Clients</span>
+          </a>
+          <a routerLink="/gestion-programmes" routerLinkActive="active">
+            <i class="pi pi-calendar"></i>
+            <span>Programmes</span>
+          </a>
+        </ng-container>
+
+        <!-- Menu USER/CLIENT (reste inchangé) -->
+        <ng-container *ngIf="!isCoach && !isAdmin">
+          <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <i class="pi pi-home"></i>
+            <span>Accueil</span>
+          </a>
+          <a routerLink="/programmes" routerLinkActive="active">
+            <i class="pi pi-bolt"></i>
+            <span>Programmes</span>
+          </a>
+          <a routerLink="/gestion-programmes" routerLinkActive="active">
+            <i class="pi pi-calendar"></i>
+            <span>Mes Programmes</span>
+          </a>
+          <a routerLink="/nutrition" routerLinkActive="active">
+            <i class="pi pi-apple"></i>
+            <span>Nutrition</span>
+          </a>
+          <a routerLink="/evolution-poids" routerLinkActive="active">
+            <i class="pi pi-chart-line"></i>
+            <span>Évolution</span>
+          </a>
+          <a routerLink="/suivi" routerLinkActive="active">
+            <i class="pi pi-chart-line"></i>
+            <span>Suivi</span>
+          </a>
+          <a routerLink="/notifications" routerLinkActive="active" class="notifications-link">
+            <i class="pi pi-bell"></i>
+            <span>Notifications</span>
+            <span *ngIf="notificationsCount > 0" class="notification-badge">{{ notificationsCount }}</span>
+          </a>
+        </ng-container>
+
+        <!-- Menu ADMIN uniquement -->
+        <ng-container *ngIf="isAdmin">
+          <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <i class="pi pi-home"></i>
+            <span>Accueil</span>
+          </a>
+          <a routerLink="/gestUsers" routerLinkActive="active">
+            <i class="pi pi-users"></i>
+            <span>Utilisateurs</span>
+          </a>
+        </ng-container>
+      </div>
+
+      <!-- OPTIONS USER -->
+      <div class="nav-right">
+        <div class="user-dropdown">
+          <button class="user-btn" (click)="toggleUserMenu()">
+            <i class="pi pi-user"></i>
+            <span class="username">{{ userName }}</span>
+            <i class="pi pi-angle-down"></i>
+          </button>
+          
+          <div class="dropdown-menu" *ngIf="showUserMenu">
+            <a *ngIf="isCoach" routerLink="/coach-profile" class="dropdown-item">
+              <i class="pi pi-user"></i>
+              <span>Mon Profil</span>
+            </a>
+            <a *ngIf="!isCoach" routerLink="/profile" class="dropdown-item">
+              <i class="pi pi-user"></i>
+              <span>Mon Profil</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item logout-item" (click)="logout()">
+              <i class="pi pi-sign-out"></i>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

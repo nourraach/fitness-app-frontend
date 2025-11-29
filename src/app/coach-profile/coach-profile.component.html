@@ -1,0 +1,197 @@
+<div class="coach-profile-container">
+  <!-- Header -->
+  <div class="profile-header">
+    <h1>👤 Mon Profil Coach</h1>
+    <p class="subtitle">Gérez vos informations personnelles et professionnelles</p>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    ✓ {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    ✗ {{ errorMessage }}
+  </div>
+
+  <!-- Profile Card -->
+  <div class="profile-card">
+    <!-- Avatar Section -->
+    <div class="avatar-section">
+      <div class="avatar">
+        <i class="pi pi-user"></i>
+      </div>
+      <button class="btn-change-photo" *ngIf="isEditing">
+        <i class="pi pi-camera"></i>
+        Changer la photo
+      </button>
+    </div>
+
+    <!-- Profile Form -->
+    <div class="profile-form">
+      <!-- Personal Information -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2>📋 Informations Personnelles</h2>
+          <button *ngIf="!isEditing" class="btn-edit" (click)="toggleEdit()">
+            <i class="pi pi-pencil"></i>
+            Modifier
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom Complet *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="profile.name" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="Votre nom complet">
+          </div>
+
+          <div class="form-group">
+            <label>Email *</label>
+            <input 
+              type="email" 
+              [(ngModel)]="profile.email" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="votre@email.com">
+          </div>
+
+          <div class="form-group">
+            <label>Âge</label>
+            <input 
+              type="number" 
+              [(ngModel)]="profile.age" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="35"
+              min="18"
+              max="100">
+          </div>
+
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input 
+              type="tel" 
+              [(ngModel)]="profile.phone" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="+33 6 12 34 56 78">
+          </div>
+        </div>
+      </div>
+
+      <!-- Professional Information -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2>💼 Informations Professionnelles</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Spécialisation</label>
+            <input 
+              type="text" 
+              [(ngModel)]="profile.specialization" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="Ex: Musculation & Nutrition">
+          </div>
+
+          <div class="form-group">
+            <label>Années d'Expérience</label>
+            <input 
+              type="number" 
+              [(ngModel)]="profile.experience" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="10"
+              min="0"
+              max="50">
+          </div>
+
+          <div class="form-group full-width">
+            <label>Certifications</label>
+            <input 
+              type="text" 
+              [(ngModel)]="profile.certifications" 
+              [disabled]="!isEditing"
+              class="form-control"
+              placeholder="Ex: BPJEPS, Diplôme de Nutritionniste">
+          </div>
+
+          <div class="form-group full-width">
+            <label>Biographie</label>
+            <textarea 
+              [(ngModel)]="profile.bio" 
+              [disabled]="!isEditing"
+              class="form-control"
+              rows="4"
+              placeholder="Parlez de votre parcours, vos compétences et votre approche du coaching..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions" *ngIf="isEditing">
+        <button class="btn-cancel" (click)="cancelEdit()" [disabled]="loading">
+          Annuler
+        </button>
+        <button class="btn-save" (click)="saveProfile()" [disabled]="loading">
+          <span *ngIf="!loading">Enregistrer</span>
+          <span *ngIf="loading">Enregistrement...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Actions -->
+  <div class="additional-actions">
+    <div class="action-card">
+      <div class="action-icon">🔒</div>
+      <div class="action-content">
+        <h3>Sécurité</h3>
+        <p>Modifiez votre mot de passe pour sécuriser votre compte</p>
+        <button class="btn-action" (click)="changePassword()">
+          Changer le mot de passe
+        </button>
+      </div>
+    </div>
+
+    <div class="action-card danger">
+      <div class="action-icon">⚠️</div>
+      <div class="action-content">
+        <h3>Zone Dangereuse</h3>
+        <p>Supprimez définitivement votre compte et toutes vos données</p>
+        <button class="btn-action btn-danger" (click)="deleteAccount()">
+          Supprimer le compte
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Summary -->
+  <div class="stats-summary">
+    <h2>📊 Résumé de votre Activité</h2>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">{{ profile.experience || 0 }}</div>
+        <div class="stat-label">Années d'Expérience</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">32</div>
+        <div class="stat-label">Clients Actifs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">45</div>
+        <div class="stat-label">Programmes Créés</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">4.8/5</div>
+        <div class="stat-label">Note Moyenne</div>
+      </div>
+    </div>
+  </div>
+</div>

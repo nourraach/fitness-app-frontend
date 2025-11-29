@@ -1,0 +1,458 @@
+<!-- Navbar conditionnelle -->
+<app-coach-navbar *ngIf="isCoach"></app-coach-navbar>
+<app-navbar *ngIf="!isCoach"></app-navbar>
+
+<div class="profile-container">
+  <!-- Bannière de bienvenue avec illustration -->
+  <div class="welcome-banner">
+    <div class="banner-content">
+      <div class="banner-text">
+        <h1 class="banner-title">
+          Prêt à optimiser votre santé<br>
+          et atteindre vos objectifs ?
+        </h1>
+        
+        <div class="banner-badges">
+          <span class="badge-item">
+            <i class="pi pi-heart-fill"></i>
+            Santé
+          </span>
+          <span class="badge-item">
+            <i class="pi pi-bolt"></i>
+            Énergie
+          </span>
+          <span class="badge-item">
+            <i class="pi pi-star-fill"></i>
+            Objectifs
+          </span>
+        </div>
+      </div>
+      <div class="banner-illustration">
+        <img src="assets/images/himfaskha.png" alt="Illustration profil" class="hero-image">
+      </div>
+    </div>
+  </div>
+
+  <!-- Header avec animation et image -->
+  <div class="profile-header">
+    <div class="header-decoration">
+      <div class="circle-1"></div>
+      <div class="circle-2"></div>
+      <div class="circle-3"></div>
+    </div>
+    
+    <h1>
+      <i class="pi pi-user-edit"></i>
+      Mon Profil Santé
+    </h1>
+    <p>Personnalisez vos informations pour des recommandations adaptées</p>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="pi pi-check-circle"></i>
+    <span>{{ successMessage }}</span>
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="pi pi-times-circle"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-wrapper" *ngIf="isLoading">
+    <div class="loading-spinner">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+    <p>Chargement de votre profil...</p>
+  </div>
+
+  <div class="profile-content" *ngIf="!isLoading">
+    <!-- Layout avec formulaire à gauche et images à droite -->
+    <div class="profile-layout">
+      <!-- Colonne gauche - Formulaire -->
+      <div class="form-column">
+        <div class="main-card">
+      <div class="card-header-custom">
+        <button class="btn-edit-modern" *ngIf="!isEditing && hasProfile" (click)="enableEdit()">
+          <i class="pi pi-pencil"></i>
+          <span>Modifier</span>
+        </button>
+      </div>
+
+      <form class="profile-form-modern" (ngSubmit)="saveProfile()">
+        <!-- Informations de base -->
+        <div class="form-section animated-section">
+          <div class="section-header">
+            <div class="section-icon-wrapper">
+              <i class="pi pi-user"></i>
+            </div>
+            <div>
+              <h3 class="section-title">Informations de base</h3>
+              <p class="section-description">Commencez par vos informations personnelles</p>
+            </div>
+          </div>
+          
+          <div class="form-grid">
+            <!-- Âge avec slider -->
+            <div class="form-field interactive-field">
+              <label for="age" class="modern-label">
+                <span class="label-icon">
+                  <i class="pi pi-calendar"></i>
+                </span>
+                <span class="label-text">Âge</span>
+                <span class="label-badge">{{ profile.age || 0 }} ans</span>
+              </label>
+              <div class="input-group">
+                <input 
+                  type="range" 
+                  id="age-slider"
+                  [(ngModel)]="profile.age" 
+                  name="age-slider"
+                  [disabled]="!isEditing"
+                  min="15" 
+                  max="100"
+                  class="range-slider"
+                  (input)="onAgeChange()">
+                <input 
+                  type="number" 
+                  id="age" 
+                  [(ngModel)]="profile.age" 
+                  name="age"
+                  [disabled]="!isEditing"
+                  min="15" 
+                  max="100" 
+                  placeholder="25"
+                  class="number-input"
+                  required>
+              </div>
+              
+            </div>
+
+            <!-- Sexe avec cartes sélectionnables -->
+            <div class="form-field interactive-field">
+              <label class="modern-label">
+                <span class="label-icon">
+                  <i class="pi pi-users"></i>
+                </span>
+                <span class="label-text">Sexe</span>
+              </label>
+              <div class="gender-cards">
+                <div 
+                  class="gender-card"
+                  [class.active]="profile.sexe === 'HOMME'"
+                  [class.disabled]="!isEditing"
+                  (click)="isEditing && selectGender('HOMME')">
+                  <i class="pi pi-mars"></i>
+                  <span>Homme</span>
+                </div>
+                <div 
+                  class="gender-card"
+                  [class.active]="profile.sexe === 'FEMME'"
+                  [class.disabled]="!isEditing"
+                  (click)="isEditing && selectGender('FEMME')">
+                  <i class="pi pi-venus"></i>
+                  <span>Femme</span>
+                </div>
+              </div>
+              <input type="hidden" [(ngModel)]="profile.sexe" name="sexe" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mesures corporelles -->
+        <div class="form-section animated-section">
+          <div class="section-header">
+            <div class="section-icon-wrapper">
+              <i class="pi pi-chart-line"></i>
+            </div>
+            <div>
+              <h3 class="section-title">Mesures corporelles</h3>
+              <p class="section-description">Vos mensurations pour un calcul précis</p>
+            </div>
+          </div>
+          
+          <div class="form-grid">
+            <!-- Taille avec slider et visualisation -->
+            <div class="form-field interactive-field">
+              <label for="taille" class="modern-label">
+                <span class="label-icon">
+                  <i class="pi pi-arrows-v"></i>
+                </span>
+                <span class="label-text">Taille</span>
+                <span class="label-badge">{{ profile.taille || 0 }} cm</span>
+              </label>
+              <div class="input-group">
+                <input 
+                  type="range" 
+                  id="taille-slider"
+                  [(ngModel)]="profile.taille" 
+                  name="taille-slider"
+                  [disabled]="!isEditing"
+                  min="140" 
+                  max="220"
+                  class="range-slider teal-slider">
+                <input 
+                  type="number" 
+                  id="taille" 
+                  [(ngModel)]="profile.taille" 
+                  name="taille"
+                  [disabled]="!isEditing"
+                  min="140" 
+                  max="220"
+                  placeholder="170"
+                  class="number-input"
+                  required>
+              </div>
+              <div class="measurement-visual">
+                <div class="visual-bar teal-bar" [style.height.%]="(profile.taille - 140) / 80 * 100"></div>
+              </div>
+              
+            </div>
+
+            <!-- Poids avec slider et visualisation -->
+            <div class="form-field interactive-field">
+              <label for="poids" class="modern-label">
+                <span class="label-icon">
+                  <i class="pi pi-circle"></i>
+                </span>
+                <span class="label-text">Poids</span>
+                <span class="label-badge">{{ profile.poids || 0 }} kg</span>
+              </label>
+              <div class="input-group">
+                <input 
+                  type="range" 
+                  id="poids-slider"
+                  [(ngModel)]="profile.poids" 
+                  name="poids-slider"
+                  [disabled]="!isEditing"
+                  min="40" 
+                  max="150"
+                  step="0.5"
+                  class="range-slider pink-slider">
+                <input 
+                  type="number" 
+                  id="poids" 
+                  [(ngModel)]="profile.poids" 
+                  name="poids"
+                  [disabled]="!isEditing"
+                  min="40" 
+                  max="150" 
+                  step="0.1"
+                  placeholder="70"
+                  class="number-input"
+                  required>
+              </div>
+              <div class="measurement-visual">
+                <div class="visual-bar pink-bar" [style.height.%]="(profile.poids - 40) / 110 * 100"></div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+
+        <!-- Objectifs avec cartes interactives -->
+        <div class="form-section animated-section">
+          <div class="section-header">
+            <div class="section-icon-wrapper">
+              <i class="pi pi-flag"></i>
+            </div>
+            <div>
+              <h3 class="section-title">Vos objectifs</h3>
+              <p class="section-description">Définissez votre parcours santé</p>
+            </div>
+          </div>
+          
+          <!-- Objectif principal avec cartes -->
+          <div class="form-field interactive-field">
+            <label class="modern-label">
+              <span class="label-icon">
+                <i class="pi pi-star"></i>
+              </span>
+              <span class="label-text">Objectif principal</span>
+            </label>
+            <div class="objective-cards">
+              <div 
+                class="objective-card"
+                [class.active]="profile.objectif === 'PERTE_POIDS'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectObjective('PERTE_POIDS')">
+                <div class="card-icon">🔥</div>
+                <div class="card-title">Perte de poids</div>
+              </div>
+              <div 
+                class="objective-card"
+                [class.active]="profile.objectif === 'PRISE_MASSE'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectObjective('PRISE_MASSE')">
+                <div class="card-icon">💪</div>
+                <div class="card-title">Prise de masse</div>
+  
+              </div>
+              <div 
+                class="objective-card"
+                [class.active]="profile.objectif === 'MAINTIEN'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectObjective('MAINTIEN')">
+                <div class="card-icon">⚖️</div>
+                <div class="card-title">Maintien</div>
+              </div>
+              <div 
+                class="objective-card"
+                [class.active]="profile.objectif === 'REMISE_EN_FORME'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectObjective('REMISE_EN_FORME')">
+                <div class="card-icon">🏃</div>
+                <div class="card-title">Remise en forme</div>
+              </div>
+            </div>
+            <input type="hidden" [(ngModel)]="profile.objectif" name="objectif" required>
+          </div>
+
+          <!-- Niveau d'activité avec cartes -->
+          <div class="form-field interactive-field">
+            <label class="modern-label">
+              <span class="label-icon">
+                <i class="pi pi-bolt"></i>
+              </span>
+              <span class="label-text">Niveau d'activité physique</span>
+            </label>
+            <div class="activity-cards">
+              <div 
+                class="activity-card"
+                [class.active]="profile.niveauActivite === 'SEDENTAIRE'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectActivity('SEDENTAIRE')">
+                <div class="activity-icon">😴</div>
+                <div class="activity-title">Sédentaire</div>
+              </div>
+              <div 
+                class="activity-card"
+                [class.active]="profile.niveauActivite === 'LEGER'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectActivity('LEGER')">
+                <div class="activity-icon">🚶</div>
+                <div class="activity-title">Léger</div>
+              </div>
+              <div 
+                class="activity-card"
+                [class.active]="profile.niveauActivite === 'MODERE'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectActivity('MODERE')">
+                <div class="activity-icon">🏃</div>
+                <div class="activity-title">Modéré</div>
+              </div>
+              <div 
+                class="activity-card"
+                [class.active]="profile.niveauActivite === 'INTENSE'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectActivity('INTENSE')">
+                <div class="activity-icon">💪</div>
+                <div class="activity-title">Intense</div>
+              </div>
+              <div 
+                class="activity-card"
+                [class.active]="profile.niveauActivite === 'TRES_INTENSE'"
+                [class.disabled]="!isEditing"
+                (click)="isEditing && selectActivity('TRES_INTENSE')">
+                <div class="activity-icon">🔥</div>
+                <div class="activity-title">Très intense</div>
+              </div>
+            </div>
+            <input type="hidden" [(ngModel)]="profile.niveauActivite" name="niveauActivite" required>
+          </div>
+        </div>
+
+      </form>
+    </div>
+      </div>
+
+      <!-- Colonne droite - Images simples -->
+      <div class="images-column">
+        <div class="sidebar-grid">
+          
+          <!-- Image principale -->
+          <div class="sidebar-image large">
+            <img src="assets/images/4.jpg" alt="Nutrition saine">
+            <div class="image-label">
+              <i class="pi pi-apple"></i>
+              <span>Nutrition Équilibrée</span>
+            </div>
+          </div>
+
+          <!-- 2 images moyennes -->
+          <div class="sidebar-image medium">
+            <img src="assets/images/3.jpg" alt="Fitness">
+            <div class="image-label">
+              <i class="pi pi-bolt"></i>
+              <span>Entraînement</span>
+            </div>
+          </div>
+
+          <div class="sidebar-image medium">
+            <img src="assets/images/1.jpg" alt="Bien-être">
+            <div class="image-label">
+              <i class="pi pi-heart"></i>
+              <span>Bien-être</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions en dehors du cadre -->
+    <div class="form-actions-outside">
+      <button type="button" class="btn-cancel-modern" (click)="cancelEdit()" *ngIf="hasProfile && isEditing">
+        <i class="pi pi-times"></i>
+        <span>Annuler</span>
+      </button>
+      <button type="button" class="btn-save-modern" (click)="saveAndCalculate()" *ngIf="isEditing">
+        <i class="pi pi-check"></i>
+        <span>Enregistrer et Calculer</span>
+      </button>
+      <button type="button" class="btn-calculate-modern" (click)="saveAndCalculate()" *ngIf="!isEditing && hasProfile">
+        <i class="pi pi-calculator"></i>
+        <span>Recalculer l'IMC</span>
+      </button>
+    </div>
+
+    <!-- Résultats IMC et Calories - En pleine largeur -->
+    <div class="results-section" *ngIf="(imcResult || besoinsCaloriquesResult) && !isEditing"></div>
+      <h2 class="results-title">Vos Indicateurs de Santé</h2>
+      <div class="results-grid">
+      <!-- Carte IMC -->
+      <div class="result-card-modern imc-card">
+        <div class="card-image-header">
+          <div class="card-overlay"></div>
+        </div>
+        <div class="card-icon">
+          <i class="pi pi-chart-line"></i>
+        </div>
+        <div class="card-content">
+          <h3>Indice de Masse Corporelle</h3>
+          <div class="result-main" *ngIf="imcResult">
+            <div class="result-number" [style.color]="getImcColor(imcResult.imc)">
+              {{ imcResult.imc | number:'1.1-1' }}
+            </div>
+            <div class="result-badge" [style.background]="getImcColor(imcResult.imc)">
+              {{ imcResult.categorie }}
+            </div>
+          </div>
+          <p class="result-description" *ngIf="imcResult">
+            {{ imcResult.interpretation }}
+          </p>
+          <div class="imc-scale">
+            <div class="scale-bar">
+              <div class="scale-indicator" [style.left.%]="(imcResult?.imc || 0) * 3"></div>
+            </div>
+            <div class="scale-labels">
+              <span>18.5</span>
+              <span>25</span>
+              <span>30</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div>
+    </div>

@@ -1,0 +1,65 @@
+<div class="programmes-container">
+  <div class="header">
+    <h1>Programmes d'Entraînement</h1>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Niveau:</label>
+      <button (click)="filterByNiveau('TOUS')" [class.active]="selectedNiveau === 'TOUS'">Tous</button>
+      <button (click)="filterByNiveau('DEBUTANT')" [class.active]="selectedNiveau === 'DEBUTANT'">Débutant</button>
+      <button (click)="filterByNiveau('INTERMEDIAIRE')" [class.active]="selectedNiveau === 'INTERMEDIAIRE'">Intermédiaire</button>
+      <button (click)="filterByNiveau('AVANCE')" [class.active]="selectedNiveau === 'AVANCE'">Avancé</button>
+    </div>
+
+    <div class="filter-group">
+      <label>Objectif:</label>
+      <button (click)="filterByObjectif('TOUS')" [class.active]="selectedObjectif === 'TOUS'">Tous</button>
+      <button (click)="filterByObjectif('PERTE_POIDS')" [class.active]="selectedObjectif === 'PERTE_POIDS'">Perte de poids</button>
+      <button (click)="filterByObjectif('PRISE_MASSE')" [class.active]="selectedObjectif === 'PRISE_MASSE'">Prise de masse</button>
+      <button (click)="filterByObjectif('ENDURANCE')" [class.active]="selectedObjectif === 'ENDURANCE'">Endurance</button>
+    </div>
+  </div>
+
+  <!-- Liste des programmes -->
+  <div *ngIf="loading" class="loading">Chargement...</div>
+
+  <div *ngIf="!loading && filteredProgrammes.length === 0" class="empty-state">
+    <i class="fas fa-dumbbell"></i>
+    <p>Aucun programme trouvé</p>
+  </div>
+
+  <div class="programmes-grid">
+    <div *ngFor="let prog of filteredProgrammes" class="programme-card">
+      <div class="card-header">
+        <h3>{{ prog.nom }}</h3>
+        <span *ngIf="prog.statut" class="statut-badge" [ngClass]="getStatutClass(prog.statut)">{{ prog.statut }}</span>
+      </div>
+
+      <div class="card-body">
+        <p *ngIf="prog.description" class="description">{{ prog.description }}</p>
+        
+        <div class="info-row" *ngIf="prog.niveau">
+          <span><i class="fas fa-signal"></i> Niveau: {{ prog.niveau }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="prog.objectif">
+          <span><i class="fas fa-bullseye"></i> Objectif: {{ prog.objectif }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="prog.duree">
+          <span><i class="fas fa-clock"></i> Durée: {{ prog.duree }} semaines</span>
+        </div>
+
+        <div class="info-row" *ngIf="prog.exercices && prog.exercices.length > 0">
+          <span><i class="fas fa-dumbbell"></i> {{ prog.exercices.length }} exercice(s)</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn-primary" routerLink="/programmes/{{ prog.id }}">Voir détails</button>
+      </div>
+    </div>
+  </div>
+</div>

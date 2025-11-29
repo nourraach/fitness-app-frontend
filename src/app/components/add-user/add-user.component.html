@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Form</title>
+</head>
+<body>
+    <div class="login-root">
+        <h3>Add User</h3>
+        <div class="box-root flex-flex flex-direction--column" style="min-height: 100vh; flex-grow: 1;">
+            <div class="loginbackground box-background--white padding-top--64">
+                <div class="loginbackground-gridContainer">
+                    <div class="box-root flex-flex" style="grid-area: top / start / 8 / end;">
+                        <div class="box-root" style="background-image: linear-gradient(white 0%, rgb(247, 250, 252) 33%); flex-grow: 1;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="box-root padding-top--24 flex-flex flex-direction--column" style="flex-grow: 1; z-index: 9;">
+                <div class="formbg-outer">
+                    <div class="formbg">
+                        <div class="formbg-inner padding-horizontal--48">
+                            <form id="stripe-login" [formGroup]="registerForm" (ngSubmit)="submitForm()">
+                                <div class="field padding-bottom--24">
+                                    <label for="name">{{ 'Nom' |translate}}</label>
+                                    <input type="text" name="name" formControlName="name" required>
+                                    <div *ngIf="registerForm.get('name')?.invalid && registerForm.get('name')?.touched" class="text-danger">
+                                        <div *ngIf="registerForm.get('name')?.hasError('required')">{{ 'NameRequired' | translate }}</div>
+                                        <div *ngIf="registerForm.get('name')?.hasError('pattern')">{{ 'NamePattern' | translate }}</div>
+                                    </div>
+                                </div>
+                                <div class="field padding-bottom--24">
+                                    <label for="email">{{ 'Email' |translate}}</label>
+                                    <input type="email" name="email" formControlName="email" required>
+                                    <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="text-danger">
+                                        <div *ngIf="registerForm.get('email')?.hasError('required')">{{ 'EmailRequired' | translate }}</div>
+                                        <div *ngIf="registerForm.get('email')?.hasError('email')">{{ 'EmailValid' | translate }}</div>
+                                    </div>
+                                </div>
+                                <div class="field padding-bottom--24">
+                                    <label for="structure">{{ 'Structure' | translate }}</label>
+                                    <select class="form-control" id="structure" formControlName="structureId">
+                                        <option *ngFor="let structure of structures" [value]="structure.id">{{ structure.libelleAr }}</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="field padding-bottom--24">
+                                    <label for="phoneNumber">{{ 'PHONE' |translate}}</label>
+                                    <input type="number" name="phoneNumber" formControlName="phoneNumber" required>
+                                    <div *ngIf="registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched" class="text-danger">
+                                    <div *ngIf="registerForm.get('phoneNumber')?.hasError('required')">{{ 'PhoneNumberRequired' | translate }}</div>
+                                    </div>
+                                </div>
+                                <div class="field padding-bottom--24">
+                                    <label for="password">{{ 'Password' | translate }}</label>
+                                    <input type="password" class="form-control" id="password" formControlName="password">
+                                    <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="text-danger">
+                                        <div *ngIf="registerForm.get('password')?.hasError('required')">{{ 'PasswordRequired' | translate }}</div>
+                                    </div>
+                                </div>
+                                <div class="field padding-bottom--24">
+                                    <label for="confirmPassword">{{ 'ConfirmPassword' | translate }}</label>
+                                    <input type="password" class="form-control" id="confirmPassword" formControlName="confirmPassword">
+                                </div>
+                                <div class="field padding-bottom--24">
+                                    <label for="role">{{ 'Role' | translate }}</label>
+                                    <select class="form-control" id="role" formControlName="role">
+                                        <option value="user">{{ 'User' | translate }}</option>
+                                        <option value="admin">{{ 'Admin' | translate }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn" [disabled]="registerForm.invalid">{{ 'Ajouter' | translate }}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

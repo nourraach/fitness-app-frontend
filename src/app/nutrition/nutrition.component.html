@@ -1,0 +1,317 @@
+<div class="nutrition-container">
+  <!-- Hero Section -->
+  <section class="nutrition-hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          NUTRITION<br>
+          <span class="text-green">ÉQUILIBRÉE</span>
+        </h1>
+        <p class="hero-subtitle">Découvrez des plats sains et délicieux adaptés à vos objectifs nutritionnels</p>
+        <div class="hero-features">
+          <div class="feature-badge">
+            <i class="pi pi-check-circle"></i>
+            <span>Plans personnalisés</span>
+          </div>
+          <div class="feature-badge">
+            <i class="pi pi-heart"></i>
+            <span>Recettes équilibrées</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-image-wrapper">
+        <img src="assets/images/chouka_w_khodhramfaskha.png" alt="Nutrition saine" class="hero-image-normal">
+        <div class="hero-decoration"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plats List Section with Dark Background -->
+  <section class="plats-list-section">
+    <div class="top-list-section">
+      <h2 class="section-title">Plats Suggérés</h2>
+    </div>
+
+    <div class="filters-section">
+      <div class="search-filter-container">
+        <div class="search-box">
+          <input 
+            type="text" 
+            [(ngModel)]="rechercheTexte" 
+            (input)="rechercherPlats()"
+            placeholder="Rechercher un plat..."
+            class="search-input">
+        </div>
+        
+        <div class="filter-dropdown-wrapper">
+          <button class="filter-dropdown-btn" (click)="toggleDropdown()">
+            <span class="filter-icon">🔽</span>
+            <span class="filter-text">Filtrer</span>
+          </button>
+          
+          <div class="dropdown-menu" *ngIf="afficherDropdown">
+            <button 
+              *ngFor="let cat of categories" 
+              [class.active]="categorieSelectionnee === cat.value"
+              (click)="selectionnerCategorie(cat.value)"
+              class="dropdown-item">
+              {{ cat.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plats-vertical-list">
+      <div *ngFor="let plat of platsAffiches; let i = index" 
+           class="plat-row" 
+           [class.plat-left]="i % 2 === 0" 
+           [class.plat-right]="i % 2 !== 0">
+        
+        <div class="plat-image-container">
+          <div class="circle-decoration"></div>
+          <div class="plat-image-circle" (click)="afficherDetails(plat)">
+            <img *ngIf="plat.imageUrl" [src]="plat.imageUrl" [alt]="plat.nom" class="plat-image-real-circle">
+            <div *ngIf="!plat.imageUrl" class="plat-image-placeholder-circle">
+              <span class="icon">🍽️</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="plat-info">
+          <h3 class="plat-title" (click)="afficherDetails(plat)">{{ plat.nom }}</h3>
+          <p class="plat-subtitle">{{ plat.categorie }}</p>
+          <div class="plat-rating">
+            <span class="rating-label">Calories</span>
+            <div class="rating-bar">
+              <div class="rating-fill" [style.width.%]="(plat.calories / 10)"></div>
+            </div>
+          </div>
+        </div>
+
+        <svg class="connecting-line" *ngIf="i < platsAffiches.length - 1">
+          <path [attr.d]="i % 2 === 0 ? 'M 150,250 Q 300,350 150,450' : 'M 150,250 Q 0,350 150,450'" 
+                stroke="rgba(132, 202, 190, 0.3)" 
+                stroke-width="2" 
+                fill="none"/>
+          <circle cx="150" cy="450" r="6" fill="rgba(132, 202, 190, 0.6)"/>
+        </svg>
+      </div>
+    </div>
+
+    <div *ngIf="platsAffiches.length === 0" class="empty-state">
+      <p>Aucun plat trouvé pour cette recherche</p>
+    </div>
+  </section>
+
+  <!-- Modal Détails Plat -->
+  <div *ngIf="afficherModal && platSelectionne" class="modal-overlay" (click)="fermerModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ platSelectionne.nom }}</h3>
+        <button class="btn-close" (click)="fermerModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="plat-detail-image">
+          <img *ngIf="platSelectionne.imageUrl" [src]="platSelectionne.imageUrl" [alt]="platSelectionne.nom" class="plat-image-real-large">
+          <div *ngIf="!platSelectionne.imageUrl" class="plat-image-placeholder-large">
+            <span class="icon-large">🍽️</span>
+          </div>
+        </div>
+
+        <p class="plat-detail-description">{{ platSelectionne.description }}</p>
+
+        <div class="detail-info-row">
+          <div class="detail-info-item">
+            <span class="icon">⏱️</span>
+            <strong>Temps:</strong> {{ platSelectionne.tempsPreparation }} min
+          </div>
+          <div class="detail-info-item">
+            <span class="icon">📊</span>
+            <strong>Difficulté:</strong> {{ platSelectionne.difficulte }}
+          </div>
+          <div class="detail-info-item">
+            <span class="icon">🏷️</span>
+            <strong>Catégorie:</strong> {{ getLabelCategorie(platSelectionne.categorie) }}
+          </div>
+        </div>
+
+        <div class="nutrition-detail">
+          <h4>Valeurs Nutritionnelles</h4>
+          <div class="nutrition-grid">
+            <div class="nutrition-detail-item calories">
+              <span class="value">{{ platSelectionne.calories }}</span>
+              <span class="label">Calories</span>
+            </div>
+            <div class="nutrition-detail-item proteines">
+              <span class="value">{{ platSelectionne.proteines }}g</span>
+              <span class="label">Protéines</span>
+            </div>
+            <div class="nutrition-detail-item lipides">
+              <span class="value">{{ platSelectionne.lipides }}g</span>
+              <span class="label">Lipides</span>
+            </div>
+            <div class="nutrition-detail-item glucides">
+              <span class="value">{{ platSelectionne.glucides }}g</span>
+              <span class="label">Glucides</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ingredients-section">
+          <h4>Ingrédients</h4>
+          <ul class="ingredients-list">
+            <li *ngFor="let ingredient of platSelectionne.ingredients">{{ ingredient }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fermerModal()">Fermer</button>
+        <button class="btn-primary">Ajouter à mes repas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajouter Repas -->
+  <div *ngIf="afficherModalRepas" class="modal-overlay" (click)="fermerModalRepas()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter un repas</h3>
+        <button class="btn-close" (click)="fermerModalRepas()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom du repas</label>
+          <input 
+            type="text" 
+            [(ngModel)]="nomRepas" 
+            placeholder="Ex: Déjeuner du midi"
+            class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label>Type de repas</label>
+          <select [(ngModel)]="typeRepas" class="form-select">
+            <option value="PETIT_DEJEUNER">Petit-déjeuner</option>
+            <option value="DEJEUNER">Déjeuner</option>
+            <option value="DINER">Dîner</option>
+            <option value="COLLATION">Collation</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Rechercher un aliment</label>
+          <input 
+            type="text" 
+            [(ngModel)]="rechercheAliment" 
+            (input)="rechercherAliments()"
+            placeholder="Tapez au moins 2 caractères..."
+            class="form-input">
+        </div>
+
+        <div *ngIf="chargementAliments" class="loading-state">
+          <p>Recherche en cours...</p>
+        </div>
+
+        <div *ngIf="alimentsRecherches.length > 0" class="aliments-recherche-list">
+          <div *ngFor="let aliment of alimentsRecherches" 
+               class="aliment-recherche-item"
+               (click)="ouvrirModalAliment(aliment)">
+            <div class="aliment-info">
+              <strong>{{ aliment.nom }}</strong>
+              <span *ngIf="aliment.marque" class="aliment-marque">{{ aliment.marque }}</span>
+            </div>
+            <div class="aliment-nutrition-mini">
+              <span>{{ aliment.calories }} cal</span>
+              <span>{{ aliment.portionStandard }}{{ aliment.unite }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="rechercheAliment.length >= 2 && !chargementAliments && alimentsRecherches.length === 0" class="empty-state">
+          <p>Aucun aliment trouvé</p>
+        </div>
+
+        <div *ngIf="alimentsSelectionnes.length > 0" class="aliments-selectionnes">
+          <h4>Aliments ajoutés</h4>
+          <div *ngFor="let alimentSel of alimentsSelectionnes; let i = index" class="aliment-selectionne-item">
+            <div class="aliment-selectionne-info">
+              <strong>{{ alimentSel.aliment.nom }}</strong>
+              <span>{{ alimentSel.quantite }} x {{ alimentSel.portion }}{{ alimentSel.aliment.unite }}</span>
+              <span class="calories-badge">{{ calculerCaloriesAliment(alimentSel) }} cal</span>
+            </div>
+            <button class="btn-remove" (click)="retirerAliment(i)">×</button>
+          </div>
+          <div class="total-calories">
+            <strong>Total: {{ calculerTotalCalories() }} calories</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fermerModalRepas()">Annuler</button>
+        <button class="btn-primary" (click)="enregistrerRepas()" [disabled]="alimentsSelectionnes.length === 0">
+          Enregistrer le repas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajouter Aliment -->
+  <div *ngIf="afficherModalAliment && alimentEnCours" class="modal-overlay" (click)="fermerModalAliment()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ alimentEnCours.nom }}</h3>
+        <button class="btn-close" (click)="fermerModalAliment()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="aliment-detail-nutrition">
+          <div class="nutrition-item">
+            <span class="label">Calories:</span>
+            <span class="value">{{ alimentEnCours.calories }}</span>
+          </div>
+          <div class="nutrition-item">
+            <span class="label">Protéines:</span>
+            <span class="value">{{ alimentEnCours.proteines }}g</span>
+          </div>
+          <div class="nutrition-item">
+            <span class="label">Lipides:</span>
+            <span class="value">{{ alimentEnCours.lipides }}g</span>
+          </div>
+          <div class="nutrition-item">
+            <span class="label">Glucides:</span>
+            <span class="value">{{ alimentEnCours.glucides }}g</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Quantité</label>
+          <input 
+            type="number" 
+            [(ngModel)]="quantiteAliment" 
+            min="0.1" 
+            step="0.1"
+            class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label>Portion ({{ alimentEnCours.unite }})</label>
+          <input 
+            type="number" 
+            [(ngModel)]="portionAliment" 
+            min="1"
+            class="form-input">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fermerModalAliment()">Annuler</button>
+        <button class="btn-primary" (click)="ajouterAliment()">Ajouter</button>
+      </div>
+    </div>
+  </div>
+</div>

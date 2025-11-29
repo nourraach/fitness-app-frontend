@@ -1,0 +1,108 @@
+<app-coach-navbar></app-coach-navbar>
+
+<div class="coach-home-container">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1>Bienvenue, {{ coachName }} 👋</h1>
+      <p class="subtitle">{{ currentDate }}</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <div *ngFor="let stat of stats" class="stat-card" [style.border-left-color]="stat.color">
+        <div class="stat-icon" [style.background-color]="stat.color">
+          <i class="pi" [ngClass]="stat.icon"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stat.title }}</h3>
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-trend" [class.trend-up]="stat.trendUp">
+            <i class="pi" [ngClass]="stat.trendUp ? 'pi-arrow-up' : 'pi-arrow-down'"></i>
+            {{ stat.trend }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Quick Actions -->
+    <div class="card quick-actions-card">
+      <h2>🚀 Actions Rapides</h2>
+      <div class="quick-actions-list">
+        <button class="action-btn" (click)="navigateTo('/gestion-programmes')">
+          <i class="pi pi-calendar"></i>
+          <span>Gérer les Programmes</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('/coach-profile')">
+          <i class="pi pi-user"></i>
+          <span>Mon Profil</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="card activities-card">
+      <h2>📊 Activités Récentes</h2>
+      <div class="activities-list">
+        <div *ngFor="let activity of recentActivities" class="activity-item">
+          <div class="activity-icon">
+            <i class="pi" [ngClass]="activity.icon"></i>
+          </div>
+          <div class="activity-content">
+            <p class="activity-text">
+              <strong>{{ activity.client }}</strong> {{ activity.action }}
+            </p>
+            <span class="activity-time">{{ activity.time }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips Section -->
+  <div class="tips-card">
+    <h2>💡 Conseil du Jour</h2>
+    <p class="tip-text">
+      Prenez le temps de consulter les progrès de vos clients régulièrement. 
+      Un suivi constant est la clé d'une transformation réussie !
+    </p>
+  </div>
+
+  <!-- Performance Overview -->
+  <div class="performance-section">
+    <h2>📈 Vue d'Ensemble</h2>
+    <div class="performance-grid">
+      <div class="performance-item">
+        <div class="performance-icon">🎯</div>
+        <h4>Objectifs Atteints</h4>
+        <div class="performance-bar">
+          <div class="performance-fill" [style.width.%]="85"></div>
+        </div>
+        <p>85% des clients ont atteint leurs objectifs ce mois</p>
+      </div>
+
+      <div class="performance-item">
+        <div class="performance-icon">💪</div>
+        <h4>Taux d'Engagement</h4>
+        <div class="performance-bar">
+          <div class="performance-fill" [style.width.%]="92" style="background: #28a745;"></div>
+        </div>
+        <p>92% de participation aux programmes cette semaine</p>
+      </div>
+
+      <div class="performance-item">
+        <div class="performance-icon">⭐</div>
+        <h4>Satisfaction Client</h4>
+        <div class="performance-bar">
+          <div class="performance-fill" [style.width.%]="95" style="background: #ffc107;"></div>
+        </div>
+        <p>4.8/5 étoiles en moyenne</p>
+      </div>
+    </div>
+  </div>
+</div>

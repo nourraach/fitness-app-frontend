@@ -1,0 +1,156 @@
+<div class="evolution-container">
+  <div class="header">
+    <h2>📊 Évolution de mon Poids</h2>
+    <button class="btn-add" (click)="ouvrirModalAjout()">+ Ajouter une mesure</button>
+  </div>
+
+  <div *ngIf="message" [class]="'alert alert-' + messageType">{{ message }}</div>
+
+  <!-- Filtres de période -->
+  <div class="filters-section">
+    <div class="period-buttons">
+      <button [class.active]="periodeSelectionnee === '7'" (click)="periodeSelectionnee = '7'; changerPeriode()">7 jours</button>
+      <button [class.active]="periodeSelectionnee === '30'" (click)="periodeSelectionnee = '30'; changerPeriode()">30 jours</button>
+      <button [class.active]="periodeSelectionnee === '90'" (click)="periodeSelectionnee = '90'; changerPeriode()">3 mois</button>
+      <button [class.active]="periodeSelectionnee === '365'" (click)="periodeSelectionnee = '365'; changerPeriode()">1 an</button>
+      <button [class.active]="periodeSelectionnee === 'all'" (click)="periodeSelectionnee = 'all'; changerPeriode()">Tout</button>
+    </div>
+  </div>
+
+  <!-- Cartes de résumé -->
+  <div *ngIf="evolution" class="summary-cards">
+    <div class="summary-card">
+      <div class="card-icon">⚖️</div>
+      <div class="card-content">
+        <span class="card-label">Poids Actuel</span>
+        <span class="card-value">{{ evolution.poidsActuel || '-' }} kg</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon">🎯</div>
+      <div class="card-content">
+        <span class="card-label">Objectif</span>
+        <span class="card-value">{{ evolution.poidsObjectif || '-' }} kg</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon" [style.color]="getTendanceColor()">{{ getTendanceIcon() }}</div>
+      <div class="card-content">
+        <span class="card-label">Variation</span>
+        <span class="card-value" [style.color]="getTendanceColor()">
+          {{ (evolution.variationPoids ?? 0) > 0 ? '+' : '' }}{{ evolution.variationPoids ?? 0 }} kg
+        </span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon">📈</div>
+      <div class="card-content">
+        <span class="card-label">IMC Actuel</span>
+        <span class="card-value">{{ evolution.imcActuel || '-' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="charts-section">
+    <div class="chart-container">
+      <h3>Évolution du Poids</h3>
+      <div class="chart-wrapper">
+        <canvas #poidsChart></canvas>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h3>Évolution de l'IMC</h3>
+      <div class="chart-wrapper">
+        <canvas #imcChart></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques détaillées -->
+  <div *ngIf="statistiques" class="statistics-section">
+    <h3>Statistiques de la période</h3>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-label">Poids Min</span>
+        <span class="stat-value">{{ statistiques.poidsMin || '-' }} kg</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Poids Max</span>
+        <span class="stat-value">{{ statistiques.poidsMax || '-' }} kg</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Poids Moyen</span>
+        <span class="stat-value">{{ statistiques.poidsMoyen || '-' }} kg</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Variation Totale</span>
+        <span class="stat-value">{{ (statistiques.variationTotale ?? 0) > 0 ? '+' : '' }}{{ statistiques.variationTotale ?? 0 }} kg</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">IMC Moyen</span>
+        <span class="stat-value">{{ statistiques.imcMoyen || '-' }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Activités</span>
+        <span class="stat-value">{{ statistiques.nombreActivites || 0 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique -->
+  <div *ngIf="evolution && evolution.historique.length > 0" class="history-section">
+    <h3>Historique des mesures</h3>
+    <div class="history-list">
+      <div *ngFor="let mesure of evolution.historique" class="history-item">
+        <div class="history-date">{{ mesure.date | date:'dd/MM/yyyy' }}</div>
+        <div class="history-data">
+          <span class="history-poids">{{ mesure.poids }} kg</span>
+          <span *ngIf="mesure.imc" class="history-imc">IMC: {{ mesure.imc }}</span>
+        </div>
+        <div *ngIf="mesure.notes" class="history-notes">{{ mesure.notes }}</div>
+        <button class="btn-delete-small" (click)="supprimerPoids(mesure.id!)">×</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!evolution || evolution.historique.length === 0" class="empty-state">
+    <p>Aucune mesure enregistrée. Commencez par ajouter votre poids !</p>
+  </div>
+
+  <!-- Modal Ajout Poids -->
+  <div *ngIf="afficherModalAjout" class="modal-overlay" (click)="fermerModalAjout()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter une mesure de poids</h3>
+        <button class="btn-close" (click)="fermerModalAjout()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Poids (kg)</label>
+          <input type="number" [(ngModel)]="nouveauPoids" step="0.1" min="0" class="form-control" placeholder="Ex: 70.5">
+        </div>
+
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" [(ngModel)]="dateNouvelleMesure" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label>Notes (optionnel)</label>
+          <textarea [(ngModel)]="notesNouvelleMesure" class="form-control" rows="3" placeholder="Ajoutez des notes..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="fermerModalAjout()">Annuler</button>
+        <button class="btn-primary" (click)="ajouterPoids()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
