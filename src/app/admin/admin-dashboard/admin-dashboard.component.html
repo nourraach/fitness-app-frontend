@@ -1,0 +1,264 @@
+<div class="admin-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>
+        <i class="fas fa-tachometer-alt"></i>
+        Tableau de Bord Administrateur
+      </h1>
+      <div class="header-actions">
+        <button (click)="refreshDashboard()" class="refresh-btn" [disabled]="isLoading">
+          <i class="fas fa-sync-alt" [class.spinning]="isLoading"></i>
+          <span>Actualiser</span>
+        </button>
+        <div class="last-updated">
+          Dernière mise à jour: {{ formatTime(lastUpdated) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <span>Chargement du tableau de bord...</span>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && systemStats" class="dashboard-content">
+    <!-- Key Metrics Row -->
+    <div class="metrics-row">
+      <!-- Total Users -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <i class="fas fa-users metric-icon"></i>
+          <h3>Utilisateurs Total</h3>
+        </div>
+        <div class="metric-value">{{ formatNumber(systemStats.totalUsers) }}</div>
+        <div class="metric-change positive">
+          <i class="fas fa-arrow-up"></i>
+          +{{ systemStats.newUsersToday }} aujourd'hui
+        </div>
+      </div>
+
+      <!-- Active Sessions -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <i class="fas fa-desktop metric-icon"></i>
+          <h3>Sessions Actives</h3>
+        </div>
+        <div class="metric-value">{{ realtimeMetrics.currentSessions }}</div>
+        <div class="metric-change">
+          <i class="fas fa-user"></i>
+          {{ realtimeMetrics.activeUsers }} utilisateurs en ligne
+        </div>
+      </div>
+
+      <!-- Total Programs -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <i class="fas fa-dumbbell metric-icon"></i>
+          <h3>Programmes</h3>
+        </div>
+        <div class="metric-value">{{ formatNumber(systemStats.totalPrograms) }}</div>
+        <div class="metric-change positive">
+          <i class="fas fa-plus"></i>
+          +{{ systemStats.newProgramsThisWeek }} cette semaine
+        </div>
+      </div>
+
+      <!-- System Uptime -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <i class="fas fa-clock metric-icon"></i>
+          <h3>Temps de Fonctionnement</h3>
+        </div>
+        <div class="metric-value uptime">{{ getUptimeText(systemStats.systemUptime) }}</div>
+        <div class="metric-change positive">
+          <i class="fas fa-check-circle"></i>
+          Système stable
+        </div>
+      </div>
+    </div>
+
+    <!-- System Health Row -->
+    <div class="health-row">
+      <!-- Server Load -->
+      <div class="health-card">
+        <div class="health-header">
+          <i class="fas fa-microchip"></i>
+          <h4>Charge Serveur</h4>
+        </div>
+        <div class="health-meter">
+          <div class="meter-container">
+            <div 
+              class="meter-fill" 
+              [style.width.%]="realtimeMetrics.serverLoad"
+              [style.background-color]="getMetricColor(realtimeMetrics.serverLoad, {warning: 70, critical: 85})"
+            ></div>
+          </div>
+          <div class="meter-value" [style.color]="getMetricColor(realtimeMetrics.serverLoad, {warning: 70, critical: 85})">
+            {{ formatPercentage(realtimeMetrics.serverLoad) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Usage -->
+      <div class="health-card">
+        <div class="health-header">
+          <i class="fas fa-memory"></i>
+          <h4>Utilisation Mémoire</h4>
+        </div>
+        <div class="health-meter">
+          <div class="meter-container">
+            <div 
+              class="meter-fill" 
+              [style.width.%]="realtimeMetrics.memoryUsage"
+              [style.background-color]="getMetricColor(realtimeMetrics.memoryUsage, {warning: 75, critical: 90})"
+            ></div>
+          </div>
+          <div class="meter-value" [style.color]="getMetricColor(realtimeMetrics.memoryUsage, {warning: 75, critical: 90})">
+            {{ formatPercentage(realtimeMetrics.memoryUsage) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Disk Usage -->
+      <div class="health-card">
+        <div class="health-header">
+          <i class="fas fa-hdd"></i>
+          <h4>Espace Disque</h4>
+        </div>
+        <div class="health-meter">
+          <div class="meter-container">
+            <div 
+              class="meter-fill" 
+              [style.width.%]="realtimeMetrics.diskUsage"
+              [style.background-color]="getMetricColor(realtimeMetrics.diskUsage, {warning: 80, critical: 95})"
+            ></div>
+          </div>
+          <div class="meter-value" [style.color]="getMetricColor(realtimeMetrics.diskUsage, {warning: 80, critical: 95})">
+            {{ formatPercentage(realtimeMetrics.diskUsage) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="content-row">
+      <!-- Recent Activity -->
+      <div class="activity-card">
+        <div class="card-header">
+          <h3>
+            <i class="fas fa-chart-line"></i>
+            Activité Récente
+          </h3>
+        </div>
+        <div class="activity-stats">
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="activity-info">
+              <div class="activity-value">{{ systemStats.newUsersToday }}</div>
+              <div class="activity-label">Nouveaux utilisateurs aujourd'hui</div>
+            </div>
+          </div>
+          
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="activity-info">
+              <div class="activity-value">{{ systemStats.newProgramsThisWeek }}</div>
+              <div class="activity-label">Programmes créés cette semaine</div>
+            </div>
+          </div>
+          
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="fas fa-comments"></i>
+            </div>
+            <div class="activity-info">
+              <div class="activity-value">{{ systemStats.messagesThisWeek }}</div>
+              <div class="activity-label">Messages échangés cette semaine</div>
+            </div>
+          </div>
+          
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="activity-info">
+              <div class="activity-value">{{ systemStats.reportsGenerated }}</div>
+              <div class="activity-label">Rapports générés ce mois</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Alerts -->
+      <div class="alerts-card">
+        <div class="card-header">
+          <h3>
+            <i class="fas fa-bell"></i>
+            Alertes Système
+          </h3>
+        </div>
+        <div class="alerts-list">
+          <div *ngFor="let alert of alerts" class="alert-item" [class]="'alert-' + alert.type">
+            <div class="alert-icon">
+              <i [class]="getAlertIcon(alert.type)"></i>
+            </div>
+            <div class="alert-content">
+              <div class="alert-title">{{ alert.title }}</div>
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-time">{{ formatTime(alert.timestamp) }}</div>
+            </div>
+            <button (click)="dismissAlert(alert.id)" class="alert-dismiss">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div *ngIf="alerts.length === 0" class="no-alerts">
+            <i class="fas fa-check-circle"></i>
+            <span>Aucune alerte système</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-row">
+      <div class="actions-card">
+        <div class="card-header">
+          <h3>
+            <i class="fas fa-tools"></i>
+            Actions Rapides
+          </h3>
+        </div>
+        <div class="quick-actions">
+          <button class="action-btn" routerLink="/admin/users">
+            <i class="fas fa-users"></i>
+            <span>Gérer les Utilisateurs</span>
+          </button>
+          
+          <button class="action-btn" routerLink="/admin/audit-logs">
+            <i class="fas fa-history"></i>
+            <span>Journaux d'Audit</span>
+          </button>
+          
+          <button class="action-btn" routerLink="/admin/moderation">
+            <i class="fas fa-shield-alt"></i>
+            <span>File de Modération</span>
+          </button>
+          
+          <button class="action-btn" (click)="refreshDashboard()">
+            <i class="fas fa-sync-alt"></i>
+            <span>Actualiser les Données</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

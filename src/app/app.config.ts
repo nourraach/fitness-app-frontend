@@ -4,10 +4,11 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
-import { HttpClient, provideHttpClient, withFetch } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withFetch, withInterceptors, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { StorageService } from './service/storage-service.service';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 
 // Fonction pour charger les fichiers de traduction
 export function HttpLoaderFactory(http: HttpClient) {
@@ -20,9 +21,14 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG(),                      // Configuration de PrimeNG
     provideZoneChangeDetection({ eventCoalescing: true }), // Optimisation des changements de zone
     provideRouter(routes),                 // Routing
-    provideClientHydration(),              // Hydratation côté client
+    // provideClientHydration(),              // Hydratation côté client - temporarily disabled
     provideHttpClient(withFetch()),        // HTTP client avec Fetch API
     StorageService,                        // Service de stockage
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    },
     importProvidersFrom(                  // Configuration des traductions
       TranslateModule.forRoot({
         defaultLanguage: 'en',

@@ -1,0 +1,704 @@
+.exercise-tracker {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Header Section */
+.tracker-header {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-overview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.programme-title {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.progress-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-divider {
+  font-size: 1.25rem;
+  color: #d1d5db;
+  font-weight: 300;
+}
+
+/* Progress Section */
+.progress-section {
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  height: 0.75rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.progress-high {
+  background-color: #10b981;
+}
+
+.progress-medium {
+  background-color: #f59e0b;
+}
+
+.progress-low {
+  background-color: #ef4444;
+}
+
+.progress-none {
+  background-color: #e5e7eb;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.btn-close:hover {
+  color: #374151;
+}
+
+/* Alerts */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.alert-error {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* Loading */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 0.75rem;
+}
+
+.spinner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.empty-state i {
+  color: #d1d5db;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin: 1rem 0 0.5rem;
+  color: #374151;
+}
+
+/* Exercises List */
+.exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Exercise Card */
+.exercise-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.exercise-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.exercise-card.exercise-completed {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.exercise-card.exercise-pending {
+  border-color: #e5e7eb;
+}
+
+/* Exercise Header */
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.exercise-header:hover {
+  background-color: #f9fafb;
+}
+
+.exercise-completed .exercise-header {
+  background-color: #f0fdf4;
+}
+
+.exercise-completed .exercise-header:hover {
+  background-color: #dcfce7;
+}
+
+.exercise-main-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+/* Completion Checkbox */
+.completion-checkbox {
+  position: relative;
+}
+
+.checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+
+.checkbox-input:checked + .checkbox-label {
+  background-color: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.checkbox-input:disabled + .checkbox-label {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.checkbox-label i {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.checkbox-input:checked + .checkbox-label i {
+  opacity: 1;
+}
+
+/* Status Icon (Read-only) */
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.text-success {
+  color: #10b981;
+}
+
+.text-muted {
+  color: #9ca3af;
+}
+
+/* Exercise Info */
+.exercise-info {
+  flex: 1;
+}
+
+.exercise-name {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.exercise-summary {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.exercise-sets,
+.exercise-reps,
+.exercise-duration {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.exercise-intensity {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Intensity Classes */
+.intensite-faible {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.intensite-moyenne {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.intensite-elevee {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.intensite-maximale {
+  background-color: #ede9fe;
+  color: #6b21a8;
+}
+
+/* Exercise Actions */
+.exercise-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.completion-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #10b981;
+}
+
+.completion-date {
+  color: #6b7280;
+}
+
+.btn-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.375rem;
+  background-color: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-expand:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* Exercise Details */
+.exercise-details {
+  border-top: 1px solid #f3f4f6;
+  padding: 1.5rem;
+  background-color: #fafafa;
+}
+
+.exercise-completed .exercise-details {
+  background-color: #f7fee7;
+}
+
+.detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.exercise-description {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* Exercise Parameters */
+.exercise-params {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.param-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #ffffff;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+}
+
+.param-label {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.param-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Notes Section */
+.notes-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.notes-display p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.no-notes {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Completion Info */
+.completion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.info-item i {
+  color: #10b981;
+}
+
+/* Summary Section */
+.tracker-summary {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.summary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.summary-icon.completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.summary-icon.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.summary-icon.progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.summary-content {
+  flex: 1;
+}
+
+.summary-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Quick Actions */
+.quick-actions h5 {
+  margin: 0 0 1rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .exercise-tracker {
+    padding: 1rem;
+  }
+  
+  .tracker-header {
+    padding: 1rem;
+  }
+  
+  .progress-overview {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .progress-stats {
+    justify-content: center;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+  
+  .exercise-header {
+    padding: 1rem;
+  }
+  
+  .exercise-main-info {
+    gap: 0.75rem;
+  }
+  
+  .exercise-summary {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .exercise-params {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .programme-title {
+    font-size: 1.25rem;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .exercise-name {
+    font-size: 1rem;
+  }
+  
+  .exercise-details {
+    padding: 1rem;
+  }
+  
+  .summary-card {
+    padding: 0.75rem;
+  }
+  
+  .summary-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+  
+  .summary-number {
+    font-size: 1.25rem;
+  }
+}

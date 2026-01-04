@@ -1,0 +1,160 @@
+<div class="report-viewer">
+  <!-- Report Header -->
+  <div class="report-header">
+    <div class="report-title-section">
+      <h2>{{ report.title }}</h2>
+      <div class="report-meta">
+        <span class="client-name">
+          <i class="fas fa-user"></i>
+          {{ report.clientName }}
+        </span>
+        <span class="report-period">
+          <i class="fas fa-calendar"></i>
+          {{ formatDate(report.startDate) }} - {{ formatDate(report.endDate) }}
+        </span>
+        <span [class]="'status-badge ' + getStatusBadgeClass(report.status)">
+          {{ report.status }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="report-actions">
+      <button (click)="exportToPDF()" class="action-btn export-btn">
+        <i class="fas fa-file-pdf"></i>
+        <span>Export PDF</span>
+      </button>
+      <button (click)="shareReport()" class="action-btn share-btn">
+        <i class="fas fa-share"></i>
+        <span>Partager</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Summary -->
+  <div class="report-summary" *ngIf="report.summary">
+    <h3>Résumé</h3>
+    <p>{{ report.summary }}</p>
+  </div>
+
+  <!-- Key Metrics -->
+  <div class="metrics-section">
+    <h3>Métriques Clés</h3>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon weight">
+          <i class="fas fa-weight"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">-2.5 kg</div>
+          <div class="metric-label">Perte de poids</div>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon programs">
+          <i class="fas fa-dumbbell"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">85%</div>
+          <div class="metric-label">Programmes complétés</div>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon nutrition">
+          <i class="fas fa-apple-alt"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">92%</div>
+          <div class="metric-label">Objectifs nutrition</div>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon activity">
+          <i class="fas fa-running"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">12h</div>
+          <div class="metric-label">Activité totale</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <h3>Évolution</h3>
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="charts-loading">
+      <div class="loading-spinner"></div>
+      <span>Chargement des graphiques...</span>
+    </div>
+    
+    <!-- Charts Grid -->
+    <div *ngIf="!isLoading" class="charts-grid">
+      <!-- Weight Evolution Chart -->
+      <div class="chart-container">
+        <h4>Évolution du Poids</h4>
+        <div class="chart-placeholder">
+          <i class="fas fa-chart-line"></i>
+          <span>Graphique d'évolution du poids</span>
+        </div>
+      </div>
+      
+      <!-- Activity Chart -->
+      <div class="chart-container">
+        <h4>Activité Hebdomadaire</h4>
+        <div class="chart-placeholder">
+          <i class="fas fa-chart-bar"></i>
+          <span>Graphique d'activité</span>
+        </div>
+      </div>
+      
+      <!-- Nutrition Chart -->
+      <div class="chart-container full-width">
+        <h4>Répartition Nutritionnelle</h4>
+        <div class="chart-placeholder">
+          <i class="fas fa-chart-pie"></i>
+          <span>Graphique nutritionnel</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="recommendations-section" *ngIf="report.recommendations">
+    <h3>Recommandations</h3>
+    <div class="recommendations-list">
+      <div *ngFor="let rec of report.recommendations" class="recommendation-item">
+        <div class="recommendation-icon">
+          <i class="fas fa-lightbulb"></i>
+        </div>
+        <div class="recommendation-content">
+          <h5>{{ rec.title }}</h5>
+          <p>{{ rec.description }}</p>
+          <div class="recommendation-priority" [class]="'priority-' + rec.priority">
+            {{ rec.priority }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes-section" *ngIf="report.notes">
+    <h3>Notes</h3>
+    <div class="notes-content">
+      <p>{{ report.notes }}</p>
+    </div>
+  </div>
+
+  <!-- Report Footer -->
+  <div class="report-footer">
+    <div class="creation-info">
+      <span>Créé le {{ formatDate(report.createdAt) }}</span>
+      <span *ngIf="report.updatedAt">• Modifié le {{ formatDate(report.updatedAt) }}</span>
+    </div>
+  </div>
+</div>

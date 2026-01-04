@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, interval } from 'rxjs';
 import { StorageService } from './storage-service.service';
-import { NotificationDTO, PreferenceNotificationDTO } from '../models/notification.model';
+import { NotificationHistory, NotificationPreferences } from '../models/notification.model';
 
 const BASE_URL = "http://localhost:8095/";
 
@@ -19,11 +19,12 @@ export class NotificationService {
   private createAuthorizationHeader(): HttpHeaders | null {
     const jwtToken = this.storageService.getItem('jwt');
     if (jwtToken) {
+      console.log("JWT token trouvé pour notifications");
       return new HttpHeaders()
         .set("Authorization", "Bearer " + jwtToken)
         .set("Content-Type", "application/json");
     }
-    console.error("Aucun JWT trouvé dans localStorage.");
+    console.error("Aucun JWT trouvé dans localStorage pour les notifications.");
     return null;
   }
 
@@ -46,8 +47,10 @@ export class NotificationService {
   countNotificationsNonLues(): Observable<number> {
     const headers = this.createAuthorizationHeader();
     if (!headers) {
+      console.warn('Pas de token disponible pour charger les notifications');
       return throwError(() => new Error('Aucun JWT trouvé.'));
     }
+    
     return this.http.get<number>(BASE_URL + 'api/notifications/count-non-lues', { headers });
   }
 
@@ -75,20 +78,20 @@ export class NotificationService {
     return this.http.delete(BASE_URL + `api/notifications/${notificationId}`, { headers });
   }
 
-  getPreferences(): Observable<PreferenceNotificationDTO> {
+  getPreferences(): Observable<NotificationPreferences> {
     const headers = this.createAuthorizationHeader();
     if (!headers) {
       return throwError(() => new Error('Aucun JWT trouvé.'));
     }
-    return this.http.get<PreferenceNotificationDTO>(BASE_URL + 'api/notifications/preferences', { headers });
+    return this.http.get<NotificationPreferences>(BASE_URL + 'api/notifications/preferences', { headers });
   }
 
-  updatePreferences(preferences: PreferenceNotificationDTO): Observable<PreferenceNotificationDTO> {
+  updatePreferences(preferences: NotificationPreferences): Observable<NotificationPreferences> {
     const headers = this.createAuthorizationHeader();
     if (!headers) {
       return throwError(() => new Error('Aucun JWT trouvé.'));
     }
-    return this.http.put<PreferenceNotificationDTO>(
+    return this.http.put<NotificationPreferences>(
       BASE_URL + 'api/notifications/preferences',
       preferences,
       { headers }

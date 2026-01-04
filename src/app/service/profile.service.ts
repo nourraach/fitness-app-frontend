@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserProfile, ImcResult, BesoinsCaloriquesResult } from '../models/user-profile.model';
+import { StorageService } from './storage-service.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,10 +10,10 @@ import { UserProfile, ImcResult, BesoinsCaloriquesResult } from '../models/user-
 export class ProfileService {
   private baseUrl = 'http://localhost:8095/api/profile';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private storageService: StorageService) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('jwt');
+    const token = this.storageService.getItem('jwt');
     if (!token) {
       console.error('Aucun JWT trouvé dans localStorage');
     }

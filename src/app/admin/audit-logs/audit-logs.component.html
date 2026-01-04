@@ -1,0 +1,171 @@
+<div class="audit-logs">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <i class="fas fa-history"></i>
+        Journaux d'Audit
+      </h1>
+      <div class="header-stats" *ngIf="auditStats">
+        <div class="stat-item">
+          <span class="stat-value">{{ auditStats.totalLogs }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ auditStats.logsToday }}</span>
+          <span class="stat-label">Aujourd'hui</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ auditStats.logsThisWeek }}</span>
+          <span class="stat-label">Cette semaine</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher dans les journaux..."
+      >
+      <button (click)="onSearch()" class="search-btn">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+
+    <div class="filter-controls">
+      <select [(ngModel)]="filters.action" (change)="onFilterChange()">
+        <option value="">Toutes les actions</option>
+        <option value="LOGIN">Connexion</option>
+        <option value="LOGOUT">Déconnexion</option>
+        <option value="CREATE">Création</option>
+        <option value="UPDATE">Modification</option>
+        <option value="DELETE">Suppression</option>
+        <option value="VIEW">Consultation</option>
+      </select>
+
+      <select [(ngModel)]="filters.entityType" (change)="onFilterChange()">
+        <option value="">Tous les types</option>
+        <option value="USER">Utilisateur</option>
+        <option value="PROGRAM">Programme</option>
+        <option value="MESSAGE">Message</option>
+        <option value="REPORT">Rapport</option>
+      </select>
+
+      <input 
+        type="date" 
+        [(ngModel)]="filters.startDate" 
+        (change)="onFilterChange()"
+        placeholder="Date début"
+      >
+      <input 
+        type="date" 
+        [(ngModel)]="filters.endDate" 
+        (change)="onFilterChange()"
+        placeholder="Date fin"
+      >
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <span>Chargement des journaux...</span>
+  </div>
+
+  <!-- Audit Logs Table -->
+  <div *ngIf="!isLoading" class="logs-table-container">
+    <table class="logs-table">
+      <thead>
+        <tr>
+          <th>Date/Heure</th>
+          <th>Utilisateur</th>
+          <th>Action</th>
+          <th>Type d'entité</th>
+          <th>Détails</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of auditLogs" class="log-row">
+          <td class="timestamp-cell">
+            <div class="timestamp">{{ formatDate(log.timestamp) }}</div>
+          </td>
+          <td class="user-cell">
+            <div class="user-info">
+              <span class="user-name">{{ log.userName }}</span>
+              <span class="user-id">#{{ log.userId }}</span>
+            </div>
+          </td>
+          <td class="action-cell">
+            <div class="action-badge" [style.color]="getActionColor(log.action)">
+              <i [class]="getActionIcon(log.action)"></i>
+              <span>{{ log.action }}</span>
+            </div>
+          </td>
+          <td class="entity-cell">
+            <div class="entity-info">
+              <span class="entity-type">{{ log.entityType }}</span>
+              <span class="entity-id" *ngIf="log.entityId">#{{ log.entityId }}</span>
+            </div>
+          </td>
+          <td class="details-cell">
+            <div class="details-text" [title]="log.details">
+              {{ log.details }}
+            </div>
+          </td>
+          <td class="ip-cell">
+            <span class="ip-address">{{ log.ipAddress }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="auditLogs.length === 0" class="empty-state">
+      <i class="fas fa-history"></i>
+      <h3>Aucun journal trouvé</h3>
+      <p>Aucun journal d'audit ne correspond à vos critères de recherche.</p>
+    </div>
+  </div>
+
+  <!-- Top Actions Summary -->
+  <div *ngIf="auditStats && auditStats.topActions.length > 0" class="stats-section">
+    <div class="stats-card">
+      <h3>
+        <i class="fas fa-chart-bar"></i>
+        Actions les plus fréquentes
+      </h3>
+      <div class="stats-list">
+        <div *ngFor="let action of auditStats.topActions" class="stat-item">
+          <div class="stat-info">
+            <i [class]="getActionIcon(action.action)" [style.color]="getActionColor(action.action)"></i>
+            <span class="stat-name">{{ action.action }}</span>
+          </div>
+          <span class="stat-count">{{ action.count }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h3>
+        <i class="fas fa-users"></i>
+        Utilisateurs les plus actifs
+      </h3>
+      <div class="stats-list">
+        <div *ngFor="let user of auditStats.topUsers" class="stat-item">
+          <div class="stat-info">
+            <i class="fas fa-user"></i>
+            <span class="stat-name">{{ user.userName }}</span>
+          </div>
+          <span class="stat-count">{{ user.count }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

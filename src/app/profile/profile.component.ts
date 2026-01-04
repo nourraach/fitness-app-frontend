@@ -6,6 +6,7 @@ import { UserProfile, ImcResult, BesoinsCaloriquesResult } from '../models/user-
 import { CoachNavbarComponent } from '../coach-navbar/coach-navbar.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { JwtService } from '../service/jwt.service';
+import { StorageService } from '../service/storage-service.service';
 
 @Component({
   selector: 'app-profile',
@@ -35,7 +36,8 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private profileService: ProfileService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private storageService: StorageService
   ) {}
 
   ngOnInit(): void {
@@ -51,7 +53,7 @@ export class ProfileComponent implements OnInit {
 
   getUserName(): void {
     // Récupérer le nom depuis le localStorage ou JWT
-    const storedName = localStorage.getItem('userName');
+    const storedName = this.storageService.getItem('userName');
     if (storedName) {
       this.userName = storedName;
     }

@@ -1,0 +1,155 @@
+<div class="report-form-container">
+  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
+    
+    <!-- Basic Information -->
+    <div class="form-section">
+      <h3>Informations de base</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="clientId">Client *</label>
+          <select id="clientId" formControlName="clientId" (change)="generateTitle()">
+            <option value="">Sélectionner un client</option>
+            <option *ngFor="let client of clients" [value]="client.id">
+              {{ client.nom }} {{ client.prenom }}
+            </option>
+          </select>
+          <div class="error-message">{{ getFormError('clientId') }}</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="title">Titre du rapport *</label>
+          <input id="title" type="text" formControlName="title" placeholder="Ex: Rapport mensuel janvier 2024">
+          <button type="button" (click)="generateTitle()" class="generate-title-btn">
+            <i class="fas fa-magic"></i>
+            Générer automatiquement
+          </button>
+          <div class="error-message">{{ getFormError('title') }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Range -->
+    <div class="form-section">
+      <h3>Période du rapport</h3>
+      
+      <div class="quick-dates">
+        <button type="button" (click)="setDateRange(7)" class="quick-date-btn">7 derniers jours</button>
+        <button type="button" (click)="setDateRange(30)" class="quick-date-btn">30 derniers jours</button>
+        <button type="button" (click)="setDateRange(90)" class="quick-date-btn">3 derniers mois</button>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startDate">Date de début *</label>
+          <input id="startDate" type="date" formControlName="startDate" (change)="generateTitle()">
+          <div class="error-message">{{ getFormError('startDate') }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="endDate">Date de fin *</label>
+          <input id="endDate" type="date" formControlName="endDate" (change)="generateTitle()">
+          <div class="error-message">{{ getFormError('endDate') }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Selection -->
+    <div class="form-section">
+      <h3>Contenu à inclure</h3>
+      
+      <div class="checkbox-grid">
+        <label class="checkbox-item">
+          <input type="checkbox" formControlName="includeWeight">
+          <span class="checkmark"></span>
+          <div class="checkbox-content">
+            <i class="fas fa-weight"></i>
+            <span>Évolution du poids</span>
+          </div>
+        </label>
+        
+        <label class="checkbox-item">
+          <input type="checkbox" formControlName="includeActivity">
+          <span class="checkmark"></span>
+          <div class="checkbox-content">
+            <i class="fas fa-running"></i>
+            <span>Activité physique</span>
+          </div>
+        </label>
+        
+        <label class="checkbox-item">
+          <input type="checkbox" formControlName="includeNutrition">
+          <span class="checkmark"></span>
+          <div class="checkbox-content">
+            <i class="fas fa-apple-alt"></i>
+            <span>Nutrition</span>
+          </div>
+        </label>
+        
+        <label class="checkbox-item">
+          <input type="checkbox" formControlName="includePrograms">
+          <span class="checkmark"></span>
+          <div class="checkbox-content">
+            <i class="fas fa-dumbbell"></i>
+            <span>Programmes d'entraînement</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Summary and Notes -->
+    <div class="form-section">
+      <h3>Résumé et notes</h3>
+      
+      <div class="form-group">
+        <label for="summary">Résumé exécutif</label>
+        <textarea 
+          id="summary" 
+          formControlName="summary" 
+          rows="3"
+          placeholder="Résumé des points clés de la période..."
+        ></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="notes">Notes additionnelles</label>
+        <textarea 
+          id="notes" 
+          formControlName="notes" 
+          rows="4"
+          placeholder="Observations, recommandations, commentaires..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="form-section">
+      <h3>Statut</h3>
+      
+      <div class="form-group">
+        <label for="status">Statut du rapport</label>
+        <select id="status" formControlName="status">
+          <option value="draft">Brouillon</option>
+          <option value="completed">Terminé</option>
+          <option value="shared">Partagé</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" (click)="onCancel()" class="cancel-btn">
+        <i class="fas fa-times"></i>
+        Annuler
+      </button>
+      
+      <button type="submit" [disabled]="!reportForm.valid || isSubmitting" class="submit-btn">
+        <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+        <i class="fas fa-save" *ngIf="!isSubmitting"></i>
+        {{ isEditMode ? 'Mettre à jour' : 'Créer le rapport' }}
+      </button>
+    </div>
+  </form>
+</div>

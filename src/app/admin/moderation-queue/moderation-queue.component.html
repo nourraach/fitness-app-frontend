@@ -1,0 +1,184 @@
+<div class="moderation-queue">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <i class="fas fa-shield-alt"></i>
+        File de Modération
+      </h1>
+      <div class="queue-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ moderationItems.length }}</span>
+          <span class="stat-label">Éléments en attente</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-controls">
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="all">Tous les statuts</option>
+        <option value="PENDING">En attente</option>
+        <option value="APPROVED">Approuvés</option>
+        <option value="REJECTED">Rejetés</option>
+      </select>
+
+      <select [(ngModel)]="typeFilter" (change)="onFilterChange()">
+        <option value="">Tous les types</option>
+        <option value="MESSAGE">Messages</option>
+        <option value="POST">Publications</option>
+        <option value="PROGRAM">Programmes</option>
+        <option value="USER">Utilisateurs</option>
+        <option value="IMAGE">Images</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <span>Chargement de la file de modération...</span>
+  </div>
+
+  <!-- Moderation Items -->
+  <div *ngIf="!isLoading" class="moderation-content">
+    <div class="items-grid">
+      <div 
+        *ngFor="let item of moderationItems" 
+        class="moderation-item"
+        [class.selected]="selectedItem?.id === item.id"
+        (click)="selectItem(item)"
+      >
+        <div class="item-header">
+          <div class="item-type">
+            <i [class]="getItemTypeIcon(item.itemType)"></i>
+            <span>{{ item.itemType }}</span>
+          </div>
+          <span [class]="'status-badge ' + getStatusBadgeClass(item.status)">
+            {{ getStatusText(item.status) }}
+          </span>
+        </div>
+
+        <div class="item-content">
+          <div class="report-reason">
+            <strong>Motif:</strong> {{ item.reportReason }}
+          </div>
+          <div class="report-meta">
+            <span>Signalé le {{ formatDate(item.reportedAt) }}</span>
+            <span>Par utilisateur #{{ item.reportedBy }}</span>
+          </div>
+        </div>
+
+        <div class="item-actions" *ngIf="item.status === 'PENDING'">
+          <button 
+            (click)="approveItem(item); $event.stopPropagation()" 
+            class="approve-btn"
+            title="Approuver"
+          >
+            <i class="fas fa-check"></i>
+          </button>
+          <button 
+            (click)="rejectItem(item); $event.stopPropagation()" 
+            class="reject-btn"
+            title="Rejeter"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="moderationItems.length === 0" class="empty-state">
+      <i class="fas fa-shield-alt"></i>
+      <h3>Aucun élément en modération</h3>
+      <p>Tous les éléments ont été traités ou aucun signalement n'a été effectué.</p>
+    </div>
+  </div>
+
+  <!-- Item Details Modal -->
+  <div *ngIf="selectedItem" class="item-details-modal" (click)="closeItemDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>
+          <i [class]="getItemTypeIcon(selectedItem.itemType)"></i>
+          Détails de l'élément #{{ selectedItem.itemId }}
+        </h3>
+        <button (click)="closeItemDetails()" class="close-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h4>Informations générales</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Type d'élément</label>
+              <span>{{ selectedItem.itemType }}</span>
+            </div>
+            <div class="detail-item">
+              <label>ID de l'élément</label>
+              <span>#{{ selectedItem.itemId }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Statut</label>
+              <span [class]="'status-badge ' + getStatusBadgeClass(selectedItem.status)">
+                {{ getStatusText(selectedItem.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Signalement</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Motif du signalement</label>
+              <span>{{ selectedItem.reportReason }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Signalé par</label>
+              <span>Utilisateur #{{ selectedItem.reportedBy }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Date du signalement</label>
+              <span>{{ formatDate(selectedItem.reportedAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedItem.moderatedAt">
+          <h4>Modération</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Modéré par</label>
+              <span>Utilisateur #{{ selectedItem.moderatedBy }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Date de modération</label>
+              <span>{{ formatDate(selectedItem.moderatedAt) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedItem.moderationNotes">
+              <label>Notes de modération</label>
+              <span>{{ selectedItem.moderationNotes }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" *ngIf="selectedItem.status === 'PENDING'">
+        <button (click)="approveItem(selectedItem)" class="approve-btn">
+          <i class="fas fa-check"></i>
+          Approuver
+        </button>
+        <button (click)="rejectItem(selectedItem)" class="reject-btn">
+          <i class="fas fa-times"></i>
+          Rejeter
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

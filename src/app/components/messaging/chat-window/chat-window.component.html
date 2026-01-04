@@ -1,0 +1,146 @@
+<div class="chat-window" *ngIf="conversation">
+  <!-- Chat Header -->
+  <div class="chat-header">
+    <div class="participant-info">
+      <img
+        [src]="conversation.participantAvatar || '/assets/images/default-avatar.png'"
+        [alt]="'Avatar de ' + conversation.participantName"
+        class="participant-avatar"
+        onerror="this.src='/assets/images/default-avatar.png'"
+      />
+      <div class="participant-details">
+        <h3 class="participant-name">{{ conversation.participantName }}</h3>
+        <span class="participant-status" [class.online]="conversation.isOnline">
+          {{ conversation.isOnline ? 'En ligne' : 'Hors ligne' }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="chat-actions">
+      <button
+        class="action-btn"
+        title="Informations"
+        aria-label="Voir les informations du contact"
+      >
+        <i class="fas fa-info-circle"></i>
+      </button>
+      <button
+        class="action-btn"
+        title="Options"
+        aria-label="Options de conversation"
+      >
+        <i class="fas fa-ellipsis-v"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="messages-container" #messagesContainer>
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="loading-indicator">
+      <div class="spinner"></div>
+      <span>Chargement des messages...</span>
+    </div>
+
+    <!-- Messages List -->
+    <div class="messages-list" *ngIf="!isLoading">
+      <app-message-bubble
+        *ngFor="let message of messages; trackBy: trackByMessage"
+        [message]="message"
+        [isOwnMessage]="message.senderId === currentUserId"
+        [showAvatar]="message.senderId !== currentUserId"
+        [participantAvatar]="conversation.participantAvatar"
+        (retryMessage)="retryMessage($event)"
+      ></app-message-bubble>
+
+      <!-- Typing Indicator -->
+      <div *ngIf="otherUserTyping" class="typing-indicator-container">
+        <div class="typing-bubble">
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && messages.length === 0" class="empty-messages">
+      <div class="empty-icon">
+        <i class="fas fa-comment-dots"></i>
+      </div>
+      <h4>Commencez la conversation</h4>
+      <p>Envoyez votre premier message à {{ conversation.participantName }}</p>
+    </div>
+  </div>
+
+  <!-- Message Input -->
+  <div class="message-input-container">
+    <!-- Typing Indicator for Current User -->
+    <div *ngIf="isTyping" class="current-user-typing">
+      <span>Vous êtes en train d'écrire...</span>
+    </div>
+
+    <div class="message-input-wrapper">
+      <button
+        class="attachment-btn"
+        title="Joindre un fichier"
+        aria-label="Joindre un fichier"
+      >
+        <i class="fas fa-paperclip"></i>
+      </button>
+
+      <div class="input-field-container">
+        <textarea
+          #messageInput
+          [(ngModel)]="newMessage"
+          (input)="onMessageInputChange()"
+          (keydown)="onKeyPress($event)"
+          placeholder="Tapez votre message..."
+          class="message-input"
+          rows="1"
+          maxlength="1000"
+          aria-label="Saisir un message"
+        ></textarea>
+        
+        <div class="input-actions">
+          <button
+            class="emoji-btn"
+            title="Ajouter un emoji"
+            aria-label="Ajouter un emoji"
+          >
+            <i class="fas fa-smile"></i>
+          </button>
+        </div>
+      </div>
+
+      <button
+        (click)="sendMessage()"
+        [disabled]="!newMessage.trim()"
+        class="send-btn"
+        [class.active]="newMessage.trim()"
+        title="Envoyer le message"
+        aria-label="Envoyer le message"
+      >
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+
+    <!-- Character Counter -->
+    <div class="character-counter" *ngIf="newMessage.length > 800">
+      {{ newMessage.length }}/1000
+    </div>
+  </div>
+</div>
+
+<!-- No Conversation Selected -->
+<div *ngIf="!conversation" class="no-conversation">
+  <div class="no-conversation-content">
+    <div class="no-conversation-icon">
+      <i class="fas fa-comments"></i>
+    </div>
+    <h3>Sélectionnez une conversation</h3>
+    <p>Choisissez une conversation dans la liste pour commencer à discuter</p>
+  </div>
+</div>

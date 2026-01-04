@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { JwtService } from '../service/jwt.service';
+import { StorageService } from '../service/storage-service.service';
 
 @Component({
   selector: 'app-coach-navbar',
@@ -16,7 +17,8 @@ export class CoachNavbarComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private storageService: StorageService
   ) {}
 
   ngOnInit(): void {
@@ -36,7 +38,7 @@ export class CoachNavbarComponent implements OnInit {
 
   logout(): void {
     this.showUserMenu = false;
-    localStorage.clear();
+    this.storageService.removeItem('jwt');
     this.router.navigate(['/login']);
   }
 }

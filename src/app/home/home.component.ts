@@ -1,6 +1,6 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, Inject, PLATFORM_ID } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 interface Meal {
@@ -51,18 +51,24 @@ export class HomeComponent implements OnInit {
   
   resultatCalories: ResultatCalories | null = null;
 
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+
   ngOnInit(): void {
     // Animation d'entrée au chargement
     this.animateOnLoad();
   }
 
-  @HostListener('window:scroll', ['$event'])
+  @HostListener('window:scroll', [])
   onScroll(): void {
     this.scrollY = window.scrollY;
     this.applyParallaxEffect();
   }
 
   private applyParallaxEffect(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     const heroImage = document.querySelector('.hero-image img') as HTMLElement;
     const greenCircle = document.querySelector('.green-circle') as HTMLElement;
     const floatingIcons = document.querySelectorAll('.floating-icon');
@@ -85,6 +91,10 @@ export class HomeComponent implements OnInit {
   }
 
   private animateOnLoad(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     setTimeout(() => {
       const heroTitle = document.querySelector('.hero-title') as HTMLElement;
       const heroFeatures = document.querySelector('.hero-features') as HTMLElement;

@@ -1,0 +1,171 @@
+<div class="food-suggestions-container">
+  <!-- Search Input -->
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <i class="fas fa-search search-icon"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchInput()"
+        (keydown)="onKeyDown($event)"
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+        placeholder="Rechercher un aliment..."
+        class="search-input"
+        autocomplete="off"
+        aria-label="Rechercher un aliment"
+        aria-expanded="{{showSuggestions}}"
+        aria-haspopup="listbox"
+        role="combobox"
+      />
+      
+      <!-- Clear Button -->
+      <button
+        *ngIf="searchTerm"
+        (click)="clearSearch()"
+        class="clear-btn"
+        type="button"
+        aria-label="Effacer la recherche"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+      
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+    </div>
+    
+    <!-- Search Instructions -->
+    <div class="search-instructions" *ngIf="!searchTerm && !showSuggestions">
+      <p>
+        <i class="fas fa-lightbulb"></i>
+        Tapez au moins 2 caractères pour voir les suggestions
+      </p>
+    </div>
+  </div>
+
+  <!-- Suggestions Dropdown -->
+  <div 
+    *ngIf="showSuggestions" 
+    class="suggestions-dropdown"
+    role="listbox"
+    aria-label="Suggestions d'aliments"
+  >
+    <!-- Suggestions List -->
+    <div class="suggestions-list">
+      <div
+        *ngFor="let suggestion of suggestions; let i = index"
+        class="suggestion-item"
+        [class.selected]="selectedIndex === i"
+        (click)="selectSuggestion(suggestion)"
+        role="option"
+        [attr.aria-selected]="selectedIndex === i"
+        [attr.id]="'suggestion-' + i"
+      >
+        <div class="suggestion-icon">
+          <i [class]="getCategoryIcon(suggestion.category)"></i>
+        </div>
+        
+        <div class="suggestion-content">
+          <div class="suggestion-name" [innerHTML]="highlightMatch(suggestion.name, searchTerm)"></div>
+          <div class="suggestion-meta">
+            <span class="suggestion-category">{{ suggestion.category }}</span>
+            <span class="suggestion-calories">{{ formatCalories(suggestion.caloriesPer100g || 0) }}</span>
+          </div>
+          <div *ngIf="suggestion.brand" class="suggestion-brand">
+            {{ suggestion.brand }}
+          </div>
+        </div>
+        
+        <div class="suggestion-action">
+          <i class="fas fa-plus"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Entry Option -->
+    <div class="manual-entry-section" *ngIf="searchTerm.length >= 2">
+      <div class="manual-entry-divider">
+        <span>ou</span>
+      </div>
+      
+      <div
+        class="manual-entry-item"
+        [class.selected]="selectedIndex === suggestions.length"
+        (click)="selectManualEntry()"
+        role="option"
+        [attr.aria-selected]="selectedIndex === suggestions.length"
+      >
+        <div class="manual-entry-icon">
+          <i class="fas fa-keyboard"></i>
+        </div>
+        
+        <div class="manual-entry-content">
+          <div class="manual-entry-text">
+            Ajouter manuellement : <strong>"{{ searchTerm }}"</strong>
+          </div>
+          <div class="manual-entry-description">
+            Saisie manuelle avec informations nutritionnelles personnalisées
+          </div>
+        </div>
+        
+        <div class="manual-entry-action">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="!isLoading && suggestions.length === 0 && searchTerm.length >= 2" class="no-results">
+      <div class="no-results-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="no-results-content">
+        <h4>Aucun aliment trouvé</h4>
+        <p>Aucun résultat pour "{{ searchTerm }}"</p>
+        <button (click)="selectManualEntry()" class="manual-add-btn">
+          <i class="fas fa-plus"></i>
+          <span>Ajouter manuellement</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popular Foods (when no search) -->
+  <div *ngIf="!searchTerm && !showSuggestions" class="popular-foods">
+    <h4>
+      <i class="fas fa-star"></i>
+      Aliments populaires
+    </h4>
+    <div class="popular-foods-grid">
+      <button 
+        *ngFor="let food of getPopularFoods()" 
+        (click)="searchTerm = food; onSearchInput()"
+        class="popular-food-btn"
+      >
+        <i [class]="getCategoryIcon(food)"></i>
+        <span>{{ food }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Tips -->
+  <div *ngIf="!searchTerm && !showSuggestions" class="search-tips">
+    <h5>Conseils de recherche :</h5>
+    <ul>
+      <li>
+        <i class="fas fa-search"></i>
+        Utilisez des termes simples (ex: "pomme", "pain")
+      </li>
+      <li>
+        <i class="fas fa-keyboard"></i>
+        Naviguez avec les flèches ↑↓ et validez avec Entrée
+      </li>
+      <li>
+        <i class="fas fa-plus"></i>
+        Ajoutez manuellement si l'aliment n'est pas trouvé
+      </li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+<!-- System Message -->
+<div *ngIf="isSystemMessage()" class="system-message">
+  <div class="system-content">
+    <i class="fas fa-info-circle"></i>
+    <span [innerHTML]="formatMessageContent(message.content)"></span>
+  </div>
+  <div class="system-timestamp">
+    {{ formatTimestamp(message.timestamp) }}
+  </div>
+</div>
+
+<!-- Regular Message -->
+<div *ngIf="!isSystemMessage()" class="message-bubble-container" [class.own-message]="isOwnMessage">
+  <!-- Avatar (for received messages) -->
+  <div *ngIf="showAvatar && !isOwnMessage" class="message-avatar">
+    <img
+      [src]="participantAvatar || '/assets/images/default-avatar.png'"
+      alt="Avatar"
+      class="avatar-image"
+      onerror="this.src='/assets/images/default-avatar.png'"
+    />
+  </div>
+
+  <!-- Message Content -->
+  <div class="message-content" [class.own-content]="isOwnMessage">
+    <!-- Message Bubble -->
+    <div class="message-bubble" [class.own-bubble]="isOwnMessage" [class.failed-bubble]="message.status === 'failed'">
+      <!-- Message Text -->
+      <div class="message-text" [innerHTML]="formatMessageContent(message.content)"></div>
+      
+      <!-- Message Metadata -->
+      <div class="message-metadata">
+        <span class="message-time">{{ formatTimestamp(message.timestamp) }}</span>
+        
+        <!-- Status Icon (for own messages) -->
+        <div *ngIf="isOwnMessage" class="message-status">
+          <i [class]="getStatusIcon()" [title]="getStatusText()"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retry Button (for failed messages) -->
+    <button
+      *ngIf="isOwnMessage && message.status === 'failed'"
+      (click)="onRetryClick()"
+      class="retry-button"
+      title="Réessayer l'envoi"
+      aria-label="Réessayer l'envoi du message"
+    >
+      <i class="fas fa-redo"></i>
+      <span>Réessayer</span>
+    </button>
+
+    <!-- Loading Indicator (for sending messages) -->
+    <div *ngIf="isOwnMessage && message.status === 'sending'" class="sending-indicator">
+      <div class="sending-spinner"></div>
+      <span>Envoi...</span>
+    </div>
+  </div>
+</div>

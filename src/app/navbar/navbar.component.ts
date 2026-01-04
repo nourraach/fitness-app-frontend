@@ -1,10 +1,13 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JwtService } from '../service/jwt.service';
 import { NotificationService } from '../service/notification.service';
-import { interval } from 'rxjs';
+import { StorageService } from '../service/storage-service.service';
+import { WebsocketService } from '../services/websocket.service';
+import { interval, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
@@ -13,20 +16,26 @@ import { interval } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterModule, TranslateModule]
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   isAdmin: boolean = false;
   isCoach: boolean = false;
   showNavbar: boolean = true;
   userName: string = 'Admin';
   showUserMenu: boolean = false;
+  showSuiviMenu: boolean = false;
+  showAdminMenu: boolean = false;  // NOUVEAU pour le menu admin
   isScrolled: boolean = false;
   private lastScrollTop: number = 0;
   notificationsCount: number = 0;
+  messageNotificationsCount: number = 0;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router, 
     private jwtService: JwtService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private storageService: StorageService,
+    private websocketService: WebsocketService
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -34,6 +43,10 @@ export class NavbarComponent implements OnInit {
     const target = event.target as HTMLElement;
     if (!target.closest('.user-dropdown')) {
       this.showUserMenu = false;
+    }
+    if (!target.closest('.nav-dropdown')) {
+      this.showSuiviMenu = false;
+      this.showAdminMenu = false;  // NOUVEAU
     }
   }
 
@@ -57,32 +70,57 @@ ngOnInit(): void {
   this.updateNavbarVisibility();
   
   // Charger les notifications seulement si connecté
-  const token = localStorage.getItem('jwt');
+  const token = this.storageService.getItem('jwt');
   if (token && this.showNavbar) {
     this.chargerNotificationsCount();
+    this.initializeMessageNotifications();
   }
 
-  this.router.events.subscribe(() => {
+  this.router.events.pipe(takeUntil(this.destroy$)).subscribe(() => {
     this.updateNavbarVisibility();
     // Recharger le compteur lors du changement de route si connecté
-    const currentToken = localStorage.getItem('jwt');
+    const currentToken = this.storageService.getItem('jwt');
     if (currentToken && this.showNavbar) {
       this.chargerNotificationsCount();
     }
   });
 
   // Rafraîchir le compteur toutes les 30 secondes si connecté
-  interval(30000).subscribe(() => {
-    const currentToken = localStorage.getItem('jwt');
+  interval(30000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+    const currentToken = this.storageService.getItem('jwt');
     if (currentToken && this.showNavbar) {
       this.chargerNotificationsCount();
     }
   });
 }
 
+ngOnDestroy(): void {
+  this.destroy$.next();
+  this.destroy$.complete();
+}
+
+private initializeMessageNotifications(): void {
+  // S'abonner aux nouveaux messages pour les notifications
+  this.websocketService.messages$.pipe(takeUntil(this.destroy$)).subscribe(message => {
+    // Incrémenter le compteur si ce n'est pas notre message et qu'on n'est pas sur la page messaging
+    if (message.expediteurId !== this.jwtService.getUserId() && 
+        !this.router.url.includes('/messaging')) {
+      this.messageNotificationsCount++;
+      this.notificationsCount = Math.max(this.notificationsCount, this.messageNotificationsCount);
+    }
+  });
+
+  // Réinitialiser le compteur quand on visite la page messaging
+  this.router.events.pipe(takeUntil(this.destroy$)).subscribe(() => {
+    if (this.router.url.includes('/messaging')) {
+      this.messageNotificationsCount = 0;
+    }
+  });
+}
+
 chargerNotificationsCount(): void {
   // Vérifier si l'utilisateur est connecté
-  const token = localStorage.getItem('jwt');
+  const token = this.storageService.getItem('jwt');
   if (!token) {
     this.notificationsCount = 0;
     return;
@@ -95,6 +133,12 @@ chargerNotificationsCount(): void {
     error: (err) => {
       console.error('Erreur chargement compteur notifications:', err);
       this.notificationsCount = 0;
+      
+      // Si erreur 403, le token est probablement invalide
+      if (err.status === 403) {
+        console.warn('Token invalide ou expiré, redirection vers login');
+        this.logout();
+      }
     }
   });
 }
@@ -125,9 +169,30 @@ chargerNotificationsCount(): void {
     this.showUserMenu = !this.showUserMenu;
   }
 
+  toggleSuiviMenu(): void {
+    this.showSuiviMenu = !this.showSuiviMenu;
+  }
+
+  closeSuiviMenu(): void {
+    this.showSuiviMenu = false;
+  }
+
+  // NOUVELLES MÉTHODES pour le menu admin
+  toggleAdminMenu(): void {
+    this.showAdminMenu = !this.showAdminMenu;
+  }
+
+  closeAdminMenu(): void {
+    this.showAdminMenu = false;
+  }
+
+  isRouteActive(route: string): boolean {
+    return this.router.url === route;
+  }
+
   logout(): void {
     this.showUserMenu = false;
-    localStorage.clear(); 
+    this.storageService.removeItem('jwt');
     this.router.navigate(['/login']);
   }
 

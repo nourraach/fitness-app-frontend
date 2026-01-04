@@ -1,0 +1,235 @@
+<div class="user-management">
+  <!-- Header -->
+  <div class="management-header">
+    <h2><i class="fas fa-users"></i> Gestion des Utilisateurs</h2>
+    <div class="header-stats">
+      <span class="stat-item">
+        <i class="fas fa-user"></i>
+        {{ totalUsers }} utilisateurs
+      </span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Rechercher par nom ou email..." class="search-input">
+    </div>
+    
+    <select [(ngModel)]="roleFilter" (ngModelChange)="onFilterChange()" class="filter-select">
+      <option value="all">Tous les rôles</option>
+      <option value="admin">Administrateurs</option>
+      <option value="coach">Coachs</option>
+      <option value="client">Clients</option>
+    </select>
+    
+    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="filter-select">
+      <option value="all">Tous les statuts</option>
+      <option value="active">Actifs</option>
+      <option value="inactive">Inactifs</option>
+      <option value="suspended">Suspendus</option>
+    </select>
+  </div>
+
+  <!-- Main Content -->
+  <div class="management-content">
+    <!-- Users List -->
+    <div class="users-list-container" [class.collapsed]="selectedUser">
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <span>Chargement des utilisateurs...</span>
+      </div>
+
+      <!-- Users Table -->
+      <div *ngIf="!isLoading" class="users-table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Dernière connexion</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers" [class.selected]="selectedUser?.id === user.id" (click)="selectUser(user)">
+              <td>
+                <div class="user-info">
+                  <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="user-details">
+                    <div class="user-name">{{ user.prenom || user.firstName }} {{ user.nom || user.lastName }}</div>
+                    <div class="user-id">#{{ user.id.toString().substring(0, 8) }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span [class]="'role-badge ' + getRoleBadgeClass(user.role)">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td>
+                <span [class]="'status-badge ' + getStatusBadgeClass(user.status || 'unknown')">
+                  {{ user.status || 'Unknown' }}
+                </span>
+              </td>
+              <td>{{ user.lastLogin ? formatDate(user.lastLogin) : 'Jamais' }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button (click)="toggleUserStatus(user); $event.stopPropagation()" 
+                          [class]="(user.status || 'inactive') === 'active' ? 'deactivate-btn' : 'activate-btn'"
+                          [title]="(user.status || 'inactive') === 'active' ? 'Désactiver' : 'Activer'">
+                    <i [class]="(user.status || 'inactive') === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+                  </button>
+                  <button (click)="resetPassword(user); $event.stopPropagation()" class="reset-btn" title="Réinitialiser mot de passe">
+                    <i class="fas fa-key"></i>
+                  </button>
+                  <button (click)="deleteUser(user); $event.stopPropagation()" class="delete-btn" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredUsers.length === 0" class="empty-state">
+          <i class="fas fa-users"></i>
+          <h3>Aucun utilisateur trouvé</h3>
+          <p>Aucun utilisateur ne correspond aux critères de recherche</p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="!isLoading && totalUsers > pageSize" class="pagination">
+        <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1" class="pagination-btn">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <button *ngFor="let page of getPaginationPages()" 
+                (click)="onPageChange(page)" 
+                [class.active]="currentPage === page" 
+                class="pagination-btn">
+          {{ page }}
+        </button>
+        
+        <button (click)="onPageChange(currentPage + 1)" 
+                [disabled]="currentPage >= Math.ceil(totalUsers / pageSize)" 
+                class="pagination-btn">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- User Details -->
+    <div *ngIf="selectedUser" class="user-details-container">
+      <div class="details-header">
+        <button (click)="closeUserDetails()" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          Retour à la liste
+        </button>
+        <h3>Détails de l'utilisateur</h3>
+      </div>
+      
+      <div class="user-details-content">
+        <div class="detail-section">
+          <h4>Informations personnelles</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Nom complet</label>
+              <span>{{ selectedUser.prenom }} {{ selectedUser.nom }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Email</label>
+              <span>{{ selectedUser.email }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Téléphone</label>
+              <span>{{ selectedUser.telephone || 'Non renseigné' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Date de naissance</label>
+              <span>{{ selectedUser.dateNaissance ? formatDate(selectedUser.dateNaissance) : 'Non renseignée' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Compte</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Rôle</label>
+              <span [class]="'role-badge ' + getRoleBadgeClass(selectedUser.role)">
+                {{ selectedUser.role }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Statut</label>
+              <span [class]="'status-badge ' + getStatusBadgeClass(selectedUser.status || 'unknown')">
+                {{ selectedUser.status || 'Unknown' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Date de création</label>
+              <span>{{ formatDate(selectedUser.createdAt) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Dernière connexion</label>
+              <span>{{ selectedUser.lastLogin ? formatDate(selectedUser.lastLogin) : 'Jamais' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Statistiques</h4>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <i class="fas fa-sign-in-alt"></i>
+              <div class="stat-content">
+                <div class="stat-value">{{ selectedUser.loginCount || 0 }}</div>
+                <div class="stat-label">Connexions</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-calendar"></i>
+              <div class="stat-content">
+                <div class="stat-value">{{ selectedUser.programsCount || 0 }}</div>
+                <div class="stat-label">Programmes</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-comments"></i>
+              <div class="stat-content">
+                <div class="stat-value">{{ selectedUser.messagesCount || 0 }}</div>
+                <div class="stat-label">Messages</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button (click)="toggleUserStatus(selectedUser)" 
+                  [class]="(selectedUser.status || 'inactive') === 'active' ? 'deactivate-btn' : 'activate-btn'">
+            <i [class]="(selectedUser.status || 'inactive') === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+            {{ (selectedUser.status || 'inactive') === 'active' ? 'Désactiver' : 'Activer' }}
+          </button>
+          <button (click)="resetPassword(selectedUser)" class="reset-btn">
+            <i class="fas fa-key"></i>
+            Réinitialiser mot de passe
+          </button>
+          <button (click)="deleteUser(selectedUser)" class="delete-btn">
+            <i class="fas fa-trash"></i>
+            Supprimer utilisateur
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

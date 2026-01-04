@@ -1,13 +1,12 @@
 import { Routes } from '@angular/router';
 import { RegisterComponent } from './components/register/register.component';
-import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login/login.component';
 import { HomeComponent } from './home/home.component';
 import { GestUsersComponent } from './components/gest-users/gest-users.component';
 import { AddUserComponent } from './components/add-user/add-user.component';
 import { AdminGuard } from './guards/admin.guard';
+import { AuthGuard } from './guards/auth.guard';
 import { EditUserComponent } from './components/edit-user/edit-user.component';
-import { VerificationComponent } from './components/verifivation/verifivation.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { ProfileComponent } from './profile/profile.component';
@@ -21,9 +20,10 @@ import { RapportsProgresComponent } from './rapports-progres/rapports-progres.co
 import { CoachHomeComponent } from './coach-home/coach-home.component';
 import { CoachProfileComponent } from './coach-profile/coach-profile.component';
 import { CoachClientsComponent } from './coach-clients/coach-clients.component';
-
-
-
+import { SocialComponent } from './social/social.component';
+import { CoachDashboardComponent } from './components/coach/coach-dashboard/coach-dashboard.component';
+import { NutritionPlanComponent } from './components/coach/nutrition-plan/nutrition-plan.component';
+import { EnhancedMessagingComponent } from './components/messaging/enhanced-messaging/enhanced-messaging.component';
 
 export const routes: Routes = [
 { path: 'register', component: RegisterComponent },     
@@ -34,22 +34,123 @@ export const routes: Routes = [
 { path: 'profile', component: ProfileComponent },
 { path: 'coach-profile', component: CoachProfileComponent },
 { path: 'coach-clients', component: CoachClientsComponent },
+{ path: 'coach-dashboard', component: CoachDashboardComponent },
+{ path: 'nutrition-plans', component: NutritionPlanComponent },
+{ path: 'enhanced-messaging', component: EnhancedMessagingComponent },
 { path: 'programmes', component: ProgrammesComponent },
 { path: 'gestion-programmes', component: GestionProgrammesComponent },
 { path: 'nutrition', component: NutritionComponent },
 { path: 'suivi', component: SuiviComponent },
 { path: 'evolution-poids', component: EvolutionPoidsComponent },
 { path: 'notifications', component: NotificationsComponent },
+{ path: 'notifications-new', 
+  loadComponent: () => import('./components/notifications/notifications-container/notifications-container.component').then(m => m.NotificationsContainerComponent)
+},
 { path: 'rapports-progres', component: RapportsProgresComponent },
+{ path: 'messaging', 
+  loadComponent: () => import('./components/messaging/messaging-container/messaging-container.component').then(m => m.MessagingContainerComponent)
+},
+{ path: 'social', component: SocialComponent, canActivate: [AuthGuard] },
+{ path: 'friend-challenges', 
+  loadComponent: () => import('./components/social/friend-challenges/friend-challenges.component').then(m => m.FriendChallengesComponent),
+  canActivate: [AuthGuard]
+},
+
+// NOUVELLES ROUTES - INTÉGRATION BACKEND API
+// Admin routes avec lazy loading
+{
+  path: 'admin',
+  canActivate: [AdminGuard],
+  children: [
+    {
+      path: 'dashboard',
+      loadComponent: () => import('./admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+    },
+    {
+      path: 'users',
+      loadComponent: () => import('./admin/user-management/user-management.component').then(m => m.UserManagementComponent)
+    },
+    {
+      path: 'audit-logs',
+      loadComponent: () => import('./admin/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent)
+    },
+    {
+      path: 'moderation',
+      loadComponent: () => import('./admin/moderation-queue/moderation-queue.component').then(m => m.ModerationQueueComponent)
+    },
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+  ]
+},
+
+// Food Recognition routes
+{
+  path: 'food-recognition',
+  canActivate: [AuthGuard],
+  loadComponent: () => import('./food-recognition/food-recognition-container/food-recognition-container.component').then(m => m.FoodRecognitionContainerComponent)
+},
+
+// Progress Reports routes
+{
+  path: 'reports',
+  canActivate: [AuthGuard],
+  loadComponent: () => import('./components/progress-reports/reports-management/reports-management.component').then(m => m.ReportsManagementComponent)
+},
+
+// Charts routes
+{
+  path: 'charts',
+  canActivate: [AuthGuard],
+  children: [
+    {
+      path: 'overview',
+      loadComponent: () => import('./components/charts/charts-container/charts-container.component').then(m => m.ChartsContainerComponent)
+    },
+    { path: '', redirectTo: 'overview', pathMatch: 'full' }
+  ]
+},
+
+// Enhanced Notifications routes
+{
+  path: 'notifications-system',
+  canActivate: [AuthGuard],
+  children: [
+    {
+      path: 'preferences',
+      loadComponent: () => import('./components/notifications/notification-preferences/notification-preferences.component').then(m => m.NotificationPreferencesComponent)
+    },
+    {
+      path: 'history',
+      loadComponent: () => import('./components/notifications/notification-history/notification-history.component').then(m => m.NotificationHistoryComponent)
+    },
+    {
+      path: 'stats',
+      loadComponent: () => import('./components/notifications/notification-stats/notification-stats.component').then(m => m.NotificationStatsComponent)
+    },
+    { path: '', redirectTo: 'preferences', pathMatch: 'full' }
+  ]
+},
+
+// Nutrition Plans routes (US10)
+{
+  path: 'nutrition-plans',
+  canActivate: [AuthGuard],
+  loadComponent: () => import('./components/nutrition/nutrition-plan-generator/nutrition-plan-generator.component').then(m => m.NutritionPlanGeneratorComponent)
+},
+
+// Enhanced Friend Challenges routes (US12)
+{
+  path: 'enhanced-challenges',
+  canActivate: [AuthGuard],
+  loadComponent: () => import('./components/social/enhanced-friend-challenges/enhanced-friend-challenges.component').then(m => m.EnhancedFriendChallengesComponent)
+},
+
+// Routes existantes
 { path: 'gestUsers', component: GestUsersComponent , canActivate: [AdminGuard]},     
 { path: 'adduser', component: AddUserComponent , canActivate: [AdminGuard]}, 
 { path: 'edituser/:id', component: EditUserComponent, canActivate: [AdminGuard] },
 { path: 'forgot-password', component: ForgotPasswordComponent },
 { path: 'reset-password', component: ResetPasswordComponent },
 { path: '**', component: LoginComponent }
-
-
-
 ];
 
 

@@ -2,7 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../service/notification.service';
-import { NotificationDTO, PreferenceNotificationDTO, TypeNotification } from '../models/notification.model';
+import { 
+  NotificationPreferences, 
+  NotificationHistory, 
+  NotificationStats, 
+  HistoryFilters,
+  ApiResponse,
+  WeekDay,
+  NotificationType
+} from '../models/notification.model';
 
 @Component({
   selector: 'app-notifications',

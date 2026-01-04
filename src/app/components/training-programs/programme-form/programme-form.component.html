@@ -1,0 +1,315 @@
+<div class="programme-form">
+  <div class="form-header">
+    <h3>{{ editMode ? 'Modifier le programme' : 'Créer un nouveau programme' }}</h3>
+    <p class="form-description">
+      Remplissez les informations ci-dessous pour {{ editMode ? 'modifier' : 'créer' }} un programme d'entraînement.
+    </p>
+  </div>
+
+  <form [formGroup]="programmeForm" (ngSubmit)="onSubmit()" class="form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h4 class="section-title">Informations générales</h4>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nom" class="form-label">
+            Nom du programme *
+          </label>
+          <input
+            id="nom"
+            type="text"
+            formControlName="nom"
+            class="form-input"
+            [class.error]="isFieldInvalid('nom')"
+            placeholder="Ex: Programme de musculation débutant">
+          <div *ngIf="isFieldInvalid('nom')" class="error-message">
+            {{ getFieldError('nom') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="clientId" class="form-label">
+            Client *
+          </label>
+          <select
+            id="clientId"
+            formControlName="clientId"
+            class="form-select"
+            [class.error]="isFieldInvalid('clientId')">
+            <option value="">Sélectionner un client</option>
+            <option 
+              *ngFor="let client of clients$ | async" 
+              [value]="client.id">
+              {{ client.nom }} {{ client.prenom }}
+            </option>
+          </select>
+          <div *ngIf="isFieldInvalid('clientId')" class="error-message">
+            {{ getFieldError('clientId') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">
+          Description
+        </label>
+        <textarea
+          id="description"
+          formControlName="description"
+          class="form-textarea"
+          [class.error]="isFieldInvalid('description')"
+          rows="3"
+          placeholder="Description du programme d'entraînement...">
+        </textarea>
+        <div *ngIf="isFieldInvalid('description')" class="error-message">
+          {{ getFieldError('description') }}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dateDebut" class="form-label">
+            Date de début *
+          </label>
+          <input
+            id="dateDebut"
+            type="date"
+            formControlName="dateDebut"
+            class="form-input"
+            [class.error]="isFieldInvalid('dateDebut')">
+          <div *ngIf="isFieldInvalid('dateDebut')" class="error-message">
+            {{ getFieldError('dateDebut') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="dateFin" class="form-label">
+            Date de fin (optionnelle)
+          </label>
+          <input
+            id="dateFin"
+            type="date"
+            formControlName="dateFin"
+            class="form-input"
+            [class.error]="isFieldInvalid('dateFin')">
+          <div *ngIf="isFieldInvalid('dateFin')" class="error-message">
+            {{ getFieldError('dateFin') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercises Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <h4 class="section-title">Exercices</h4>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          (click)="addExercice()">
+          <i class="fas fa-plus"></i>
+          Ajouter un exercice
+        </button>
+      </div>
+
+      <div *ngIf="exercicesFormArray.length === 0" class="empty-exercises">
+        <i class="fas fa-dumbbell fa-2x"></i>
+        <p>Aucun exercice ajouté</p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="addExercice()">
+          Ajouter le premier exercice
+        </button>
+      </div>
+
+      <div 
+        *ngFor="let exercice of exercicesFormArray.controls; let i = index; trackBy: trackByIndex"
+        class="exercise-card"
+        [formGroupName]="i">
+        
+        <div class="exercise-header">
+          <h5 class="exercise-title">Exercice {{ i + 1 }}</h5>
+          <div class="exercise-actions">
+            <button
+              type="button"
+              class="btn-icon"
+              [disabled]="i === 0"
+              (click)="moveExerciceUp(i)"
+              title="Déplacer vers le haut">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+            <button
+              type="button"
+              class="btn-icon"
+              [disabled]="i === exercicesFormArray.length - 1"
+              (click)="moveExerciceDown(i)"
+              title="Déplacer vers le bas">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <button
+              type="button"
+              class="btn-icon btn-danger"
+              (click)="removeExercice(i)"
+              title="Supprimer">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="exercise-content">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label [for]="'exercice-nom-' + i" class="form-label">
+                Nom de l'exercice *
+              </label>
+              <input
+                [id]="'exercice-nom-' + i"
+                type="text"
+                formControlName="nom"
+                class="form-input"
+                [class.error]="isExerciceFieldInvalid(i, 'nom')"
+                placeholder="Ex: Pompes, Squats, Développé couché...">
+              <div *ngIf="isExerciceFieldInvalid(i, 'nom')" class="error-message">
+                {{ getExerciceFieldError(i, 'nom') }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label [for]="'exercice-intensite-' + i" class="form-label">
+                Intensité
+              </label>
+              <select
+                [id]="'exercice-intensite-' + i"
+                formControlName="intensite"
+                class="form-select">
+                <option [value]="IntensiteExercice.FAIBLE">Faible</option>
+                <option [value]="IntensiteExercice.MOYENNE">Moyenne</option>
+                <option [value]="IntensiteExercice.ELEVEE">Élevée</option>
+                <option [value]="IntensiteExercice.MAXIMALE">Maximale</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label [for]="'exercice-description-' + i" class="form-label">
+              Description
+            </label>
+            <textarea
+              [id]="'exercice-description-' + i"
+              formControlName="description"
+              class="form-textarea"
+              [class.error]="isExerciceFieldInvalid(i, 'description')"
+              rows="2"
+              placeholder="Instructions pour l'exercice...">
+            </textarea>
+            <div *ngIf="isExerciceFieldInvalid(i, 'description')" class="error-message">
+              {{ getExerciceFieldError(i, 'description') }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label [for]="'exercice-series-' + i" class="form-label">
+                Séries *
+              </label>
+              <input
+                [id]="'exercice-series-' + i"
+                type="number"
+                formControlName="series"
+                class="form-input"
+                [class.error]="isExerciceFieldInvalid(i, 'series')"
+                min="1"
+                max="20">
+              <div *ngIf="isExerciceFieldInvalid(i, 'series')" class="error-message">
+                {{ getExerciceFieldError(i, 'series') }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label [for]="'exercice-repetitions-' + i" class="form-label">
+                Répétitions *
+              </label>
+              <input
+                [id]="'exercice-repetitions-' + i"
+                type="number"
+                formControlName="repetitions"
+                class="form-input"
+                [class.error]="isExerciceFieldInvalid(i, 'repetitions')"
+                min="1"
+                max="100">
+              <div *ngIf="isExerciceFieldInvalid(i, 'repetitions')" class="error-message">
+                {{ getExerciceFieldError(i, 'repetitions') }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label [for]="'exercice-duree-' + i" class="form-label">
+                Durée (minutes)
+              </label>
+              <input
+                [id]="'exercice-duree-' + i"
+                type="number"
+                formControlName="dureeMinutes"
+                class="form-input"
+                [class.error]="isExerciceFieldInvalid(i, 'dureeMinutes')"
+                min="1"
+                max="300"
+                placeholder="Optionnel">
+              <div *ngIf="isExerciceFieldInvalid(i, 'dureeMinutes')" class="error-message">
+                {{ getExerciceFieldError(i, 'dureeMinutes') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label [for]="'exercice-notes-' + i" class="form-label">
+              Notes
+            </label>
+            <textarea
+              [id]="'exercice-notes-' + i"
+              formControlName="notes"
+              class="form-textarea"
+              [class.error]="isExerciceFieldInvalid(i, 'notes')"
+              rows="2"
+              placeholder="Notes supplémentaires...">
+            </textarea>
+            <div *ngIf="isExerciceFieldInvalid(i, 'notes')" class="error-message">
+              {{ getExerciceFieldError(i, 'notes') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn btn-outline"
+        (click)="onCancel()"
+        [disabled]="loading">
+        Annuler
+      </button>
+      
+      <button
+        type="button"
+        class="btn btn-outline"
+        (click)="onReset()"
+        [disabled]="loading">
+        Réinitialiser
+      </button>
+      
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="programmeForm.invalid || loading">
+        <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+        <i *ngIf="!loading" class="fas fa-save"></i>
+        {{ editMode ? 'Modifier' : 'Créer' }} le programme
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,255 @@
+<div class="reports-management-container">
+  <!-- Header -->
+  <div class="reports-header">
+    <div class="header-content">
+      <h2>
+        <i class="fas fa-chart-line"></i>
+        Rapports de Progrès
+      </h2>
+      <button
+        (click)="createNewReport()"
+        class="create-btn primary-btn"
+        [disabled]="isCreatingReport"
+      >
+        <i class="fas fa-plus"></i>
+        <span>Nouveau Rapport</span>
+      </button>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="filters-row">
+        <!-- Search -->
+        <div class="search-container">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Rechercher un rapport..."
+            class="search-input"
+          />
+        </div>
+        
+        <!-- Period Filter -->
+        <select
+          [(ngModel)]="filterPeriod"
+          (ngModelChange)="onFilterChange()"
+          class="filter-select"
+        >
+          <option value="week">Cette semaine</option>
+          <option value="month">Ce mois</option>
+          <option value="quarter">Ce trimestre</option>
+          <option value="year">Cette année</option>
+        </select>
+        
+        <!-- Client Filter -->
+        <select
+          [(ngModel)]="filterClient"
+          (ngModelChange)="onFilterChange()"
+          class="filter-select"
+        >
+          <option value="">Tous les clients</option>
+          <option *ngFor="let client of clients" [value]="client.id">
+            {{ client.nom }} {{ client.prenom }}
+          </option>
+        </select>
+        
+        <!-- Status Filter -->
+        <select
+          [(ngModel)]="filterStatus"
+          (ngModelChange)="onFilterChange()"
+          class="filter-select"
+        >
+          <option value="all">Tous les statuts</option>
+          <option value="draft">Brouillons</option>
+          <option value="completed">Terminés</option>
+          <option value="shared">Partagés</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="reports-content">
+    <!-- Reports List -->
+    <div class="reports-list-container" [class.collapsed]="selectedReport || showReportForm">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <span>Chargement des rapports...</span>
+      </div>
+
+      <!-- Reports List -->
+      <div *ngIf="!isLoading" class="reports-list">
+        <div
+          *ngFor="let report of reports"
+          class="report-card"
+          [class.selected]="selectedReport?.id === report.id"
+          (click)="selectReport(report)"
+        >
+          <div class="report-header">
+            <h4 class="report-title">{{ report.title }}</h4>
+            <div class="report-actions">
+              <button
+                (click)="editReport(report); $event.stopPropagation()"
+                class="action-btn"
+                title="Modifier"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button
+                (click)="duplicateReport(report); $event.stopPropagation()"
+                class="action-btn"
+                title="Dupliquer"
+                [disabled]="isCreatingReport"
+              >
+                <i class="fas fa-copy"></i>
+              </button>
+              <div class="dropdown">
+                <button class="action-btn dropdown-toggle" title="Plus d'options">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu">
+                  <button (click)="shareReport(report); $event.stopPropagation()">
+                    <i class="fas fa-share"></i>
+                    Partager
+                  </button>
+                  <button (click)="exportReport(report, 'pdf'); $event.stopPropagation()">
+                    <i class="fas fa-file-pdf"></i>
+                    Export PDF
+                  </button>
+                  <button (click)="exportReport(report, 'excel'); $event.stopPropagation()">
+                    <i class="fas fa-file-excel"></i>
+                    Export Excel
+                  </button>
+                  <hr>
+                  <button 
+                    (click)="deleteReport(report); $event.stopPropagation()"
+                    class="delete-action"
+                  >
+                    <i class="fas fa-trash"></i>
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="report-meta">
+            <div class="report-client">
+              <i class="fas fa-user"></i>
+              <span>{{ report.clientName }}</span>
+            </div>
+            <div class="report-period">
+              <i class="fas fa-calendar"></i>
+              <span>{{ formatDate(report.startDate) }} - {{ formatDate(report.endDate) }}</span>
+            </div>
+          </div>
+          
+          <div class="report-status">
+            <span [class]="'status-badge ' + getStatusBadgeClass(report.status)">
+              {{ getStatusText(report.status) }}
+            </span>
+            <span class="report-date">{{ formatDate(report.createdAt) }}</span>
+          </div>
+          
+          <div class="report-summary" *ngIf="report.summary">
+            <p>{{ report.summary }}</p>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="reports.length === 0" class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3>{{ searchTerm ? 'Aucun rapport trouvé' : 'Aucun rapport créé' }}</h3>
+          <p>
+            {{ searchTerm 
+              ? 'Essayez de modifier vos critères de recherche' 
+              : 'Créez votre premier rapport de progrès pour suivre l\'évolution de vos clients' 
+            }}
+          </p>
+          <button
+            *ngIf="!searchTerm"
+            (click)="createNewReport()"
+            class="create-btn primary-btn"
+          >
+            <i class="fas fa-plus"></i>
+            <span>Créer un rapport</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="!isLoading && reports.length > 0" class="pagination">
+        <button
+          (click)="onPageChange(currentPage - 1)"
+          [disabled]="currentPage === 1"
+          class="pagination-btn"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <button
+          *ngFor="let page of getPaginationPages()"
+          (click)="onPageChange(page)"
+          [class.active]="currentPage === page"
+          class="pagination-btn"
+        >
+          {{ page }}
+        </button>
+        
+        <button
+          (click)="onPageChange(currentPage + 1)"
+          [disabled]="currentPage >= Math.ceil(totalReports / pageSize)"
+          class="pagination-btn"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Report Viewer -->
+    <div *ngIf="selectedReport && !showReportForm" class="report-viewer-container">
+      <div class="viewer-header">
+        <button (click)="closeReportViewer()" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          <span>Retour à la liste</span>
+        </button>
+        <div class="viewer-actions">
+          <button (click)="editReport(selectedReport)" class="edit-btn">
+            <i class="fas fa-edit"></i>
+            <span>Modifier</span>
+          </button>
+        </div>
+      </div>
+      
+      <app-report-viewer
+        [report]="selectedReport"
+        (reportUpdated)="onReportUpdated($event)"
+        (reportDeleted)="onReportDeleted($event)"
+      ></app-report-viewer>
+    </div>
+
+    <!-- Report Form -->
+    <div *ngIf="showReportForm" class="report-form-container">
+      <div class="form-header">
+        <button (click)="closeReportForm()" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          <span>Retour à la liste</span>
+        </button>
+        <h3>{{ selectedReport ? 'Modifier le rapport' : 'Nouveau rapport' }}</h3>
+      </div>
+      
+      <app-report-form
+        [report]="selectedReport"
+        [clients]="clients"
+        (reportCreated)="onReportCreated($event)"
+        (reportUpdated)="onReportUpdated($event)"
+        (cancelled)="closeReportForm()"
+      ></app-report-form>
+    </div>
+  </div>
+</div>

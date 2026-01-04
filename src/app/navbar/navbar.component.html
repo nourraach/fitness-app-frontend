@@ -17,41 +17,101 @@
             <i class="pi pi-home"></i>
             <span>Accueil</span>
           </a>
-          <a routerLink="/coach-clients" routerLink Active="active">
+          <a routerLink="/coach-dashboard" routerLinkActive="active">
+            <i class="pi pi-chart-line"></i>
+            <span>Dashboard</span>
+          </a>
+          <a routerLink="/coach-clients" routerLinkActive="active">
             <i class="pi pi-users"></i>
             <span>Mes Clients</span>
+          </a>
+          <a routerLink="/nutrition-plans" routerLinkActive="active">
+            <i class="pi pi-heart"></i>
+            <span>Plans Nutrition</span>
           </a>
           <a routerLink="/gestion-programmes" routerLinkActive="active">
             <i class="pi pi-calendar"></i>
             <span>Programmes</span>
           </a>
+          
+          <!-- NOUVEAU - Rapports de Progrès -->
+          <a routerLink="/reports" routerLinkActive="active" class="reports-link">
+            <i class="pi pi-chart-bar"></i>
+            <span>Rapports</span>
+          </a>
+          
+          <a routerLink="/enhanced-messaging" routerLinkActive="active" class="messaging-link">
+            <i class="pi pi-send"></i>
+            <span>Messages Pro</span>
+            <span *ngIf="notificationsCount > 0" class="notification-badge">{{ notificationsCount }}</span>
+          </a>
         </ng-container>
 
-        <!-- Menu USER/CLIENT (reste inchangé) -->
+        <!-- Menu USER/CLIENT (modifié) -->
         <ng-container *ngIf="!isCoach && !isAdmin">
           <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
             <i class="pi pi-home"></i>
             <span>Accueil</span>
-          </a>
-          <a routerLink="/programmes" routerLinkActive="active">
-            <i class="pi pi-bolt"></i>
-            <span>Programmes</span>
           </a>
           <a routerLink="/gestion-programmes" routerLinkActive="active">
             <i class="pi pi-calendar"></i>
             <span>Mes Programmes</span>
           </a>
           <a routerLink="/nutrition" routerLinkActive="active">
-            <i class="pi pi-apple"></i>
+            <i class="pi pi-heart"></i>
             <span>Nutrition</span>
           </a>
-          <a routerLink="/evolution-poids" routerLinkActive="active">
-            <i class="pi pi-chart-line"></i>
-            <span>Évolution</span>
+          
+          <!-- NOUVEAU - Rapports de Progrès pour les clients -->
+          <a routerLink="/reports" routerLinkActive="active" class="reports-link">
+            <i class="pi pi-chart-bar"></i>
+            <span>Mes Rapports</span>
           </a>
-          <a routerLink="/suivi" routerLinkActive="active">
-            <i class="pi pi-chart-line"></i>
-            <span>Suivi</span>
+          
+          <!-- NOUVELLE FONCTIONNALITÉ - Reconnaissance d'aliments -->
+          <a routerLink="/food-recognition" routerLinkActive="active" class="food-recognition-link">
+            <i class="pi pi-camera"></i>
+            <span>Scan Aliment</span>
+          </a>
+          
+          <!-- Dropdown Suivi AMÉLIORÉ avec graphiques -->
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-btn" (click)="toggleSuiviMenu()" 
+                    [class.active]="showSuiviMenu || isRouteActive('/evolution-poids') || isRouteActive('/suivi') || isRouteActive('/charts')">
+              <i class="pi pi-chart-line"></i>
+              <span>Suivi</span>
+              <i class="pi pi-angle-down dropdown-arrow" [class.rotated]="showSuiviMenu"></i>
+            </button>
+            
+            <div class="nav-dropdown-menu" *ngIf="showSuiviMenu">
+              <a routerLink="/evolution-poids" class="nav-dropdown-item" (click)="closeSuiviMenu()">
+                <i class="pi pi-chart-line"></i>
+                <span>Évolution</span>
+              </a>
+              <a routerLink="/suivi" class="nav-dropdown-item" (click)="closeSuiviMenu()">
+                <i class="pi pi-chart-bar"></i>
+                <span>Suivi</span>
+              </a>
+              <!-- NOUVEAU - Graphiques avancés -->
+              <a routerLink="/charts" class="nav-dropdown-item" (click)="closeSuiviMenu()">
+                <i class="pi pi-chart-pie"></i>
+                <span>Graphiques</span>
+              </a>
+            </div>
+          </div>
+          
+          <a routerLink="/messaging" routerLinkActive="active" class="messaging-link">
+            <i class="pi pi-comments"></i>
+            <span>Messages</span>
+            <span *ngIf="notificationsCount > 0" class="notification-badge">{{ notificationsCount }}</span>
+          </a>
+          <a routerLink="/social" routerLinkActive="active" class="social-link">
+            <i class="fas fa-users"></i>
+            <span>Social</span>
+          </a>
+          <a routerLink="/friend-challenges" routerLinkActive="active" class="challenges-link">
+            <i class="fas fa-trophy"></i>
+            <span>Défis</span>
           </a>
           <a routerLink="/notifications" routerLinkActive="active" class="notifications-link">
             <i class="pi pi-bell"></i>
@@ -60,16 +120,50 @@
           </a>
         </ng-container>
 
-        <!-- Menu ADMIN uniquement -->
+        <!-- Menu ADMIN ÉTENDU avec nouvelles fonctionnalités -->
         <ng-container *ngIf="isAdmin">
           <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
             <i class="pi pi-home"></i>
             <span>Accueil</span>
           </a>
-          <a routerLink="/gestUsers" routerLinkActive="active">
-            <i class="pi pi-users"></i>
-            <span>Utilisateurs</span>
-          </a>
+          
+          <!-- Dropdown Admin -->
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-btn" (click)="toggleAdminMenu()" 
+                    [class.active]="showAdminMenu || isRouteActive('/admin') || isRouteActive('/gestUsers')">
+              <i class="pi pi-cog"></i>
+              <span>Administration</span>
+              <i class="pi pi-angle-down dropdown-arrow" [class.rotated]="showAdminMenu"></i>
+            </button>
+            
+            <div class="nav-dropdown-menu" *ngIf="showAdminMenu">
+              <!-- NOUVEAU - Dashboard Admin -->
+              <a routerLink="/admin/dashboard" class="nav-dropdown-item" (click)="closeAdminMenu()">
+                <i class="pi pi-chart-line"></i>
+                <span>Dashboard</span>
+              </a>
+              <!-- NOUVEAU - Audit Logs -->
+              <a routerLink="/admin/audit-logs" class="nav-dropdown-item" (click)="closeAdminMenu()">
+                <i class="pi pi-list"></i>
+                <span>Logs d'Audit</span>
+              </a>
+              <!-- NOUVEAU - Gestion Utilisateurs Avancée -->
+              <a routerLink="/admin/users" class="nav-dropdown-item" (click)="closeAdminMenu()">
+                <i class="pi pi-users"></i>
+                <span>Gestion Utilisateurs</span>
+              </a>
+              <!-- Ancien lien pour compatibilité -->
+              <a routerLink="/gestUsers" class="nav-dropdown-item" (click)="closeAdminMenu()">
+                <i class="pi pi-user-edit"></i>
+                <span>Utilisateurs (Legacy)</span>
+              </a>
+              <!-- NOUVEAU - Modération -->
+              <a routerLink="/admin/moderation" class="nav-dropdown-item" (click)="closeAdminMenu()">
+                <i class="pi pi-shield"></i>
+                <span>Modération</span>
+              </a>
+            </div>
+          </div>
         </ng-container>
       </div>
 

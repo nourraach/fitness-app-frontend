@@ -1,0 +1,278 @@
+<div class="exercise-tracker">
+  <!-- Header with Progress Overview -->
+  <div class="tracker-header">
+    <div class="progress-overview">
+      <h3 class="programme-title">{{ programme.nom }}</h3>
+      <div class="progress-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ completedExercises }}</span>
+          <span class="stat-label">Terminés</span>
+        </div>
+        <div class="stat-divider">/</div>
+        <div class="stat-item">
+          <span class="stat-value">{{ totalExercises }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ progressPercentage }}%</span>
+          <span class="stat-label">Progression</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-section">
+      <div class="progress-bar">
+        <div 
+          class="progress-fill" 
+          [ngClass]="getProgressClass()"
+          [style.width.%]="progressPercentage">
+        </div>
+      </div>
+      <div class="progress-text">
+        <span>{{ completedExercises }} exercices terminés sur {{ totalExercises }}</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="header-actions" *ngIf="!readOnly">
+      <button 
+        class="btn btn-sm btn-outline"
+        (click)="expandAllExercises()"
+        title="Développer tout">
+        <i class="fas fa-expand-alt"></i>
+        Tout développer
+      </button>
+      <button 
+        class="btn btn-sm btn-outline"
+        (click)="collapseAllExercises()"
+        title="Réduire tout">
+        <i class="fas fa-compress-alt"></i>
+        Tout réduire
+      </button>
+      <button 
+        class="btn btn-sm btn-success"
+        (click)="markAllExercisesCompleted()"
+        [disabled]="completedExercises === totalExercises || isLoading()"
+        title="Marquer tout comme terminé">
+        <i class="fas fa-check-double"></i>
+        Tout terminer
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error$ | async as error" class="alert alert-error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+    <button class="btn-close" (click)="clearError()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading()" class="loading-overlay">
+    <div class="spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      Mise à jour...
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="programme.exercices.length === 0" class="empty-state">
+    <i class="fas fa-dumbbell fa-3x"></i>
+    <h3>Aucun exercice</h3>
+    <p>Ce programme ne contient pas encore d'exercices.</p>
+  </div>
+
+  <!-- Exercises List -->
+  <div *ngIf="programme.exercices.length > 0" class="exercises-list">
+    <div 
+      *ngFor="let exercice of programme.exercices; let i = index; trackBy: trackByExerciseIndex"
+      class="exercise-card"
+      [ngClass]="getExerciseStatusClass(exercice)">
+      
+      <!-- Exercise Header -->
+      <div class="exercise-header" (click)="toggleExerciseExpansion(i)">
+        <div class="exercise-main-info">
+          <!-- Completion Checkbox -->
+          <div class="completion-checkbox" *ngIf="!readOnly">
+            <input 
+              type="checkbox"
+              [id]="'exercise-' + i"
+              [checked]="exercice.completed"
+              (change)="toggleExerciseCompletion(i)"
+              [disabled]="isLoading()"
+              class="checkbox-input">
+            <label [for]="'exercise-' + i" class="checkbox-label">
+              <i class="fas fa-check"></i>
+            </label>
+          </div>
+
+          <!-- Read-only Status Icon -->
+          <div class="status-icon" *ngIf="readOnly">
+            <i 
+              class="fas"
+              [class.fa-check-circle]="exercice.completed"
+              [class.fa-circle]="!exercice.completed"
+              [class.text-success]="exercice.completed"
+              [class.text-muted]="!exercice.completed">
+            </i>
+          </div>
+
+          <!-- Exercise Info -->
+          <div class="exercise-info">
+            <h4 class="exercise-name">{{ exercice.nom }}</h4>
+            <div class="exercise-summary">
+              <span class="exercise-sets">{{ exercice.series }} séries</span>
+              <span class="exercise-reps">{{ exercice.repetitions }} reps</span>
+              <span *ngIf="exercice.dureeMinutes" class="exercise-duration">
+                {{ formatDuration(exercice.dureeMinutes) }}
+              </span>
+              <span 
+                *ngIf="exercice.intensite" 
+                class="exercise-intensity"
+                [ngClass]="getIntensiteClass(exercice.intensite)">
+                {{ getIntensiteDisplayText(exercice.intensite) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exercise Actions -->
+        <div class="exercise-actions">
+          <!-- Completion Status -->
+          <div class="completion-status" *ngIf="exercice.completed">
+            <i class="fas fa-check-circle text-success"></i>
+            <span class="completion-date" *ngIf="exercice.completionDate">
+              {{ formatCompletionDate(exercice.completionDate) }}
+            </span>
+          </div>
+
+          <!-- Expand/Collapse Button -->
+          <button class="btn-expand" type="button">
+            <i 
+              class="fas"
+              [class.fa-chevron-down]="!isExerciseExpanded(i)"
+              [class.fa-chevron-up]="isExerciseExpanded(i)">
+            </i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Exercise Details (Expandable) -->
+      <div class="exercise-details" *ngIf="isExerciseExpanded(i)">
+        
+        <!-- Description -->
+        <div class="detail-section" *ngIf="exercice.description">
+          <h5 class="detail-title">Description</h5>
+          <p class="exercise-description">{{ exercice.description }}</p>
+        </div>
+
+        <!-- Exercise Parameters -->
+        <div class="detail-section">
+          <h5 class="detail-title">Paramètres</h5>
+          <div class="exercise-params">
+            <div class="param-item">
+              <span class="param-label">Séries:</span>
+              <span class="param-value">{{ exercice.series }}</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">Répétitions:</span>
+              <span class="param-value">{{ exercice.repetitions }}</span>
+            </div>
+            <div class="param-item" *ngIf="exercice.dureeMinutes">
+              <span class="param-label">Durée:</span>
+              <span class="param-value">{{ formatDuration(exercice.dureeMinutes) }}</span>
+            </div>
+            <div class="param-item" *ngIf="exercice.intensite">
+              <span class="param-label">Intensité:</span>
+              <span class="param-value" [ngClass]="getIntensiteClass(exercice.intensite)">
+                {{ getIntensiteDisplayText(exercice.intensite) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="detail-section">
+          <h5 class="detail-title">Notes</h5>
+          <div *ngIf="!readOnly && exerciseForms[i]" [formGroup]="exerciseForms[i]">
+            <textarea
+              formControlName="notes"
+              class="notes-textarea"
+              placeholder="Ajoutez vos notes sur cet exercice..."
+              rows="3">
+            </textarea>
+          </div>
+          <div *ngIf="readOnly && exercice.notes" class="notes-display">
+            <p>{{ exercice.notes }}</p>
+          </div>
+          <div *ngIf="readOnly && !exercice.notes" class="no-notes">
+            <em>Aucune note</em>
+          </div>
+        </div>
+
+        <!-- Completion Info -->
+        <div class="detail-section" *ngIf="exercice.completed">
+          <h5 class="detail-title">Informations de completion</h5>
+          <div class="completion-info">
+            <div class="info-item">
+              <i class="fas fa-calendar-check"></i>
+              <span>Terminé le {{ formatCompletionDate(exercice.completionDate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="tracker-summary" *ngIf="programme.exercices.length > 0">
+    <div class="summary-stats">
+      <div class="summary-card">
+        <div class="summary-icon completed">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-number">{{ getCompletedExercises().length }}</div>
+          <div class="summary-label">Exercices terminés</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-icon pending">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-number">{{ getRemainingExercises().length }}</div>
+          <div class="summary-label">Exercices restants</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-icon progress">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-number">{{ progressPercentage }}%</div>
+          <div class="summary-label">Progression totale</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions" *ngIf="!readOnly && getRemainingExercises().length > 0">
+      <h5>Actions rapides</h5>
+      <div class="action-buttons">
+        <button 
+          class="btn btn-outline"
+          (click)="resetAllExercises()"
+          [disabled]="getCompletedExercises().length === 0 || isLoading()">
+          <i class="fas fa-undo"></i>
+          Réinitialiser tout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

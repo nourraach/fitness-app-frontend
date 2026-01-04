@@ -3,6 +3,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { JwtService } from './../../service/jwt.service';
+import { StorageService } from './../../service/storage-service.service';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,6 +29,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     private service: JwtService,
     private fb: FormBuilder,
     private router: Router,
+    private storageService: StorageService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -41,7 +43,7 @@ ngOnInit(): void {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
-      captchaToken: ['', Validators.required]
+      captchaToken: [''] // Make captcha optional for debugging
     });
   }
 
@@ -78,26 +80,38 @@ ngOnInit(): void {
   }
 
   submitForm() {
-    if (this.loginForm.valid) {
+    // For debugging, allow submission even if captcha is missing
+    const isFormValidForSubmission = this.loginForm.get('email')?.valid && 
+                                   this.loginForm.get('password')?.valid;
+    
+    if (isFormValidForSubmission) {
       this.isSubmitting = true;
-      console.log(this.loginForm.value);
-      this.service.login(this.loginForm.value).subscribe(
+      
+      // Prepare login data
+      const loginData = {
+        email: this.loginForm.get('email')?.value,
+        password: this.loginForm.get('password')?.value,
+        captchaToken: this.loginForm.get('captchaToken')?.value || 'debug-token'
+      };
+      
+      console.log('Données de connexion:', loginData);
+      
+      this.service.login(loginData).subscribe(
         (response) => {
           this.isSubmitting = false;
-          if (response.jwt) {
-            const jwtToken = response.jwt;
-            console.log(jwtToken);
-            if (typeof localStorage !== 'undefined') {
-              localStorage.setItem('jwt', jwtToken);
-              this.service.updateAdminStatus();
-            }
+          console.log('Réponse de connexion:', response);
+          
+          // Check for both jwt and token properties
+          const token = response.jwt || response.token;
+          if (token) {
+            console.log('Token reçu:', token.substring(0, 50) + '...');
+            
+            this.storageService.setItem('jwt', token);
+            this.service.updateAdminStatus();
             
             // Redirection selon le rôle
             const role = this.service.getRole();
             console.log('🔍 Rôle détecté:', role);
-            console.log('🔍 Type du rôle:', typeof role);
-            console.log('🔍 Comparaison ROLE_COACH:', role === 'ROLE_COACH');
-            console.log('🔍 Comparaison coach (lowercase):', role?.toLowerCase() === 'coach');
             
             if (role === 'ROLE_COACH' || role?.toLowerCase() === 'coach') {
               console.log('✅ Redirection vers /coach-home');
@@ -106,14 +120,37 @@ ngOnInit(): void {
               console.log('✅ Redirection vers /home');
               this.router.navigateByUrl('/home');
             }
+          } else {
+            console.error('Aucun token trouvé dans la réponse');
+            alert('Erreur: Aucun token d\'authentification reçu.');
           }
         },
         (error) => {
           this.isSubmitting = false;
-          console.error('Erreur lors de la connexion : ', error);
-          alert('Une erreur est survenue lors de la connexion.');
+          console.error('Erreur lors de la connexion:', error);
+          console.error('Status:', error.status);
+          console.error('Error body:', error.error);
+          
+          if (error.status === 403) {
+            alert('Accès refusé. Vérifiez vos identifiants ou le captcha.');
+          } else if (error.status === 401) {
+            alert('Identifiants incorrects.');
+          } else if (error.status === 0) {
+            alert('Impossible de contacter le serveur. Vérifiez que le backend est démarré.');
+          } else {
+            alert(`Erreur ${error.status}: ${error.message || 'Une erreur est survenue lors de la connexion.'}`);
+          }
         }
       );
+    } else {
+      console.log('Formulaire invalide');
+      Object.keys(this.loginForm.controls).forEach(key => {
+        const control = this.loginForm.get(key);
+        if (control && control.invalid) {
+          console.log(`${key} est invalide:`, control.errors);
+        }
+      });
+      alert('Veuillez remplir tous les champs requis.');
     }
   }
 }

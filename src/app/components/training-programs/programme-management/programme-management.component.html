@@ -1,0 +1,277 @@
+<div class="programme-management">
+  <!-- Header -->
+  <div class="header">
+    <h2>Gestion des Programmes d'Entraînement</h2>
+    <button 
+      class="btn btn-primary"
+      (click)="toggleCreateForm()"
+      [disabled]="isLoading()">
+      <i class="fas fa-plus"></i>
+      Nouveau Programme
+    </button>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error$ | async as error" class="alert alert-error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+    <button class="btn-close" (click)="clearError()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading()" class="loading-overlay">
+    <div class="spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      Chargement...
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <form [formGroup]="filterForm" class="filters-form">
+      <div class="filter-group">
+        <label for="status-filter">Statut:</label>
+        <select id="status-filter" formControlName="status" class="form-select">
+          <option value="ALL">Tous les statuts</option>
+          <option [value]="ProgramStatus.ACTIF">Actif</option>
+          <option [value]="ProgramStatus.TERMINE">Terminé</option>
+          <option [value]="ProgramStatus.SUSPENDU">Suspendu</option>
+          <option [value]="ProgramStatus.ANNULE">Annulé</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="client-filter">Client:</label>
+        <select id="client-filter" formControlName="client" class="form-select">
+          <option value="ALL">Tous les clients</option>
+          <option 
+            *ngFor="let client of clients$ | async" 
+            [value]="client.id">
+            {{ client.nom }} {{ client.prenom }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="search-filter">Recherche:</label>
+        <input 
+          id="search-filter"
+          type="text" 
+          formControlName="search" 
+          class="form-input"
+          placeholder="Nom du programme, client ou coach...">
+      </div>
+    </form>
+  </div>
+
+  <!-- Create Form (if visible) -->
+  <div *ngIf="showCreateForm" class="create-form-section">
+    <app-programme-form
+      (programmeCreated)="createProgramme($event)"
+      (cancelled)="toggleCreateForm()">
+    </app-programme-form>
+  </div>
+
+  <!-- Programmes List -->
+  <div class="programmes-section">
+    <div *ngIf="filteredProgrammes$ | async as programmes" class="programmes-container">
+      
+      <!-- Empty State -->
+      <div *ngIf="programmes.length === 0" class="empty-state">
+        <i class="fas fa-dumbbell fa-3x"></i>
+        <h3>Aucun programme trouvé</h3>
+        <p>Créez votre premier programme d'entraînement ou ajustez vos filtres.</p>
+      </div>
+
+      <!-- Programmes Grid -->
+      <div *ngIf="programmes.length > 0" class="programmes-grid">
+        <div 
+          *ngFor="let programme of programmes; trackBy: trackByProgrammeId"
+          class="programme-card"
+          [class.selected]="selectedProgramme?.id === programme.id"
+          (click)="selectProgramme(programme)">
+          
+          <!-- Card Header -->
+          <div class="card-header">
+            <h3 class="programme-title">{{ programme.nom }}</h3>
+            <div class="status-badge" [ngClass]="getStatusClass(programme.statut)">
+              {{ getStatusDisplayText(programme.statut) }}
+            </div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <div class="programme-info">
+              <div class="info-row">
+                <i class="fas fa-user"></i>
+                <span>Client: {{ programme.nomClient || 'Non assigné' }}</span>
+              </div>
+              <div class="info-row">
+                <i class="fas fa-user-tie"></i>
+                <span>Coach: {{ programme.nomCoach || 'Non assigné' }}</span>
+              </div>
+              <div class="info-row">
+                <i class="fas fa-calendar"></i>
+                <span>Début: {{ formatDate(programme.dateDebut) }}</span>
+              </div>
+              <div class="info-row" *ngIf="programme.dateFin">
+                <i class="fas fa-calendar-check"></i>
+                <span>Fin: {{ formatDate(programme.dateFin) }}</span>
+              </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section">
+              <div class="progress-info">
+                <span class="progress-text">
+                  Progression: {{ programme.completedExercises }}/{{ programme.totalExercises }} exercices
+                </span>
+                <span class="progress-percentage">{{ programme.progressPercentage }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  [ngClass]="getProgressClass(programme.progressPercentage)"
+                  [style.width.%]="programme.progressPercentage">
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div *ngIf="programme.description" class="programme-description">
+              <p>{{ programme.description }}</p>
+            </div>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button 
+              class="btn btn-sm btn-outline"
+              [routerLink]="['/programmes', programme.id]"
+              title="Voir les détails">
+              <i class="fas fa-eye"></i>
+            </button>
+            
+            <button 
+              class="btn btn-sm btn-outline"
+              [routerLink]="['/programmes', programme.id, 'edit']"
+              title="Modifier">
+              <i class="fas fa-edit"></i>
+            </button>
+
+            <!-- Status Actions -->
+            <div class="status-actions" *ngIf="programme.statut === ProgramStatus.ACTIF">
+              <button 
+                class="btn btn-sm btn-warning"
+                (click)="updateProgrammeStatus(programme.id!, ProgramStatus.SUSPENDU)"
+                title="Suspendre">
+                <i class="fas fa-pause"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-success"
+                (click)="updateProgrammeStatus(programme.id!, ProgramStatus.TERMINE)"
+                title="Terminer">
+                <i class="fas fa-check"></i>
+              </button>
+            </div>
+
+            <div class="status-actions" *ngIf="programme.statut === ProgramStatus.SUSPENDU">
+              <button 
+                class="btn btn-sm btn-primary"
+                (click)="updateProgrammeStatus(programme.id!, ProgramStatus.ACTIF)"
+                title="Reprendre">
+                <i class="fas fa-play"></i>
+              </button>
+            </div>
+
+            <button 
+              class="btn btn-sm btn-danger"
+              (click)="deleteProgramme(programme.id!)"
+              title="Supprimer">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+
+          <!-- Timestamps -->
+          <div class="card-footer">
+            <small class="text-muted">
+              Créé le {{ formatDate(programme.createdAt) }}
+              <span *ngIf="programme.updatedAt">
+                • Modifié le {{ formatDate(programme.updatedAt) }}
+              </span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selected Programme Details (Optional Sidebar) -->
+  <div *ngIf="selectedProgramme" class="programme-details-sidebar">
+    <div class="sidebar-header">
+      <h3>{{ selectedProgramme.nom }}</h3>
+      <button class="btn-close" (click)="clearSelection()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="sidebar-content">
+      <div class="detail-section">
+        <h4>Informations générales</h4>
+        <dl>
+          <dt>Client</dt>
+          <dd>{{ selectedProgramme.nomClient || 'Non assigné' }}</dd>
+          <dt>Coach</dt>
+          <dd>{{ selectedProgramme.nomCoach || 'Non assigné' }}</dd>
+          <dt>Statut</dt>
+          <dd>
+            <span class="status-badge" [ngClass]="getStatusClass(selectedProgramme.statut)">
+              {{ getStatusDisplayText(selectedProgramme.statut) }}
+            </span>
+          </dd>
+          <dt>Progression</dt>
+          <dd>{{ selectedProgramme.progressPercentage }}% ({{ selectedProgramme.completedExercises }}/{{ selectedProgramme.totalExercises }})</dd>
+        </dl>
+      </div>
+
+      <div class="detail-section" *ngIf="selectedProgramme.exercices.length">
+        <h4>Exercices ({{ selectedProgramme.exercices.length }})</h4>
+        <ul class="exercises-list">
+          <li *ngFor="let exercice of selectedProgramme.exercices" class="exercise-item">
+            <div class="exercise-info">
+              <span class="exercise-name">{{ exercice.nom }}</span>
+              <span class="exercise-details">
+                {{ exercice.series }} séries × {{ exercice.repetitions }} reps
+                <span *ngIf="exercice.dureeMinutes"> • {{ exercice.dureeMinutes }}min</span>
+              </span>
+            </div>
+            <div class="exercise-status">
+              <i 
+                class="fas"
+                [class.fa-check-circle]="exercice.completed"
+                [class.fa-circle]="!exercice.completed"
+                [class.text-success]="exercice.completed"
+                [class.text-muted]="!exercice.completed">
+              </i>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-actions">
+        <button 
+          class="btn btn-primary btn-block"
+          [routerLink]="['/programmes', selectedProgramme.id]">
+          Voir les détails complets
+        </button>
+        <button 
+          class="btn btn-outline btn-block"
+          [routerLink]="['/programmes', selectedProgramme.id, 'edit']">
+          Modifier le programme
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

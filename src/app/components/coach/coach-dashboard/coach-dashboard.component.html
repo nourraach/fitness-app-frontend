@@ -1,0 +1,281 @@
+<!-- Coach Dashboard -->
+<div class="coach-dashboard" *ngIf="!isLoading">
+  
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <i class="pi pi-chart-line"></i>
+        Tableau de Bord Coach
+      </h1>
+      <button class="refresh-btn" (click)="refreshDashboard()" title="Actualiser">
+        <i class="pi pi-refresh"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Overview Cards -->
+  <div class="overview-cards" *ngIf="dashboardOverview">
+    <div class="metric-card">
+      <div class="metric-icon clients">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="metric-content">
+        <h3>{{ dashboardOverview.totalClients }}</h3>
+        <p>Clients Totaux</p>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon programs">
+        <i class="pi pi-calendar"></i>
+      </div>
+      <div class="metric-content">
+        <h3>{{ dashboardOverview.activePrograms }}</h3>
+        <p>Programmes Actifs</p>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon completion">
+        <i class="pi pi-chart-pie"></i>
+      </div>
+      <div class="metric-content">
+        <h3>{{ formatPercentage(dashboardOverview.completionRate) }}</h3>
+        <p>Taux de Completion</p>
+      </div>
+    </div>
+
+    <div class="metric-card" *ngIf="dashboardOverview.businessMetrics">
+      <div class="metric-icon revenue">
+        <i class="pi pi-euro"></i>
+      </div>
+      <div class="metric-content">
+        <h3>{{ formatCurrency(dashboardOverview.businessMetrics.monthlyRevenue) }}</h3>
+        <p>Revenus Mensuels</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    
+    <!-- Alerts Section -->
+    <div class="dashboard-section alerts-section" *ngIf="alerts.length > 0">
+      <div class="section-header">
+        <h2>
+          <i class="pi pi-exclamation-triangle"></i>
+          Alertes Urgentes
+        </h2>
+        <button class="toggle-btn" (click)="toggleShowAllAlerts()">
+          {{ showAllAlerts ? 'Voir moins' : 'Voir tout' }}
+        </button>
+      </div>
+      
+      <div class="alerts-list">
+        <div class="alert-item" 
+             *ngFor="let alert of getDisplayedAlerts()" 
+             [class]="getAlertLevelClass(alert.severity)">
+          <div class="alert-icon">
+            <i class="pi pi-exclamation-circle" *ngIf="alert.severity === AlertLevel.HIGH"></i>
+            <i class="pi pi-info-circle" *ngIf="alert.severity === AlertLevel.MEDIUM"></i>
+            <i class="pi pi-check-circle" *ngIf="alert.severity === AlertLevel.LOW"></i>
+          </div>
+          <div class="alert-content">
+            <h4>{{ alert.clientName }}</h4>
+            <p>{{ alert.message }}</p>
+            <span class="alert-time">{{ getRelativeTime(alert.createdAt) }}</span>
+          </div>
+          <div class="alert-actions">
+            <button class="btn-action" (click)="viewClientDetails(alert.clientId)" title="Voir détails">
+              <i class="pi pi-eye"></i>
+            </button>
+            <button class="btn-action" (click)="resolveAlert(alert.id)" title="Résoudre">
+              <i class="pi pi-check"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clients Section -->
+    <div class="dashboard-section clients-section">
+      <div class="section-header">
+        <h2>
+          <i class="pi pi-users"></i>
+          Mes Clients
+        </h2>
+        <button class="toggle-btn" (click)="toggleShowAllClients()">
+          {{ showAllClients ? 'Voir moins' : 'Voir tout' }}
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <div class="search-box">
+          <i class="pi pi-search"></i>
+          <input type="text" 
+                 placeholder="Rechercher un client..." 
+                 [(ngModel)]="searchQuery"
+                 (keyup.enter)="onSearchClients()">
+        </div>
+        
+        <select [(ngModel)]="selectedStatus" (change)="onStatusFilterChange()" class="filter-select">
+          <option value="">Tous les statuts</option>
+          <option value="ACTIVE">Actif</option>
+          <option value="PAUSED">En pause</option>
+          <option value="COMPLETED">Terminé</option>
+        </select>
+        
+        <select [(ngModel)]="selectedAlertLevel" (change)="onAlertLevelFilterChange()" class="filter-select">
+          <option value="">Tous les niveaux</option>
+          <option value="HIGH">Alerte élevée</option>
+          <option value="MEDIUM">Alerte moyenne</option>
+          <option value="LOW">Alerte faible</option>
+        </select>
+        
+        <button class="clear-filters-btn" (click)="clearFilters()" *ngIf="searchQuery || selectedStatus || selectedAlertLevel">
+          <i class="pi pi-times"></i>
+          Effacer
+        </button>
+      </div>
+
+      <!-- Clients List -->
+      <div class="clients-list" *ngIf="clients.length > 0">
+        <div class="client-card" *ngFor="let client of getDisplayedClients()">
+          <div class="client-header">
+            <div class="client-info">
+              <h3>{{ client.prenom }} {{ client.nom }}</h3>
+              <p class="client-email">{{ client.email }}</p>
+              <span class="client-type" [class]="client.relationType.toLowerCase()">
+                {{ client.relationType === RelationType.COACH_SPORTIF ? 'Coach Sportif' : 'Nutritionniste' }}
+              </span>
+            </div>
+            <div class="client-status">
+              <span class="status-badge" [class]="getStatusClass(client.status)">
+                {{ client.status }}
+              </span>
+            </div>
+          </div>
+
+          <div class="client-metrics">
+            <div class="metric">
+              <span class="metric-label">Programmes actifs</span>
+              <span class="metric-value">{{ client.activeProgramsCount }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Progrès</span>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" 
+                       [class]="getProgressBarClass(client.progressPercentage)"
+                       [style.width.%]="client.progressPercentage">
+                  </div>
+                </div>
+                <span class="progress-text">{{ formatPercentage(client.progressPercentage) }}</span>
+              </div>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Adhérence</span>
+              <span class="metric-value">{{ formatPercentage(client.adherenceRate) }}</span>
+            </div>
+          </div>
+
+          <div class="client-alert" *ngIf="client.alertMessage" [class]="getAlertLevelClass(client.alertLevel)">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ client.alertMessage }}</span>
+          </div>
+
+          <div class="client-footer">
+            <div class="last-activity">
+              <i class="pi pi-clock"></i>
+              <span *ngIf="client.lastActivity">Dernière activité: {{ getRelativeTime(client.lastActivity) }}</span>
+              <span *ngIf="!client.lastActivity">Aucune activité récente</span>
+            </div>
+            <div class="client-actions">
+              <button class="btn-secondary" (click)="viewClientDetails(client.clientId)">
+                <i class="pi pi-eye"></i>
+                Détails
+              </button>
+              <button class="btn-primary" (click)="createNutritionPlan(client.clientId)" *ngIf="client.relationType === RelationType.NUTRITIONNISTE">
+                <i class="pi pi-plus"></i>
+                Plan Nutrition
+              </button>
+              <button class="btn-primary" (click)="sendMessage(client.clientId)">
+                <i class="pi pi-comments"></i>
+                Message
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="clients.length === 0">
+        <i class="pi pi-users"></i>
+        <h3>Aucun client trouvé</h3>
+        <p>Vous n'avez pas encore de clients ou aucun client ne correspond aux filtres appliqués.</p>
+      </div>
+    </div>
+
+    <!-- Business Metrics Section -->
+    <div class="dashboard-section metrics-section" *ngIf="dashboardOverview?.businessMetrics">
+      <div class="section-header">
+        <h2>
+          <i class="pi pi-chart-bar"></i>
+          Métriques Business
+        </h2>
+      </div>
+      
+      <div class="business-metrics">
+        <div class="business-metric">
+          <div class="metric-icon retention">
+            <i class="pi pi-heart"></i>
+          </div>
+          <div class="metric-details">
+            <h4>{{ dashboardOverview?.businessMetrics?.retentionRate ? formatPercentage(dashboardOverview.businessMetrics.retentionRate) : '0%' }}</h4>
+            <p>Taux de Rétention</p>
+          </div>
+        </div>
+        
+        <div class="business-metric">
+          <div class="metric-icon success">
+            <i class="pi pi-star"></i>
+          </div>
+          <div class="metric-details">
+            <h4>{{ dashboardOverview?.businessMetrics?.successRate ? formatPercentage(dashboardOverview.businessMetrics.successRate) : '0%' }}</h4>
+            <p>Taux de Succès</p>
+          </div>
+        </div>
+        
+        <div class="business-metric">
+          <div class="metric-icon sessions">
+            <i class="pi pi-calendar-plus"></i>
+          </div>
+          <div class="metric-details">
+            <h4>{{ dashboardOverview.businessMetrics.averageSessionsPerClient }}</h4>
+            <p>Sessions/Client</p>
+          </div>
+        </div>
+        
+        <div class="business-metric">
+          <div class="metric-icon growth">
+            <i class="pi pi-arrow-up"></i>
+          </div>
+          <div class="metric-details">
+            <h4>{{ formatPercentage(dashboardOverview.businessMetrics.clientGrowthRate) }}</h4>
+            <p>Croissance Clients</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="loading-spinner">
+    <i class="pi pi-spin pi-spinner"></i>
+  </div>
+  <p>Chargement du tableau de bord...</p>
+</div>

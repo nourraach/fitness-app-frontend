@@ -163,7 +163,7 @@ export class GestionProgrammesComponent implements OnInit {
 
     this.loading = true;
     const observable = this.isEditing && this.currentProgrammeId
-      ? this.programmeService.modifierProgramme(this.currentProgrammeId, this.programme)
+      ? this.programmeService.updateProgramme(this.currentProgrammeId, this.programme)  // NOUVELLE API PUT
       : this.programmeService.creerProgramme(this.programme);
 
     observable.subscribe({
@@ -175,7 +175,7 @@ export class GestionProgrammesComponent implements OnInit {
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = err.error?.erreur || 'Erreur lors de la sauvegarde du programme';
+        this.error = err.error?.erreur || err.message || 'Erreur lors de la sauvegarde du programme';
         this.loading = false;
       }
     });
@@ -213,6 +213,41 @@ export class GestionProgrammesComponent implements OnInit {
       exercices: [...programme.exercices]
     };
     this.showForm = true;
+  }
+
+  // NOUVELLE MÉTHODE - Utilise la nouvelle API PUT
+  modifierProgrammeAvecAPI(programme: ProgrammeEntrainement): void {
+    this.isEditing = true;
+    this.currentProgrammeId = programme.id;
+    this.programme = {
+      clientId: programme.clientId,
+      nom: programme.nom,
+      description: programme.description || '',
+      dateDebut: programme.dateDebut,
+      dateFin: programme.dateFin,
+      exercices: [...programme.exercices]
+    };
+    this.showForm = true;
+  }
+
+  // NOUVELLE MÉTHODE - Utilise la nouvelle API DELETE
+  supprimerProgrammeAvecAPI(id: number): void {
+    if (!id || !confirm('Êtes-vous sûr de vouloir supprimer ce programme ?')) {
+      return;
+    }
+
+    this.loading = true;
+    this.programmeService.deleteProgramme(id).subscribe({
+      next: () => {
+        this.success = 'Programme supprimé avec succès';
+        this.chargerProgrammes();
+        setTimeout(() => this.success = '', 3000);
+      },
+      error: (err) => {
+        this.error = err.message || 'Erreur lors de la suppression du programme';
+        this.loading = false;
+      }
+    });
   }
 
   changerStatut(id: number, statut: string): void {

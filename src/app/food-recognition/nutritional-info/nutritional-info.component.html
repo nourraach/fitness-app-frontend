@@ -1,0 +1,75 @@
+<div class="nutritional-info-container" *ngIf="nutritionalInfo">
+  <!-- Header -->
+  <div class="nutrition-header">
+    <h3>{{ foodName || 'Informations Nutritionnelles' }}</h3>
+    <div class="health-score" [style.color]="getHealthScoreColor(getHealthScore())">
+      <span class="score-value">{{ getHealthScore() }}/100</span>
+      <span class="score-text">{{ getHealthScoreText(getHealthScore()) }}</span>
+    </div>
+  </div>
+
+  <!-- Quantity Controls -->
+  <div class="quantity-section" *ngIf="showQuantityControls">
+    <label>Quantité (g)</label>
+    <div class="quantity-controls">
+      <button (click)="adjustQuantity(-10)" class="qty-btn">-</button>
+      <input [(ngModel)]="selectedQuantity" (ngModelChange)="onQuantityChange()" type="number" min="1" max="2000">
+      <button (click)="adjustQuantity(10)" class="qty-btn">+</button>
+    </div>
+    <div class="quick-quantities">
+      <button *ngFor="let qty of [50,100,150,200]" (click)="setQuickQuantity(qty)" [class.active]="selectedQuantity === qty">{{qty}}g</button>
+    </div>
+  </div>
+
+  <!-- Calories Highlight -->
+  <div class="calories-section">
+    <div class="calories-circle" [style.border-color]="getCaloriesColor(adjustedNutrition?.calories || 0)">
+      <span class="calories-value">{{ (adjustedNutrition?.calories || 0).toFixed(0) }}</span>
+      <span class="calories-label">calories</span>
+    </div>
+  </div>
+
+  <!-- Macros -->
+  <div class="macros-section">
+    <div class="macro-item">
+      <div class="macro-circle protein">
+        <span>{{ formatNutrientValue(adjustedNutrition?.protein || 0, 'g') }}</span>
+      </div>
+      <span>Protéines</span>
+    </div>
+    <div class="macro-item">
+      <div class="macro-circle carbs">
+        <span>{{ formatNutrientValue(adjustedNutrition?.carbohydrates || 0, 'g') }}</span>
+      </div>
+      <span>Glucides</span>
+    </div>
+    <div class="macro-item">
+      <div class="macro-circle fat">
+        <span>{{ formatNutrientValue(adjustedNutrition?.fat || 0, 'g') }}</span>
+      </div>
+      <span>Lipides</span>
+    </div>
+  </div>
+
+  <!-- Detailed Nutrients -->
+  <div class="nutrients-section">
+    <div class="nutrient-row">
+      <span>Fibres</span>
+      <span>{{ formatNutrientValue(adjustedNutrition?.fiber || 0, 'g') }}</span>
+    </div>
+    <div class="nutrient-row">
+      <span>Sucres</span>
+      <span>{{ formatNutrientValue(adjustedNutrition?.sugar || 0, 'g') }}</span>
+    </div>
+    <div class="nutrient-row">
+      <span>Sodium</span>
+      <span>{{ formatNutrientValue(adjustedNutrition?.sodium || 0, 'g') }}</span>
+    </div>
+  </div>
+
+  <!-- Add Button -->
+  <button (click)="onAddToMeal()" class="add-btn">
+    <i class="fas fa-plus"></i>
+    Ajouter au repas
+  </button>
+</div>

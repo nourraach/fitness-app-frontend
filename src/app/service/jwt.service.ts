@@ -22,10 +22,14 @@ export class JwtService {
   login(loginRequest: any): Observable<any> {
     return this.http.post(BASE_URL + 'login', loginRequest).pipe(
       tap((response: any) => {
-        if (response.token) {
-          this.storageService.setItem('jwt', response.token);
-          console.log("🔐 JWT stocké avec succès :", response.token);
+        // Check for both 'jwt' and 'token' properties in response
+        const token = response.jwt || response.token;
+        if (token) {
+          this.storageService.setItem('jwt', token);
+          console.log("🔐 JWT stocké avec succès :", token);
           this.updateAdminStatus();
+        } else {
+          console.error("Aucun token trouvé dans la réponse:", response);
         }
       })
     );
@@ -53,8 +57,10 @@ export class JwtService {
   private createAuthorizationHeader(): HttpHeaders | null {
     const jwtToken = this.storageService.getItem('jwt');
     if (jwtToken) {
-      console.log("JWT token trouvé :", jwtToken);
-      return new HttpHeaders().set("Authorization", "Bearer " + jwtToken);
+      console.log("JWT token trouvé :", jwtToken.substring(0, 50) + "...");
+      return new HttpHeaders()
+        .set("Authorization", "Bearer " + jwtToken)
+        .set("Content-Type", "application/json");
     }
     console.error("Aucun JWT trouvé dans localStorage.");
     return null;
@@ -98,6 +104,35 @@ export class JwtService {
         const decodedToken: any = jwtDecode(token);
         console.log('Email du token :', decodedToken.email);
         return decodedToken.email || null;
+      } catch (error) {
+        console.error('Erreur lors du décodage du token JWT', error);
+        return null;
+      }
+    }
+    return null;
+  }
+
+  getUserId(): number | null {
+    const token = this.storageService.getItem('jwt');
+    if (token) {
+      try {
+        const decodedToken: any = jwtDecode(token);
+        console.log('ID utilisateur du token :', decodedToken.id || decodedToken.userId || decodedToken.sub);
+        return decodedToken.id || decodedToken.userId || decodedToken.sub || null;
+      } catch (error) {
+        console.error('Erreur lors du décodage du token JWT', error);
+        return null;
+      }
+    }
+    return null;
+  }
+
+  getUserName(): string | null {
+    const token = this.storageService.getItem('jwt');
+    if (token) {
+      try {
+        const decodedToken: any = jwtDecode(token);
+        return decodedToken.name || decodedToken.username || null;
       } catch (error) {
         console.error('Erreur lors du décodage du token JWT', error);
         return null;
@@ -175,8 +210,43 @@ decodeToken(token: string): any {
     return null;
   }
 }
-getToken(): string | null {
-  return this.storageService.getItem('jwt');
-}
+  getToken(): string | null {
+    return this.storageService.getItem('jwt');
+  }
+
+  isTokenValid(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const decodedToken: any = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      
+      // Check if token is expired
+      if (decodedToken.exp && decodedToken.exp < currentTime) {
+        console.warn('Token expiré');
+        this.logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Token invalide:', error);
+      this.logout();
+      return false;
+    }
+  }
+
+  logout(): void {
+    this.storageService.removeItem('jwt');
+    this.adminStatusSubject.next(false);
+  }
+
+  clearInvalidToken(): void {
+    console.warn('Suppression du token invalide');
+    this.logout();
+  }
 
 }

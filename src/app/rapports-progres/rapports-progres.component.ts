@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RapportProgresService } from '../services/rapport-progres.service';
-import { RapportProgres } from '../models/rapport-progres.model';
+import { RapportProgresDTO } from '../models/rapport-progres.model';
 import { JwtService } from '../service/jwt.service';
 
 @Component({
@@ -13,8 +13,8 @@ import { JwtService } from '../service/jwt.service';
   styleUrls: ['./rapports-progres.component.css']
 })
 export class RapportsProgresComponent implements OnInit {
-  rapports: RapportProgres[] = [];
-  rapportSelectionne: RapportProgres | null = null;
+  rapports: RapportProgresDTO[] = [];
+  rapportSelectionne: RapportProgresDTO | null = null;
   isCoach = false;
   
   // Pour la génération de rapport
@@ -132,7 +132,7 @@ export class RapportsProgresComponent implements OnInit {
     });
   }
 
-  voirDetails(rapport: RapportProgres): void {
+  voirDetails(rapport: RapportProgresDTO): void {
     this.rapportSelectionne = rapport;
   }
 

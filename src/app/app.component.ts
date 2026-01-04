@@ -3,31 +3,27 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 import { HomeComponent } from "./home/home.component";
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { MessageNotificationComponent } from './components/message-notification/message-notification.component';
+import { StorageService } from './service/storage-service.service';
 
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, NavbarComponent, TranslateModule],
+    imports: [RouterOutlet, NavbarComponent, TranslateModule, MessageNotificationComponent],
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css']
 })
 export class AppComponent {
   title = 'frontendProjetStage';
-  constructor(private translate: TranslateService) {
+  constructor(private translate: TranslateService, private storageService: StorageService) {
     // Vérifier le stockage local pour récupérer la langue préférée
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const storedLang = localStorage.getItem('selectedLanguage');
-      const defaultLang = storedLang ? storedLang : 'en'; // Langue par défaut si aucune langue n'est stockée
-      this.translate.setDefaultLang(defaultLang);
-      this.translate.use(defaultLang); // Utiliser la langue stockée ou par défaut
+    const storedLang = this.storageService.getItem('selectedLanguage');
+    const defaultLang = storedLang ? storedLang : 'en'; // Langue par défaut si aucune langue n'est stockée
+    this.translate.setDefaultLang(defaultLang);
+    this.translate.use(defaultLang); // Utiliser la langue stockée ou par défaut
 
-      // Appliquer la direction du texte (RTL ou LTR) au chargement
-      this.applyDirection(defaultLang);
-    } else {
-      this.translate.setDefaultLang('en'); // Langue par défaut si SSR
-      this.translate.use('en');
-      this.applyDirection('en');
-    }
+    // Appliquer la direction du texte (RTL ou LTR) au chargement
+    this.applyDirection(defaultLang);
   }
 
   // Fonction pour appliquer la direction du texte (RTL ou LTR)
@@ -51,9 +47,7 @@ export class AppComponent {
     this.translate.use(lang); // Changer la langue dynamiquement
 
     // Sauvegarder la langue sélectionnée dans localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('selectedLanguage', lang);
-    }
+    this.storageService.setItem('selectedLanguage', lang);
 
     // Appliquer la direction du texte selon la langue choisie
     this.applyDirection(lang);
