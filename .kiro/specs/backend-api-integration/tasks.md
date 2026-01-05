@@ -193,7 +193,7 @@ Cette implémentation intègre les nouvelles APIs backend critiques dans le fron
   - **Property 3: Programme CRUD operations**
   - **Validates: Requirements 3.1, 3.2**
 
-- [ ] 6.3 Améliorer CoachClientsComponent avec vraies statistiques
+- [x] 6.3 Améliorer CoachClientsComponent avec vraies statistiques
   - Intégrer affichage programsCount, progressRate, lastActivity
   - Ajouter tri par statistiques
   - Créer alertes visuelles clients inactifs
@@ -205,21 +205,21 @@ Cette implémentation intègre les nouvelles APIs backend critiques dans le fron
   - **Validates: Requirements 2.1, 2.2**
 
 - [ ] 7. Implémenter les services utilitaires
-  - [ ] 7.1 Créer ApiErrorHandlerService
+  - [x] 7.1 Créer ApiErrorHandlerService
     - Implémenter gestion erreurs contextuelles
     - Ajouter messages d'erreur en français
     - Créer retry logic intelligent
     - Gérer erreurs spécifiques (401, 403, 413, 415)
     - _Requirements: 8.1, 8.2, 8.3, 8.5, 8.6_
 
-- [ ] 7.2 Implémenter NetworkResilienceService
+- [x] 7.2 Implémenter NetworkResilienceService
   - Créer détection état réseau
   - Ajouter queue de retry hors ligne
   - Implémenter synchronisation automatique
   - Gérer mode dégradé
   - _Requirements: 8.4, 8.7_
 
-- [ ] 7.3 Créer CacheService
+- [x] 7.3 Créer CacheService
   - Implémenter cache intelligent avec TTL
   - Ajouter invalidation par pattern
   - Créer stratégies de cache par type de données

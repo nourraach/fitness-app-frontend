@@ -78,6 +78,11 @@ ngOnInit(): void {
 
   this.router.events.pipe(takeUntil(this.destroy$)).subscribe(() => {
     this.updateNavbarVisibility();
+    
+    // NOUVEAU: Vérifier et mettre à jour les rôles à chaque changement de route
+    this.checkRole();
+    this.getUserName();
+    
     // Recharger le compteur lors du changement de route si connecté
     const currentToken = this.storageService.getItem('jwt');
     if (currentToken && this.showNavbar) {
@@ -146,8 +151,20 @@ chargerNotificationsCount(): void {
 
   checkRole(): void {
     const role = this.jwtService.getRole();
+    const wasAdmin = this.isAdmin;
+    const wasCoach = this.isCoach;
+    
     this.isAdmin = role === 'ROLE_ADMIN';
     this.isCoach = role === 'ROLE_COACH' || role?.toLowerCase() === 'coach';
+    
+    // Log des changements de rôle pour debug
+    if (wasAdmin !== this.isAdmin || wasCoach !== this.isCoach) {
+      console.log('🔄 Navbar - Changement de rôle détecté:', {
+        ancien: { admin: wasAdmin, coach: wasCoach },
+        nouveau: { admin: this.isAdmin, coach: this.isCoach },
+        role: role
+      });
+    }
   }
 
   getUserName(): void {
@@ -192,7 +209,17 @@ chargerNotificationsCount(): void {
 
   logout(): void {
     this.showUserMenu = false;
-    this.storageService.removeItem('jwt');
+    
+    // Utiliser la méthode logout du JwtService pour un nettoyage complet
+    this.jwtService.logout();
+    
+    // Forcer la mise à jour des états locaux
+    this.isAdmin = false;
+    this.isCoach = false;
+    this.userName = '';
+    this.notificationsCount = 0;
+    
+    console.log('🔓 Navbar - Déconnexion et nettoyage des états');
     this.router.navigate(['/login']);
   }
 

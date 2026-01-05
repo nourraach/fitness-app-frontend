@@ -30,11 +30,9 @@ export class RapportProgresService {
 
   // Legacy methods (keeping for compatibility)
   genererRapport(clientId: number, dateDebut: string, dateFin: string): Observable<RapportProgresDTO> {
-    const params = new HttpParams()
-      .set('clientId', clientId.toString())
-      .set('dateDebut', dateDebut)
-      .set('dateFin', dateFin);
-    return this.http.post<RapportProgresDTO>(`${this.apiUrl}/generer`, null, { params, headers: this.getHeaders() })
+    // CORRECTION: Utilise POST /api/rapports/generer avec body
+    const body = { clientId, dateDebut, dateFin };
+    return this.http.post<RapportProgresDTO>(`${this.apiUrl}/generer`, body, { headers: this.getHeaders() })
       .pipe(
         retry(2),
         catchError(this.handleError)
@@ -42,6 +40,7 @@ export class RapportProgresService {
   }
 
   genererRapportSemaineCourante(clientId: number): Observable<RapportProgresDTO> {
+    // CORRECTION: Utilise GET /api/rapports/semaine-courante avec query param
     const params = new HttpParams().set('clientId', clientId.toString());
     return this.http.get<RapportProgresDTO>(`${this.apiUrl}/semaine-courante`, { params, headers: this.getHeaders() })
       .pipe(
@@ -258,8 +257,10 @@ export class RapportProgresService {
   }
 
   exportReport(id: number, format: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${id}/export?format=${format}`, {
+    // CORRECTION: Utilise l'endpoint d'export correct
+    return this.http.get(`${this.apiUrl}/${id}/export`, {
       headers: this.getHeaders(),
+      params: { format },
       responseType: 'blob'
     }).pipe(
       retry(2),

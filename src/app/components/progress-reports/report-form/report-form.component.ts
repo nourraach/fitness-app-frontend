@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RapportProgres } from '../../../models/rapport-progres.model';
-import { EnhancedClient } from '../../../models/enhanced-client.model';
+import { EnhancedClientDTO } from '../../../models/enhanced-client.model';
 import { RapportProgresService } from '../../../services/rapport-progres.service';
 
 @Component({
@@ -14,7 +14,7 @@ import { RapportProgresService } from '../../../services/rapport-progres.service
 })
 export class ReportFormComponent implements OnInit {
   @Input() report: RapportProgres | null = null;
-  @Input() clients: EnhancedClient[] = [];
+  @Input() clients: EnhancedClientDTO[] = [];
   @Output() reportCreated = new EventEmitter<RapportProgres>();
   @Output() reportUpdated = new EventEmitter<RapportProgres>();
   @Output() cancelled = new EventEmitter<void>();

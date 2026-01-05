@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { RapportProgresService } from '../../../services/rapport-progres.service';
 import { ClientService } from '../../../services/client.service';
 import { RapportProgres } from '../../../models/rapport-progres.model';
-import { EnhancedClient } from '../../../models/enhanced-client.model';
+import { EnhancedClientDTO } from '../../../models/enhanced-client.model';
 import { ReportViewerComponent } from '../report-viewer/report-viewer.component';
 import { ReportFormComponent } from '../report-form/report-form.component';
 
@@ -18,9 +18,9 @@ import { ReportFormComponent } from '../report-form/report-form.component';
 })
 export class ReportsManagementComponent implements OnInit, OnDestroy {
   reports: RapportProgres[] = [];
-  clients: EnhancedClient[] = [];
+  clients: EnhancedClientDTO[] = [];
   selectedReport: RapportProgres | null = null;
-  selectedClient: EnhancedClient | null = null;
+  selectedClient: EnhancedClientDTO | null = null;
   
   isLoading = false;
   isCreatingReport = false;

@@ -38,7 +38,11 @@ export class CoachNavbarComponent implements OnInit {
 
   logout(): void {
     this.showUserMenu = false;
-    this.storageService.removeItem('jwt');
+    
+    // Utiliser la méthode logout du JwtService pour un nettoyage complet
+    this.jwtService.logout();
+    
+    console.log('🔓 Coach Navbar - Déconnexion complète');
     this.router.navigate(['/login']);
   }
 }

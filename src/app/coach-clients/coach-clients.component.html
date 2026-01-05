@@ -19,39 +19,79 @@
     ✗ {{ errorMessage }}
   </div>
 
-  <!-- Search Bar -->
-  <div class="search-bar">
-    <i class="pi pi-search"></i>
-    <input 
-      type="text" 
-      [(ngModel)]="searchTerm" 
-      placeholder="Rechercher un client par nom ou email..."
-      class="search-input">
+  <!-- Search and Filter Bar -->
+  <div class="search-filter-bar">
+    <div class="search-section">
+      <i class="pi pi-search"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        placeholder="Rechercher un client par nom ou email..."
+        class="search-input">
+    </div>
+    
+    <div class="filter-section">
+      <select [(ngModel)]="sortBy" class="sort-select">
+        <option value="name">Trier par nom</option>
+        <option value="progressRate">Trier par progrès</option>
+        <option value="programsCount">Trier par programmes</option>
+        <option value="lastActivity">Trier par activité</option>
+      </select>
+      
+      <button 
+        class="filter-btn" 
+        [class.active]="showInactiveOnly"
+        (click)="toggleInactiveFilter()">
+        <i class="pi pi-exclamation-triangle"></i>
+        Inactifs seulement
+      </button>
+    </div>
   </div>
 
-  <!-- Stats Summary -->
+  <!-- Enhanced Stats Summary -->
   <div class="stats-summary">
     <div class="stat-card">
       <div class="stat-icon">👥</div>
       <div class="stat-content">
-        <div class="stat-value">{{ myClients.length }}</div>
+        <div class="stat-value">{{ clientStatistics?.totalClients || myClients.length }}</div>
         <div class="stat-label">Clients Totaux</div>
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-icon">✅</div>
       <div class="stat-content">
-        <div class="stat-value">{{ getActiveClientsCount() }}</div>
+        <div class="stat-value">{{ clientStatistics?.activeClients || getActiveClientsCount() }}</div>
         <div class="stat-label">Clients Actifs</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getInactiveClientsCount() }}</div>
+        <div class="stat-label">Clients Inactifs</div>
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-icon">📊</div>
       <div class="stat-content">
-        <div class="stat-value">{{ getTotalProgramsCount() }}</div>
-        <div class="stat-label">Programmes Assignés</div>
+        <div class="stat-value">{{ getClientsWithProgramsCount() }}</div>
+        <div class="stat-label">Avec Programmes</div>
       </div>
     </div>
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getAverageProgressRate() }}%</div>
+        <div class="stat-label">Progrès Moyen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inactive Clients Alert -->
+  <div *ngIf="hasInactiveAlerts()" class="alert alert-warning">
+    <i class="pi pi-exclamation-triangle"></i>
+    <strong>Attention:</strong> {{ getInactiveAlerts().length }} client(s) inactif(s) depuis plus de 7 jours.
+    <button class="btn-link" (click)="showInactiveOnly = true">Voir les clients inactifs</button>
   </div>
 
   <!-- Clients List -->
@@ -70,7 +110,7 @@
   </div>
 
   <div class="clients-grid" *ngIf="filteredClients.length > 0">
-    <div *ngFor="let client of filteredClients" class="client-card">
+    <div *ngFor="let client of filteredClients" class="client-card" [class.inactive-client]="client.isInactive">
       <div class="client-header">
         <div class="client-avatar">
           <i class="pi pi-user"></i>
@@ -78,9 +118,15 @@
         <div class="client-info">
           <h3>{{ client.name }}</h3>
           <p class="client-email">{{ client.email }}</p>
-          <span class="status-badge" [ngClass]="getStatusClass(client.status)">
-            {{ getStatusLabel(client.status) }}
-          </span>
+          <div class="status-badges">
+            <span class="status-badge" [ngClass]="getStatusClass(client.status)">
+              {{ getStatusLabel(client.status) }}
+            </span>
+            <span *ngIf="client.isInactive" class="inactive-badge">
+              <i class="pi pi-exclamation-triangle"></i>
+              Inactif
+            </span>
+          </div>
         </div>
       </div>
 
@@ -89,9 +135,9 @@
           <i class="pi pi-calendar"></i>
           <span>Assigné le {{ client.assignedDate | date:'dd/MM/yyyy' }}</span>
         </div>
-        <div class="detail-item" *ngIf="client.lastActivity">
+        <div class="detail-item">
           <i class="pi pi-clock"></i>
-          <span>Dernière activité: {{ client.lastActivity | date:'dd/MM/yyyy' }}</span>
+          <span>{{ formatLastActivity(client.lastActivity) }}</span>
         </div>
         <div class="detail-item" *ngIf="client.phone">
           <i class="pi pi-phone"></i>
@@ -102,12 +148,12 @@
       <div class="client-stats">
         <div class="stat-item">
           <div class="stat-label">Programmes</div>
-          <div class="stat-value">{{ client.programsCount || 0 }}</div>
+          <div class="stat-value">{{ client.programsCount }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-label">Progrès</div>
-          <div class="stat-value" [ngClass]="getProgressClass(client.progressRate)">
-            {{ client.progressRate || 0 }}%
+          <div class="stat-value" [ngClass]="client.progressClass">
+            {{ client.progressRate }}%
           </div>
         </div>
       </div>
@@ -202,16 +248,23 @@
               </div>
               <div class="detail-row">
                 <span class="label">Dernière activité:</span>
-                <span class="value">{{ selectedClient.lastActivity | date:'dd/MM/yyyy' }}</span>
+                <span class="value">{{ formatLastActivity(selectedClient.lastActivity) }}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Programmes actifs:</span>
-                <span class="value">{{ selectedClient.programsCount || 0 }}</span>
+                <span class="value">{{ selectedClient.programsCount }}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Taux de progrès:</span>
-                <span class="value" [ngClass]="getProgressClass(selectedClient.progressRate)">
-                  {{ selectedClient.progressRate || 0 }}%
+                <span class="value" [ngClass]="selectedClient.progressClass">
+                  {{ selectedClient.progressRate }}%
+                </span>
+              </div>
+              <div class="detail-row" *ngIf="selectedClient.isInactive">
+                <span class="label">Statut:</span>
+                <span class="value inactive-warning">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  Client inactif depuis plus de 7 jours
                 </span>
               </div>
             </div>

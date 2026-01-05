@@ -66,42 +66,54 @@ export class ChartDataService {
   ) {}
 
   getWeightEvolution(period: '7d' | '30d' | '3m' | '1y' = '30d'): Observable<WeightEvolutionDTO[]> {
-    return this.http.get<WeightEvolutionDTO[]>(`${this.apiUrl}/weight-evolution`, {
+    // CORRECTION: Utilise l'endpoint correct avec userId
+    const userId = this.getCurrentUserId();
+    return this.http.get<WeightEvolutionDTO[]>(`${this.apiUrl}/weight-evolution/${userId}`, {
       headers: this.getHeaders(),
       params: { period }
     });
   }
 
   getBMIEvolution(period: '7d' | '30d' | '3m' | '1y' = '30d'): Observable<WeightEvolutionDTO[]> {
-    return this.http.get<WeightEvolutionDTO[]>(`${this.apiUrl}/bmi-evolution`, {
+    // CORRECTION: Utilise l'endpoint correct avec userId
+    const userId = this.getCurrentUserId();
+    return this.http.get<WeightEvolutionDTO[]>(`${this.apiUrl}/bmi-evolution/${userId}`, {
       headers: this.getHeaders(),
       params: { period }
     });
   }
 
   getCaloriesComparison(period: '7d' | '30d' | '3m' | '1y' = '30d'): Observable<CaloriesComparisonDTO[]> {
-    return this.http.get<CaloriesComparisonDTO[]>(`${this.apiUrl}/calories-comparison`, {
+    // CORRECTION: Utilise l'endpoint correct avec userId
+    const userId = this.getCurrentUserId();
+    return this.http.get<CaloriesComparisonDTO[]>(`${this.apiUrl}/calories-comparison/${userId}`, {
       headers: this.getHeaders(),
       params: { period }
     });
   }
 
   getActivityDistribution(period: '7d' | '30d' | '3m' | '1y' = '30d'): Observable<ActivityDistributionDTO[]> {
-    return this.http.get<ActivityDistributionDTO[]>(`${this.apiUrl}/activity-distribution`, {
+    // CORRECTION: Utilise l'endpoint correct avec userId
+    const userId = this.getCurrentUserId();
+    return this.http.get<ActivityDistributionDTO[]>(`${this.apiUrl}/activity-distribution/${userId}`, {
       headers: this.getHeaders(),
       params: { period }
     });
   }
 
   getWeeklyProgress(weeks: number = 12): Observable<WeeklyProgressDTO[]> {
-    return this.http.get<WeeklyProgressDTO[]>(`${this.apiUrl}/weekly-progress`, {
+    // CORRECTION: Utilise l'endpoint correct avec userId
+    const userId = this.getCurrentUserId();
+    return this.http.get<WeeklyProgressDTO[]>(`${this.apiUrl}/weekly-progress/${userId}`, {
       headers: this.getHeaders(),
       params: { weeks: weeks.toString() }
     });
   }
 
   getMonthlyTrends(months: number = 12): Observable<MonthlyTrendsDTO[]> {
-    return this.http.get<MonthlyTrendsDTO[]>(`${this.apiUrl}/monthly-trends`, {
+    // CORRECTION: Utilise l'endpoint correct avec userId
+    const userId = this.getCurrentUserId();
+    return this.http.get<MonthlyTrendsDTO[]>(`${this.apiUrl}/monthly-trends/${userId}`, {
       headers: this.getHeaders(),
       params: { months: months.toString() }
     });
@@ -113,5 +125,19 @@ export class ChartDataService {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
+  }
+
+  private getCurrentUserId(): number {
+    // CORRECTION: Récupère l'ID utilisateur depuis le token JWT ou storage
+    const userStr = this.storageService.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        return user.id || 1;
+      } catch (e) {
+        console.warn('Error parsing user from storage:', e);
+      }
+    }
+    return 1; // Fallback
   }
 }

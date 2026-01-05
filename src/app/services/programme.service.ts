@@ -80,6 +80,7 @@ export class ProgrammeService {
     );
     this.programmesSubject.next(updatedProgrammes);
 
+    // CORRECTION: Utilise l'endpoint PATCH correct du backend
     return this.http.patch<ProgrammeEntrainement>(`${this.apiUrl}/${id}/statut`, { statut }, { headers: this.getHeaders() })
       .pipe(
         retry(2),
@@ -103,7 +104,8 @@ export class ProgrammeService {
 
   // NOUVELLES MÉTHODES POUR INTÉGRATION BACKEND COMPLÈTE
   updateProgramme(id: number, request: CreerProgrammeRequest): Observable<ProgrammeEntrainement> {
-    return this.http.put<ProgrammeEntrainement>(`http://localhost:8095/api/coach/programmes/${id}`, request, { headers: this.getHeaders() })
+    // CORRECTION: Utilise l'endpoint correct du backend
+    return this.http.put<ProgrammeEntrainement>(`${this.apiUrl}/${id}`, request, { headers: this.getHeaders() })
       .pipe(
         retry(2),
         tap(() => this.refreshProgrammes()),
@@ -112,7 +114,8 @@ export class ProgrammeService {
   }
 
   deleteProgramme(id: number): Observable<any> {
-    return this.http.delete(`http://localhost:8095/api/coach/programmes/${id}`, { headers: this.getHeaders() })
+    // CORRECTION: Utilise l'endpoint correct du backend
+    return this.http.delete(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
       .pipe(
         retry(2),
         tap(() => this.refreshProgrammes()),

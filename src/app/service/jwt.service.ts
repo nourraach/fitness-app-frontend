@@ -96,6 +96,17 @@ export class JwtService {
     const role = this.getRole();
     const isAdmin = role === 'ROLE_ADMIN';
     this.adminStatusSubject.next(isAdmin); // Mettre à jour le BehaviorSubject
+    
+    console.log('🔄 JwtService - Mise à jour du statut admin:', {
+      role: role,
+      isAdmin: isAdmin
+    });
+  }
+
+  // NOUVELLE MÉTHODE: Forcer la mise à jour complète des rôles
+  forceRoleUpdate(): void {
+    this.updateAdminStatus();
+    console.log('🔄 JwtService - Mise à jour forcée des rôles');
   }
   getEmail(): string | null {
     const token = this.storageService.getItem('jwt');
@@ -240,8 +251,16 @@ decodeToken(token: string): any {
   }
 
   logout(): void {
+    // Nettoyage complet du token et des états
     this.storageService.removeItem('jwt');
     this.adminStatusSubject.next(false);
+    
+    // Forcer le nettoyage du cache localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem('jwt');
+    }
+    
+    console.log('🔓 Déconnexion complète - Token supprimé');
   }
 
   clearInvalidToken(): void {

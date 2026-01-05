@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 import { 
   Challenge, 
   ChallengeParticipant, 
@@ -13,6 +13,7 @@ import {
   ChallengeStatus,
   ParticipantStatus
 } from '../models/challenge.model';
+import { StorageService } from '../service/storage-service.service';
 
 @Injectable({
   providedIn: 'root'
@@ -31,64 +32,70 @@ export class ChallengeService {
   public myChallenges$ = this.myChallengesSubject.asObservable();
   public invitations$ = this.invitationsSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private storageService: StorageService
+  ) {
     this.loadMockData();
   }
 
   // Create new challenge
   createChallenge(request: CreateChallengeRequest): Observable<Challenge> {
-    // In real app: return this.http.post<Challenge>(`${this.apiUrl}/challenges`, request);
-    
-    const newChallenge: Challenge = {
-      id: Date.now(),
-      creatorId: this.currentUserId,
-      title: request.title,
-      description: request.description,
-      type: request.type,
-      targetValue: request.targetValue,
-      unit: this.getUnitForType(request.type),
-      startDate: request.startDate,
-      endDate: request.endDate,
-      status: ChallengeStatus.ACTIVE,
-      isPublic: request.isPublic,
-      maxParticipants: request.maxParticipants,
-      createdAt: new Date(),
-      creatorInfo: this.getCurrentUser(),
-      participantCount: 1, // Creator is automatically a participant
-      completedCount: 0
-    };
+    // CORRECTION: Utilise l'endpoint correct POST /api/challenges
+    return this.http.post<Challenge>(`${this.apiUrl}/challenges`, request, { headers: this.getHeaders() })
+      .pipe(
+        tap(challenge => {
+          // Add to challenges list
+          const currentChallenges = this.challengesSubject.value;
+          this.challengesSubject.next([challenge, ...currentChallenges]);
 
-    // Add to challenges list
-    const currentChallenges = this.challengesSubject.value;
-    this.challengesSubject.next([newChallenge, ...currentChallenges]);
-
-    const currentMyChallenges = this.myChallengesSubject.value;
-    this.myChallengesSubject.next([newChallenge, ...currentMyChallenges]);
-
-    // Send invitations to friends
-    request.invitedFriends.forEach(friendId => {
-      this.sendChallengeInvitation(newChallenge.id, friendId);
-    });
-
-    return of(newChallenge);
+          const currentMyChallenges = this.myChallengesSubject.value;
+          this.myChallengesSubject.next([challenge, ...currentMyChallenges]);
+        }),
+        catchError(error => {
+          console.error('Error creating challenge:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Get available challenges
   getAvailableChallenges(): Observable<Challenge[]> {
-    // In real app: return this.http.get<Challenge[]>(`${this.apiUrl}/challenges/available`);
-    return this.challenges$;
+    // CORRECTION: Utilise l'endpoint correct GET /api/challenges/available
+    return this.http.get<Challenge[]>(`${this.apiUrl}/challenges/available`, { headers: this.getHeaders() })
+      .pipe(
+        tap(challenges => this.challengesSubject.next(challenges)),
+        catchError(error => {
+          console.error('Error getting available challenges:', error);
+          return of([]);
+        })
+      );
   }
 
   // Get my challenges (created or participating)
   getMyChallenges(): Observable<Challenge[]> {
-    // In real app: return this.http.get<Challenge[]>(`${this.apiUrl}/challenges/my`);
-    return this.myChallenges$;
+    // CORRECTION: Utilise l'endpoint correct GET /api/challenges/my
+    return this.http.get<Challenge[]>(`${this.apiUrl}/challenges/my`, { headers: this.getHeaders() })
+      .pipe(
+        tap(challenges => this.myChallengesSubject.next(challenges)),
+        catchError(error => {
+          console.error('Error getting my challenges:', error);
+          return of([]);
+        })
+      );
   }
 
   // Get challenge invitations
   getChallengeInvitations(): Observable<ChallengeInvitation[]> {
-    // In real app: return this.http.get<ChallengeInvitation[]>(`${this.apiUrl}/challenges/invitations`);
-    return this.invitations$;
+    // CORRECTION: Utilise l'endpoint correct GET /api/challenges/invitations
+    return this.http.get<ChallengeInvitation[]>(`${this.apiUrl}/challenges/invitations`, { headers: this.getHeaders() })
+      .pipe(
+        tap(invitations => this.invitationsSubject.next(invitations)),
+        catchError(error => {
+          console.error('Error getting challenge invitations:', error);
+          return of([]);
+        })
+      );
   }
 
   // Send challenge invitation
@@ -284,6 +291,14 @@ export class ChallengeService {
   }
 
   // Private helper methods
+  private getHeaders(): HttpHeaders {
+    const token = this.storageService.getItem('jwt');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
+
   private loadMockData(): void {
     const mockChallenges: Challenge[] = [
       {

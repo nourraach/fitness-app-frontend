@@ -6,334 +6,297 @@ export interface CacheEntry<T> {
   data: T;
   timestamp: number;
   ttl: number; // Time to live in milliseconds
-  key: string;
 }
 
 export interface CacheConfig {
-  ttl?: number; // Default TTL in milliseconds
-  maxSize?: number; // Maximum number of entries
-  storageType?: 'memory' | 'localStorage' | 'sessionStorage';
+  defaultTTL: number; // Default TTL in minutes
+  maxSize: number; // Maximum number of entries
+  enableLogging: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class CacheService {
-  private memoryCache = new Map<string, CacheEntry<any>>();
-  private cacheStats = new BehaviorSubject({
+  private cache = new Map<string, CacheEntry<any>>();
+  private cacheStatsSubject = new BehaviorSubject<{hits: number, misses: number, size: number}>({
     hits: 0,
     misses: 0,
     size: 0
   });
 
-  private readonly defaultConfig: CacheConfig = {
-    ttl: 5 * 60 * 1000, // 5 minutes
+  private config: CacheConfig = {
+    defaultTTL: 5, // 5 minutes par défaut
     maxSize: 100,
-    storageType: 'memory'
+    enableLogging: false
   };
 
-  public stats$ = this.cacheStats.asObservable();
+  private stats = {
+    hits: 0,
+    misses: 0
+  };
+
+  public cacheStats$ = this.cacheStatsSubject.asObservable();
 
   constructor() {
-    this.setupCleanupInterval();
-    this.loadFromPersistentStorage();
+    // Nettoyer le cache périodiquement
+    setInterval(() => this.cleanup(), 60000); // Toutes les minutes
   }
 
-  // Get data from cache or execute the provided function
-  get<T>(
-    key: string, 
-    dataProvider: () => Observable<T>, 
-    config?: Partial<CacheConfig>
-  ): Observable<T> {
-    const finalConfig = { ...this.defaultConfig, ...config };
-    const cachedEntry = this.getCacheEntry<T>(key, finalConfig);
+  /**
+   * Configurer le service de cache
+   */
+  configure(config: Partial<CacheConfig>): void {
+    this.config = { ...this.config, ...config };
+  }
 
-    if (cachedEntry && !this.isExpired(cachedEntry)) {
-      this.updateStats('hit');
-      console.log(`Cache HIT for key: ${key}`);
-      return of(cachedEntry.data);
+  /**
+   * Stocker une valeur dans le cache
+   */
+  set<T>(key: string, data: T, ttlMinutes?: number): void {
+    const ttl = (ttlMinutes || this.config.defaultTTL) * 60 * 1000;
+    
+    // Vérifier la taille du cache
+    if (this.cache.size >= this.config.maxSize) {
+      this.evictOldest();
     }
 
-    this.updateStats('miss');
-    console.log(`Cache MISS for key: ${key}`);
+    this.cache.set(key, {
+      data: this.deepClone(data),
+      timestamp: Date.now(),
+      ttl
+    });
+
+    this.updateStats();
+    this.log(`Cache SET: ${key} (TTL: ${ttlMinutes || this.config.defaultTTL}min)`);
+  }
+
+  /**
+   * Récupérer une valeur du cache
+   */
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
     
-    return dataProvider().pipe(
+    if (!entry) {
+      this.stats.misses++;
+      this.updateStats();
+      this.log(`Cache MISS: ${key}`);
+      return null;
+    }
+
+    // Vérifier si l'entrée a expiré
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      this.stats.misses++;
+      this.updateStats();
+      this.log(`Cache EXPIRED: ${key}`);
+      return null;
+    }
+
+    this.stats.hits++;
+    this.updateStats();
+    this.log(`Cache HIT: ${key}`);
+    return this.deepClone(entry.data);
+  }
+
+  /**
+   * Vérifier si une clé existe dans le cache et n'a pas expiré
+   */
+  has(key: string): boolean {
+    const entry = this.cache.get(key);
+    if (!entry) return false;
+    
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      this.updateStats();
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Supprimer une entrée du cache
+   */
+  delete(key: string): boolean {
+    const deleted = this.cache.delete(key);
+    if (deleted) {
+      this.updateStats();
+      this.log(`Cache DELETE: ${key}`);
+    }
+    return deleted;
+  }
+
+  /**
+   * Invalider les entrées correspondant à un pattern
+   */
+  invalidate(pattern: string): number {
+    const keysToDelete = Array.from(this.cache.keys()).filter(key => 
+      key.includes(pattern)
+    );
+    
+    keysToDelete.forEach(key => this.cache.delete(key));
+    this.updateStats();
+    
+    this.log(`Cache INVALIDATE: ${pattern} (${keysToDelete.length} entries)`);
+    return keysToDelete.length;
+  }
+
+  /**
+   * Vider complètement le cache
+   */
+  clear(): void {
+    this.cache.clear();
+    this.stats.hits = 0;
+    this.stats.misses = 0;
+    this.updateStats();
+    this.log('Cache CLEAR: All entries removed');
+  }
+
+  /**
+   * Wrapper pour les observables avec cache automatique
+   */
+  cacheObservable<T>(
+    key: string,
+    source: () => Observable<T>,
+    ttlMinutes?: number
+  ): Observable<T> {
+    // Vérifier si les données sont en cache
+    const cached = this.get<T>(key);
+    if (cached !== null) {
+      return of(cached);
+    }
+
+    // Exécuter la source et mettre en cache le résultat
+    return source().pipe(
       tap(data => {
-        this.set(key, data, finalConfig);
+        this.set(key, data, ttlMinutes);
       }),
       catchError(error => {
-        // If we have expired data, return it as fallback
-        if (cachedEntry) {
-          console.log(`Using expired cache as fallback for key: ${key}`);
-          return of(cachedEntry.data);
-        }
+        this.log(`Cache ERROR for ${key}: ${error.message}`);
         throw error;
       })
     );
   }
 
-  // Set data in cache
-  set<T>(key: string, data: T, config?: Partial<CacheConfig>): void {
-    const finalConfig = { ...this.defaultConfig, ...config };
-    const entry: CacheEntry<T> = {
-      data,
-      timestamp: Date.now(),
-      ttl: finalConfig.ttl!,
-      key
-    };
-
-    this.setCacheEntry(key, entry, finalConfig);
-    this.enforceMaxSize(finalConfig);
-    this.updateStats('size');
-  }
-
-  // Check if data exists in cache and is not expired
-  has(key: string): boolean {
-    const entry = this.getCacheEntry(key);
-    return entry !== null && !this.isExpired(entry);
-  }
-
-  // Remove specific key from cache
-  delete(key: string): boolean {
-    const deleted = this.deleteCacheEntry(key);
-    if (deleted) {
-      this.updateStats('size');
-    }
-    return deleted;
-  }
-
-  // Clear all cache entries
-  clear(): void {
-    this.memoryCache.clear();
-    this.clearPersistentStorage();
-    this.updateStats('size');
-    console.log('Cache cleared');
-  }
-
-  // Clear cache entries matching a pattern
-  clearPattern(pattern: string | RegExp): number {
-    const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
-    let deletedCount = 0;
-
-    // Clear from memory cache
-    for (const key of this.memoryCache.keys()) {
-      if (regex.test(key)) {
-        this.memoryCache.delete(key);
-        deletedCount++;
-      }
-    }
-
-    // Clear from persistent storage
-    this.clearPersistentStoragePattern(regex);
-    
-    this.updateStats('size');
-    console.log(`Cleared ${deletedCount} cache entries matching pattern:`, pattern);
-    return deletedCount;
-  }
-
-  // Get cache statistics
-  getStats() {
-    const stats = this.cacheStats.value;
-    const hitRate = stats.hits + stats.misses > 0 
-      ? (stats.hits / (stats.hits + stats.misses) * 100).toFixed(2)
-      : '0.00';
+  /**
+   * Obtenir les statistiques du cache
+   */
+  getStats(): {hits: number, misses: number, size: number, hitRate: number} {
+    const total = this.stats.hits + this.stats.misses;
+    const hitRate = total > 0 ? (this.stats.hits / total) * 100 : 0;
     
     return {
-      ...stats,
-      hitRate: `${hitRate}%`,
-      memorySize: this.memoryCache.size
+      hits: this.stats.hits,
+      misses: this.stats.misses,
+      size: this.cache.size,
+      hitRate: Math.round(hitRate * 100) / 100
     };
   }
 
-  // Preload data into cache
-  preload<T>(key: string, dataProvider: () => Observable<T>, config?: Partial<CacheConfig>): Observable<T> {
-    if (this.has(key)) {
-      return of(this.getCacheEntry<T>(key)!.data);
-    }
-    
-    return this.get(key, dataProvider, config);
+  /**
+   * Obtenir toutes les clés du cache
+   */
+  getKeys(): string[] {
+    return Array.from(this.cache.keys());
   }
 
-  // Refresh cache entry (force reload)
-  refresh<T>(key: string, dataProvider: () => Observable<T>, config?: Partial<CacheConfig>): Observable<T> {
-    this.delete(key);
-    return this.get(key, dataProvider, config);
+  /**
+   * Obtenir la taille du cache en mémoire (approximative)
+   */
+  getMemoryUsage(): number {
+    let size = 0;
+    this.cache.forEach((entry, key) => {
+      size += key.length * 2; // Approximation pour la clé
+      size += JSON.stringify(entry.data).length * 2; // Approximation pour les données
+    });
+    return size; // En bytes
   }
 
-  private getCacheEntry<T>(key: string, config?: Partial<CacheConfig>): CacheEntry<T> | null {
-    const finalConfig = { ...this.defaultConfig, ...config };
-    
-    // Try memory cache first
-    if (this.memoryCache.has(key)) {
-      return this.memoryCache.get(key);
-    }
+  /**
+   * Nettoyer les entrées expirées
+   */
+  private cleanup(): void {
+    const now = Date.now();
+    let cleanedCount = 0;
 
-    // Try persistent storage
-    if (finalConfig.storageType !== 'memory') {
-      return this.getFromPersistentStorage<T>(key, finalConfig.storageType!);
-    }
-
-    return null;
-  }
-
-  private setCacheEntry<T>(key: string, entry: CacheEntry<T>, config: CacheConfig): void {
-    // Always store in memory for fast access
-    this.memoryCache.set(key, entry);
-
-    // Also store in persistent storage if configured
-    if (config.storageType !== 'memory') {
-      this.saveToPersistentStorage(key, entry, config.storageType!);
-    }
-  }
-
-  private deleteCacheEntry(key: string): boolean {
-    const memoryDeleted = this.memoryCache.delete(key);
-    this.deleteFromPersistentStorage(key);
-    return memoryDeleted;
-  }
-
-  private isExpired<T>(entry: CacheEntry<T>): boolean {
-    return Date.now() - entry.timestamp > entry.ttl;
-  }
-
-  private enforceMaxSize(config: CacheConfig): void {
-    if (!config.maxSize || this.memoryCache.size <= config.maxSize) {
-      return;
-    }
-
-    // Remove oldest entries (LRU strategy)
-    const entries = Array.from(this.memoryCache.entries());
-    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-    
-    const toRemove = entries.slice(0, this.memoryCache.size - config.maxSize);
-    toRemove.forEach(([key]) => {
-      this.memoryCache.delete(key);
-      this.deleteFromPersistentStorage(key);
+    this.cache.forEach((entry, key) => {
+      if (now - entry.timestamp > entry.ttl) {
+        this.cache.delete(key);
+        cleanedCount++;
+      }
     });
 
-    console.log(`Removed ${toRemove.length} old cache entries to enforce max size`);
-  }
-
-  private setupCleanupInterval(): void {
-    // Clean up expired entries every 5 minutes
-    setInterval(() => {
-      this.cleanupExpired();
-    }, 5 * 60 * 1000);
-  }
-
-  private cleanupExpired(): void {
-    let removedCount = 0;
-    
-    for (const [key, entry] of this.memoryCache.entries()) {
-      if (this.isExpired(entry)) {
-        this.memoryCache.delete(key);
-        this.deleteFromPersistentStorage(key);
-        removedCount++;
-      }
-    }
-
-    if (removedCount > 0) {
-      console.log(`Cleaned up ${removedCount} expired cache entries`);
-      this.updateStats('size');
+    if (cleanedCount > 0) {
+      this.updateStats();
+      this.log(`Cache CLEANUP: ${cleanedCount} expired entries removed`);
     }
   }
 
-  private getFromPersistentStorage<T>(key: string, storageType: 'localStorage' | 'sessionStorage'): CacheEntry<T> | null {
-    try {
-      const storage = storageType === 'localStorage' ? localStorage : sessionStorage;
-      const stored = storage.getItem(`cache_${key}`);
-      
-      if (stored) {
-        return JSON.parse(stored);
+  /**
+   * Supprimer l'entrée la plus ancienne
+   */
+  private evictOldest(): void {
+    let oldestKey: string | null = null;
+    let oldestTimestamp = Date.now();
+
+    this.cache.forEach((entry, key) => {
+      if (entry.timestamp < oldestTimestamp) {
+        oldestTimestamp = entry.timestamp;
+        oldestKey = key;
       }
-    } catch (error) {
-      console.error('Error reading from persistent storage:', error);
+    });
+
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+      this.log(`Cache EVICT: ${oldestKey} (oldest entry)`);
+    }
+  }
+
+  /**
+   * Cloner profondément un objet
+   */
+  private deepClone<T>(obj: T): T {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
     }
     
-    return null;
-  }
-
-  private saveToPersistentStorage<T>(key: string, entry: CacheEntry<T>, storageType: 'localStorage' | 'sessionStorage'): void {
-    try {
-      const storage = storageType === 'localStorage' ? localStorage : sessionStorage;
-      storage.setItem(`cache_${key}`, JSON.stringify(entry));
-    } catch (error) {
-      console.error('Error saving to persistent storage:', error);
+    if (obj instanceof Date) {
+      return new Date(obj.getTime()) as unknown as T;
     }
-  }
-
-  private deleteFromPersistentStorage(key: string): void {
-    try {
-      localStorage.removeItem(`cache_${key}`);
-      sessionStorage.removeItem(`cache_${key}`);
-    } catch (error) {
-      console.error('Error deleting from persistent storage:', error);
+    
+    if (obj instanceof Array) {
+      return obj.map(item => this.deepClone(item)) as unknown as T;
     }
-  }
-
-  private clearPersistentStorage(): void {
-    try {
-      // Clear cache entries from localStorage
-      const localKeys = Object.keys(localStorage).filter(key => key.startsWith('cache_'));
-      localKeys.forEach(key => localStorage.removeItem(key));
-
-      // Clear cache entries from sessionStorage
-      const sessionKeys = Object.keys(sessionStorage).filter(key => key.startsWith('cache_'));
-      sessionKeys.forEach(key => sessionStorage.removeItem(key));
-    } catch (error) {
-      console.error('Error clearing persistent storage:', error);
-    }
-  }
-
-  private clearPersistentStoragePattern(pattern: RegExp): void {
-    try {
-      // Clear matching entries from localStorage
-      const localKeys = Object.keys(localStorage)
-        .filter(key => key.startsWith('cache_'))
-        .filter(key => pattern.test(key.substring(6))); // Remove 'cache_' prefix
-      localKeys.forEach(key => localStorage.removeItem(key));
-
-      // Clear matching entries from sessionStorage
-      const sessionKeys = Object.keys(sessionStorage)
-        .filter(key => key.startsWith('cache_'))
-        .filter(key => pattern.test(key.substring(6))); // Remove 'cache_' prefix
-      sessionKeys.forEach(key => sessionStorage.removeItem(key));
-    } catch (error) {
-      console.error('Error clearing persistent storage pattern:', error);
-    }
-  }
-
-  private loadFromPersistentStorage(): void {
-    try {
-      // Load from localStorage
-      const localKeys = Object.keys(localStorage).filter(key => key.startsWith('cache_'));
-      localKeys.forEach(key => {
-        const cacheKey = key.substring(6); // Remove 'cache_' prefix
-        const entry = this.getFromPersistentStorage(cacheKey, 'localStorage');
-        if (entry && !this.isExpired(entry)) {
-          this.memoryCache.set(cacheKey, entry);
-        }
+    
+    if (typeof obj === 'object') {
+      const cloned = {} as T;
+      Object.keys(obj).forEach(key => {
+        (cloned as any)[key] = this.deepClone((obj as any)[key]);
       });
-
-      console.log(`Loaded ${this.memoryCache.size} cache entries from persistent storage`);
-    } catch (error) {
-      console.error('Error loading from persistent storage:', error);
+      return cloned;
     }
+    
+    return obj;
   }
 
-  private updateStats(type: 'hit' | 'miss' | 'size'): void {
-    const current = this.cacheStats.value;
-    
-    switch (type) {
-      case 'hit':
-        this.cacheStats.next({ ...current, hits: current.hits + 1 });
-        break;
-      case 'miss':
-        this.cacheStats.next({ ...current, misses: current.misses + 1 });
-        break;
-      case 'size':
-        this.cacheStats.next({ ...current, size: this.memoryCache.size });
-        break;
+  /**
+   * Mettre à jour les statistiques
+   */
+  private updateStats(): void {
+    this.cacheStatsSubject.next({
+      hits: this.stats.hits,
+      misses: this.stats.misses,
+      size: this.cache.size
+    });
+  }
+
+  /**
+   * Logger les opérations de cache
+   */
+  private log(message: string): void {
+    if (this.config.enableLogging) {
+      console.log(`[CacheService] ${message}`);
     }
   }
 }

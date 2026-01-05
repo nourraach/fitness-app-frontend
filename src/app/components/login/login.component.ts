@@ -109,17 +109,20 @@ ngOnInit(): void {
             this.storageService.setItem('jwt', token);
             this.service.updateAdminStatus();
             
-            // Redirection selon le rôle
-            const role = this.service.getRole();
-            console.log('🔍 Rôle détecté:', role);
-            
-            if (role === 'ROLE_COACH' || role?.toLowerCase() === 'coach') {
-              console.log('✅ Redirection vers /coach-home');
-              this.router.navigateByUrl('/coach-home');
-            } else {
-              console.log('✅ Redirection vers /home');
-              this.router.navigateByUrl('/home');
-            }
+            // NOUVEAU: Forcer un délai pour s'assurer que le token est bien stocké
+            setTimeout(() => {
+              // Redirection selon le rôle
+              const role = this.service.getRole();
+              console.log('🔍 Rôle détecté après délai:', role);
+              
+              if (role === 'ROLE_COACH' || role?.toLowerCase() === 'coach') {
+                console.log('✅ Redirection vers /coach-home');
+                this.router.navigateByUrl('/coach-home');
+              } else {
+                console.log('✅ Redirection vers /home');
+                this.router.navigateByUrl('/home');
+              }
+            }, 100); // Petit délai pour s'assurer que le localStorage est mis à jour
           } else {
             console.error('Aucun token trouvé dans la réponse');
             alert('Erreur: Aucun token d\'authentification reçu.');

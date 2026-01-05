@@ -361,7 +361,7 @@ export class ActivityDistributionComponent implements OnInit, OnChanges {
       }
     };
 
-    this.chart = new Chart(ctx, config);
+    this.chart = new Chart(ctx, config as any);
   }
 
   ngOnDestroy() {

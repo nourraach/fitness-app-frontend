@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClientService } from '../services/client.service';
 import { Client } from '../models/client.model';
+import { EnhancedClientDTO, EnhancedClientUtils, ClientStatistics } from '../models/enhanced-client.model';
 
 @Component({
   selector: 'app-coach-clients',
@@ -13,14 +14,17 @@ import { Client } from '../models/client.model';
   styleUrls: ['./coach-clients.component.css']
 })
 export class CoachClientsComponent implements OnInit {
-  myClients: Client[] = [];
+  myClients: EnhancedClientDTO[] = [];
   availableClients: Client[] = [];
-  selectedClient: Client | null = null;
+  selectedClient: EnhancedClientDTO | null = null;
+  clientStatistics: ClientStatistics | null = null;
   showAssignModal = false;
   loading = false;
   errorMessage = '';
   successMessage = '';
   searchTerm = '';
+  sortBy: 'name' | 'progressRate' | 'programsCount' | 'lastActivity' = 'name';
+  showInactiveOnly = false;
 
   constructor(
     private clientService: ClientService,
@@ -28,20 +32,21 @@ export class CoachClientsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadMyClients();
-    this.generateMockData(); // Pour la démo, on génère des données
+    this.loadEnhancedClients();
   }
 
-  loadMyClients(): void {
+  loadEnhancedClients(): void {
     this.loading = true;
-    this.clientService.getMyClients().subscribe({
+    this.clientService.getEnhancedClients().subscribe({
       next: (clients) => {
-        this.myClients = clients;
+        // Enrichir les clients avec les données calculées côté frontend
+        this.myClients = clients.map(client => EnhancedClientUtils.enrichClient(client));
+        this.clientStatistics = EnhancedClientUtils.getClientStatistics(this.myClients);
         this.loading = false;
       },
       error: (error) => {
-        console.error('Erreur lors du chargement des clients:', error);
-        // En cas d'erreur (backend pas prêt), on utilise les données mock
+        console.error('Erreur lors du chargement des clients améliorés:', error);
+        // En cas d'erreur, fallback vers les données mock
         this.generateMockData();
         this.loading = false;
       }
@@ -60,9 +65,9 @@ export class CoachClientsComponent implements OnInit {
     });
   }
 
-  // Données mock pour la démo
+  // Données mock pour la démo (fallback)
   generateMockData(): void {
-    this.myClients = [
+    const mockClients: EnhancedClientDTO[] = [
       {
         id: 1,
         name: 'Marie Dubois',
@@ -70,7 +75,7 @@ export class CoachClientsComponent implements OnInit {
         age: 28,
         phone: '+33 6 12 34 56 78',
         assignedDate: '2025-01-15',
-        lastActivity: '2025-11-24',
+        lastActivity: '2025-01-03',
         programsCount: 3,
         progressRate: 85,
         status: 'active'
@@ -82,7 +87,7 @@ export class CoachClientsComponent implements OnInit {
         age: 35,
         phone: '+33 6 23 45 67 89',
         assignedDate: '2025-02-10',
-        lastActivity: '2025-11-23',
+        lastActivity: '2025-01-04',
         programsCount: 2,
         progressRate: 72,
         status: 'active'
@@ -94,7 +99,7 @@ export class CoachClientsComponent implements OnInit {
         age: 31,
         phone: '+33 6 34 56 78 90',
         assignedDate: '2025-03-05',
-        lastActivity: '2025-11-24',
+        lastActivity: '2024-12-20',
         programsCount: 4,
         progressRate: 92,
         status: 'active'
@@ -106,12 +111,16 @@ export class CoachClientsComponent implements OnInit {
         age: 42,
         phone: '+33 6 45 67 89 01',
         assignedDate: '2025-01-20',
-        lastActivity: '2025-11-20',
-        programsCount: 1,
-        progressRate: 45,
+        lastActivity: 'Aucune activité',
+        programsCount: 0,
+        progressRate: 0,
         status: 'inactive'
       }
     ];
+
+    // Enrichir les clients mock avec les données calculées
+    this.myClients = mockClients.map(client => EnhancedClientUtils.enrichClient(client));
+    this.clientStatistics = EnhancedClientUtils.getClientStatistics(this.myClients);
   }
 
   generateMockAvailableClients(): void {
@@ -157,13 +166,8 @@ export class CoachClientsComponent implements OnInit {
     this.clientService.assignClient(client.id).subscribe({
       next: () => {
         this.successMessage = `${client.name} a été assigné avec succès !`;
-        this.myClients.push({
-          ...client,
-          assignedDate: new Date().toISOString().split('T')[0],
-          status: 'active',
-          programsCount: 0,
-          progressRate: 0
-        });
+        // Recharger la liste des clients améliorés
+        this.loadEnhancedClients();
         this.availableClients = this.availableClients.filter(c => c.id !== client.id);
         this.closeAssignModal();
         this.loading = false;
@@ -176,7 +180,7 @@ export class CoachClientsComponent implements OnInit {
     });
   }
 
-  unassignClient(client: Client): void {
+  unassignClient(client: EnhancedClientDTO): void {
     if (!confirm(`Êtes-vous sûr de vouloir retirer ${client.name} de vos clients ?`)) {
       return;
     }
@@ -186,6 +190,7 @@ export class CoachClientsComponent implements OnInit {
       next: () => {
         this.successMessage = `${client.name} a été retiré de vos clients`;
         this.myClients = this.myClients.filter(c => c.id !== client.id);
+        this.clientStatistics = EnhancedClientUtils.getClientStatistics(this.myClients);
         this.loading = false;
         setTimeout(() => this.successMessage = '', 3000);
       },
@@ -196,7 +201,7 @@ export class CoachClientsComponent implements OnInit {
     });
   }
 
-  viewClientDetails(client: Client): void {
+  viewClientDetails(client: EnhancedClientDTO): void {
     this.selectedClient = client;
   }
 
@@ -224,20 +229,81 @@ export class CoachClientsComponent implements OnInit {
 
   getProgressClass(rate?: number): string {
     if (!rate) return '';
-    if (rate >= 80) return 'progress-excellent';
-    if (rate >= 60) return 'progress-good';
-    if (rate >= 40) return 'progress-average';
-    return 'progress-low';
+    return EnhancedClientUtils.getProgressClass(rate);
   }
 
-  get filteredClients(): Client[] {
-    if (!this.searchTerm) return this.myClients;
+  get filteredClients(): EnhancedClientDTO[] {
+    let clients = this.myClients;
+
+    // Filtrer par terme de recherche
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      clients = clients.filter(client => 
+        client.name.toLowerCase().includes(term) ||
+        client.email.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtrer par clients inactifs seulement
+    if (this.showInactiveOnly) {
+      clients = clients.filter(client => client.isInactive);
+    }
+
+    // Trier les clients
+    return EnhancedClientUtils.sortClients(clients, this.sortBy);
+  }
+
+  // Nouvelles méthodes pour les statistiques améliorées
+  setSortBy(sortBy: 'name' | 'progressRate' | 'programsCount' | 'lastActivity'): void {
+    this.sortBy = sortBy;
+  }
+
+  toggleInactiveFilter(): void {
+    this.showInactiveOnly = !this.showInactiveOnly;
+  }
+
+  getInactiveClientsCount(): number {
+    return this.myClients.filter(c => c.isInactive).length;
+  }
+
+  getAverageProgressRate(): number {
+    return this.clientStatistics?.averageProgressRate || 0;
+  }
+
+  getClientsWithProgramsCount(): number {
+    return this.clientStatistics?.clientsWithPrograms || 0;
+  }
+
+  getClientsWithoutProgramsCount(): number {
+    return this.clientStatistics?.clientsWithoutPrograms || 0;
+  }
+
+  // Méthodes d'alerte pour clients inactifs
+  getInactiveAlerts(): EnhancedClientDTO[] {
+    return EnhancedClientUtils.getInactiveClients(this.myClients);
+  }
+
+  hasInactiveAlerts(): boolean {
+    return this.getInactiveAlerts().length > 0;
+  }
+
+  // Formatage des dates
+  formatLastActivity(lastActivity: string): string {
+    if (lastActivity === "Aucune activité") return lastActivity;
     
-    const term = this.searchTerm.toLowerCase();
-    return this.myClients.filter(client => 
-      client.name.toLowerCase().includes(term) ||
-      client.email.toLowerCase().includes(term)
-    );
+    try {
+      const date = new Date(lastActivity);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return "Aujourd'hui";
+      if (diffDays === 1) return "Hier";
+      if (diffDays < 7) return `Il y a ${diffDays} jours`;
+      if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+      return `Il y a ${Math.floor(diffDays / 30)} mois`;
+    } catch (error) {
+      return lastActivity;
+    }
   }
 
   getActiveClientsCount(): number {

@@ -72,8 +72,14 @@ export class RegisterComponent implements OnInit {
 
   // Déconnexion de l'utilisateur (si connecté)
   logoutUser(): void {
-    this.storageService.removeItem('jwt');
-    console.log('Utilisateur déconnecté automatiquement.');
+    // Nettoyage complet via le service JWT
+    if (this.service) {
+      this.service.logout();
+    } else {
+      // Fallback si le service n'est pas disponible
+      this.storageService.removeItem('jwt');
+    }
+    console.log('🔓 Register - Utilisateur déconnecté automatiquement.');
   }
 
   // Soumettre le formulaire d'enregistrement
