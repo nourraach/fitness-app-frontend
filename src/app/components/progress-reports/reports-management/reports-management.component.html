@@ -51,7 +51,7 @@
         >
           <option value="">Tous les clients</option>
           <option *ngFor="let client of clients" [value]="client.id">
-            {{ client.nom }} {{ client.prenom }}
+            {{ client.name }}
           </option>
         </select>
         
@@ -89,7 +89,7 @@
           (click)="selectReport(report)"
         >
           <div class="report-header">
-            <h4 class="report-title">{{ report.title }}</h4>
+            <h4 class="report-title">Rapport du {{ formatDate(report.dateDebutSemaine) }}</h4>
             <div class="report-actions">
               <button
                 (click)="editReport(report); $event.stopPropagation()"
@@ -139,23 +139,23 @@
           <div class="report-meta">
             <div class="report-client">
               <i class="fas fa-user"></i>
-              <span>{{ report.clientName }}</span>
+              <span>{{ report.nomUtilisateur }}</span>
             </div>
             <div class="report-period">
               <i class="fas fa-calendar"></i>
-              <span>{{ formatDate(report.startDate) }} - {{ formatDate(report.endDate) }}</span>
+              <span>{{ formatDate(report.dateDebutSemaine) }} - {{ formatDate(report.dateFinSemaine) }}</span>
             </div>
           </div>
           
           <div class="report-status">
-            <span [class]="'status-badge ' + getStatusBadgeClass(report.status)">
-              {{ getStatusText(report.status) }}
+            <span [class]="'status-badge ' + getStatusBadgeClass(getReportStatus(report))">
+              {{ getStatusText(getReportStatus(report)) }}
             </span>
-            <span class="report-date">{{ formatDate(report.createdAt) }}</span>
+            <span class="report-date">{{ formatDate(report.dateGeneration) }}</span>
           </div>
           
-          <div class="report-summary" *ngIf="report.summary">
-            <p>{{ report.summary }}</p>
+          <div class="report-summary" *ngIf="report.resume">
+            <p>{{ report.resume }}</p>
           </div>
         </div>
 
@@ -229,7 +229,7 @@
       <app-report-viewer
         [report]="selectedReport"
         (reportUpdated)="onReportUpdated($event)"
-        (reportDeleted)="onReportDeleted($event)"
+        (reportDeleted)="onReportDeletedFromChild($event)"
       ></app-report-viewer>
     </div>
 

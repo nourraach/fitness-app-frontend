@@ -30,6 +30,9 @@ export interface RapportProgresDTO {
   };
 }
 
+// Alias for backward compatibility
+export interface RapportProgres extends RapportProgresDTO {}
+
 export interface CreerRapportRequest {
   utilisateurId: number;
   dateDebutSemaine: Date;

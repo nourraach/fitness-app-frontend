@@ -16,6 +16,9 @@ export interface EnhancedClientDTO {
   lastActivityDate?: Date;      // Parsed date pour tri
 }
 
+// Alias for backward compatibility
+export interface EnhancedClient extends EnhancedClientDTO {}
+
 export interface CoachStatsDTO {
   totalClients: number;
   activeClients: number;

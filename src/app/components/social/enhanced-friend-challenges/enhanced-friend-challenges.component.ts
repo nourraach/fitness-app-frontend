@@ -3,19 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DefiService } from '../../../services/defi.service';
 import { FriendService } from '../../../services/friend.service';
-
-interface DefiDTO {
-  id: number;
-  nom: string;
-  description: string;
-  objectif: 'CALORIES_BRULEES' | 'DUREE_ACTIVITE' | 'POIDS' | 'PAS' | 'DISTANCE';
-  valeurCible: number;
-  dateDebut: string;
-  dateFin: string;
-  statut: string;
-  participants: any[];
-  progression?: number;
-}
+import { DefiDTO, CreerDefiRequest, ParticipantDefiDTO } from '../../../models/defi.model';
+import { User } from '../../../models/friend.model';
 
 @Component({
   selector: 'app-enhanced-friend-challenges',
@@ -105,23 +94,23 @@ interface DefiDTO {
         <div *ngFor="let defi of activeDefis" class="challenge-card active">
           <div class="challenge-header">
             <h4>{{ defi.nom }}</h4>
-            <span class="challenge-type">{{ getObjectifLabel(defi.objectif) }}</span>
+            <span class="challenge-type">{{ getObjectifLabel(defi.typeObjectif) }}</span>
           </div>
           <p class="challenge-description">{{ defi.description }}</p>
           <div class="challenge-progress">
             <div class="progress-bar">
-              <div class="progress-fill" [style.width.%]="defi.progression || 0"></div>
+              <div class="progress-fill" [style.width.%]="0"></div>
             </div>
-            <span class="progress-text">{{ defi.progression || 0 }}% complété</span>
+            <span class="progress-text">0% complété</span>
           </div>
           <div class="challenge-details">
-            <span>Objectif: {{ defi.valeurCible }} {{ getUnite(defi.objectif) }}</span>
+            <span>Objectif: {{ defi.valeurCible }} {{ getUnite(defi.typeObjectif) }}</span>
             <span>Participants: {{ defi.participants.length }}</span>
             <span>Fin: {{ formatDate(defi.dateFin) }}</span>
           </div>
           <div class="challenge-actions">
-            <button class="btn btn-sm btn-info" (click)="viewClassement(defi.id)">Classement</button>
-            <button class="btn btn-sm btn-danger" (click)="quitterDefi(defi.id)">Quitter</button>
+            <button class="btn btn-sm btn-info" (click)="viewClassement(defi.id!)">Classement</button>
+            <button class="btn btn-sm btn-danger" (click)="quitterDefi(defi.id!)">Quitter</button>
           </div>
         </div>
       </div>
@@ -131,16 +120,16 @@ interface DefiDTO {
         <div *ngFor="let defi of pendingDefis" class="challenge-card pending">
           <div class="challenge-header">
             <h4>{{ defi.nom }}</h4>
-            <span class="challenge-type">{{ getObjectifLabel(defi.objectif) }}</span>
+            <span class="challenge-type">{{ getObjectifLabel(defi.typeObjectif) }}</span>
           </div>
           <p class="challenge-description">{{ defi.description }}</p>
           <div class="challenge-details">
-            <span>Objectif: {{ defi.valeurCible }} {{ getUnite(defi.objectif) }}</span>
+            <span>Objectif: {{ defi.valeurCible }} {{ getUnite(defi.typeObjectif) }}</span>
             <span>Début: {{ formatDate(defi.dateDebut) }}</span>
           </div>
           <div class="challenge-actions">
-            <button class="btn btn-sm btn-success" (click)="accepterDefi(defi.id)">Accepter</button>
-            <button class="btn btn-sm btn-secondary" (click)="refuserDefi(defi.id)">Refuser</button>
+            <button class="btn btn-sm btn-success" (click)="accepterDefi(defi.id!)">Accepter</button>
+            <button class="btn btn-sm btn-secondary" (click)="refuserDefi(defi.id!)">Refuser</button>
           </div>
         </div>
       </div>
@@ -235,15 +224,15 @@ export class EnhancedFriendChallengesComponent implements OnInit {
   }
 
   loadDefis() {
-    this.defiService.getMesDefis().subscribe(defis => {
-      this.activeDefis = defis.filter(d => d.statut === 'ACTIF');
-      this.pendingDefis = defis.filter(d => d.statut === 'EN_ATTENTE');
-      this.completedDefis = defis.filter(d => d.statut === 'TERMINE');
+    this.defiService.getMesDefis().subscribe((defis: DefiDTO[]) => {
+      this.activeDefis = defis.filter((d: DefiDTO) => d.statut === 'ACTIF');
+      this.pendingDefis = defis.filter((d: DefiDTO) => d.statut === 'EN_ATTENTE');
+      this.completedDefis = defis.filter((d: DefiDTO) => d.statut === 'TERMINE');
     });
   }
 
   loadFriends() {
-    this.friendService.getFriends().subscribe(friends => {
+    this.friendService.friends$.subscribe((friends: User[]) => {
       this.friends = friends;
     });
   }
@@ -262,13 +251,19 @@ export class EnhancedFriendChallengesComponent implements OnInit {
       this.isLoading = true;
       const formValue = this.challengeForm.value;
       
-      const request = {
+      // Calculate dates based on duration
+      const dateDebut = new Date();
+      const dateFin = new Date();
+      dateFin.setDate(dateDebut.getDate() + (formValue.duree || 7)); // Default 7 days if no duration
+      
+      const request: CreerDefiRequest = {
         nom: formValue.nom,
         description: formValue.description,
-        objectif: formValue.objectif,
+        typeObjectif: formValue.objectif,
         valeurCible: formValue.valeurCible,
-        dureeJours: formValue.duree,
-        amisInvites: this.selectedFriends
+        dateDebut: dateDebut,
+        dateFin: dateFin,
+        participantsIds: this.selectedFriends
       };
 
       this.defiService.creerDefiEntreAmis(request).subscribe({
@@ -279,7 +274,7 @@ export class EnhancedFriendChallengesComponent implements OnInit {
           this.loadDefis();
           this.isLoading = false;
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error creating challenge:', error);
           this.isLoading = false;
         }
@@ -309,7 +304,7 @@ export class EnhancedFriendChallengesComponent implements OnInit {
 
   viewClassement(defiId: number) {
     this.defiService.getClassement(defiId).subscribe(classement => {
-      this.classement = classement.participants || [];
+      this.classement = classement.classement || [];
       this.showClassement = true;
     });
   }
@@ -341,7 +336,10 @@ export class EnhancedFriendChallengesComponent implements OnInit {
     return unites[objectif] || '';
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('fr-FR');
+  formatDate(date: Date | string): string {
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString('fr-FR');
+    }
+    return date.toLocaleDateString('fr-FR');
   }
 }

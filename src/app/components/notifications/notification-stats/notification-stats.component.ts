@@ -561,8 +561,8 @@ export class NotificationStatsComponent implements OnInit {
     const data = Object.values(this.stats!.repartitionParType);
     const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545'];
 
-    const config: ChartConfiguration = {
-      type: 'doughnut' as ChartType,
+    const config: ChartConfiguration<'doughnut'> = {
+      type: 'doughnut',
       data: {
         labels,
         datasets: [{

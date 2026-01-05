@@ -165,8 +165,8 @@ export class NutritionPlanService {
   }
 
   // Génération automatique de plan
-  generateAutomaticPlan(clientId: number, objectif: string, preferences?: string[]): Observable<NutritionPlanDTO> {
-    const request = {
+  generateAutomaticPlan(clientId: number, objectif: 'PERTE_POIDS' | 'PRISE_MASSE' | 'MAINTIEN' | 'PERFORMANCE', preferences?: string[]): Observable<NutritionPlanDTO> {
+    const request: CreateNutritionPlanRequest = {
       clientId,
       objectif,
       preferences: preferences || [],

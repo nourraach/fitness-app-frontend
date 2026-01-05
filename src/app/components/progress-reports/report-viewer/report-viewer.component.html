@@ -2,18 +2,18 @@
   <!-- Report Header -->
   <div class="report-header">
     <div class="report-title-section">
-      <h2>{{ report.title }}</h2>
+      <h2>Rapport du {{ formatDate(report.dateDebutSemaine) }}</h2>
       <div class="report-meta">
         <span class="client-name">
           <i class="fas fa-user"></i>
-          {{ report.clientName }}
+          {{ report.nomUtilisateur }}
         </span>
         <span class="report-period">
           <i class="fas fa-calendar"></i>
-          {{ formatDate(report.startDate) }} - {{ formatDate(report.endDate) }}
+          {{ formatDate(report.dateDebutSemaine) }} - {{ formatDate(report.dateFinSemaine) }}
         </span>
-        <span [class]="'status-badge ' + getStatusBadgeClass(report.status)">
-          {{ report.status }}
+        <span [class]="'status-badge ' + getStatusBadgeClass(getReportStatus())">
+          {{ getReportStatus() }}
         </span>
       </div>
     </div>
@@ -31,9 +31,9 @@
   </div>
 
   <!-- Report Summary -->
-  <div class="report-summary" *ngIf="report.summary">
+  <div class="report-summary" *ngIf="report.resume">
     <h3>Résumé</h3>
-    <p>{{ report.summary }}</p>
+    <p>{{ report.resume }}</p>
   </div>
 
   <!-- Key Metrics -->
@@ -124,37 +124,26 @@
   </div>
 
   <!-- Recommendations -->
-  <div class="recommendations-section" *ngIf="report.recommendations">
+  <div class="recommendations-section" *ngIf="report.recommandations">
     <h3>Recommandations</h3>
-    <div class="recommendations-list">
-      <div *ngFor="let rec of report.recommendations" class="recommendation-item">
-        <div class="recommendation-icon">
-          <i class="fas fa-lightbulb"></i>
-        </div>
-        <div class="recommendation-content">
-          <h5>{{ rec.title }}</h5>
-          <p>{{ rec.description }}</p>
-          <div class="recommendation-priority" [class]="'priority-' + rec.priority">
-            {{ rec.priority }}
-          </div>
-        </div>
-      </div>
+    <div class="recommendations-content">
+      <p>{{ report.recommandations }}</p>
     </div>
   </div>
 
   <!-- Notes -->
-  <div class="notes-section" *ngIf="report.notes">
-    <h3>Notes</h3>
+  <div class="notes-section" *ngIf="report.resume">
+    <h3>Résumé</h3>
     <div class="notes-content">
-      <p>{{ report.notes }}</p>
+      <p>{{ report.resume }}</p>
     </div>
   </div>
 
   <!-- Report Footer -->
   <div class="report-footer">
     <div class="creation-info">
-      <span>Créé le {{ formatDate(report.createdAt) }}</span>
-      <span *ngIf="report.updatedAt">• Modifié le {{ formatDate(report.updatedAt) }}</span>
+      <span>Créé le {{ formatDate(report.dateGeneration) }}</span>
+      <span *ngIf="report.dateModification">• Modifié le {{ formatDate(report.dateModification) }}</span>
     </div>
   </div>
 </div>

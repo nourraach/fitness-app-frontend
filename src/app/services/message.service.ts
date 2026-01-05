@@ -33,6 +33,15 @@ export class MessageService {
     return this.messagesSubject.asObservable();
   }
 
+  // Backward compatibility methods
+  getMessages(conversationId: number): Observable<MessageDTO[]> {
+    return this.getConversationMessages(conversationId);
+  }
+
+  markAsRead(messageId: number): Observable<void> {
+    return this.markMessageAsRead(messageId);
+  }
+
   get conversations$(): Observable<ConversationDTO[]> {
     return this.conversationsSubject.asObservable();
   }

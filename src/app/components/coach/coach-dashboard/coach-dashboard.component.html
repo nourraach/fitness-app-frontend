@@ -233,7 +233,7 @@
             <i class="pi pi-heart"></i>
           </div>
           <div class="metric-details">
-            <h4>{{ dashboardOverview?.businessMetrics?.retentionRate ? formatPercentage(dashboardOverview.businessMetrics.retentionRate) : '0%' }}</h4>
+            <h4>{{ dashboardOverview?.businessMetrics?.retentionRate ? formatPercentage(dashboardOverview?.businessMetrics?.retentionRate) : '0%' }}</h4>
             <p>Taux de Rétention</p>
           </div>
         </div>
@@ -243,7 +243,7 @@
             <i class="pi pi-star"></i>
           </div>
           <div class="metric-details">
-            <h4>{{ dashboardOverview?.businessMetrics?.successRate ? formatPercentage(dashboardOverview.businessMetrics.successRate) : '0%' }}</h4>
+            <h4>{{ dashboardOverview?.businessMetrics?.successRate ? formatPercentage(dashboardOverview?.businessMetrics?.successRate) : '0%' }}</h4>
             <p>Taux de Succès</p>
           </div>
         </div>
@@ -253,7 +253,7 @@
             <i class="pi pi-calendar-plus"></i>
           </div>
           <div class="metric-details">
-            <h4>{{ dashboardOverview.businessMetrics.averageSessionsPerClient }}</h4>
+            <h4>{{ dashboardOverview?.businessMetrics?.averageSessionsPerClient || '0' }}</h4>
             <p>Sessions/Client</p>
           </div>
         </div>
@@ -263,7 +263,7 @@
             <i class="pi pi-arrow-up"></i>
           </div>
           <div class="metric-details">
-            <h4>{{ formatPercentage(dashboardOverview.businessMetrics.clientGrowthRate) }}</h4>
+            <h4>{{ dashboardOverview?.businessMetrics?.clientGrowthRate ? formatPercentage(dashboardOverview?.businessMetrics?.clientGrowthRate) : '0%' }}</h4>
             <p>Croissance Clients</p>
           </div>
         </div>

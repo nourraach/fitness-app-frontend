@@ -35,13 +35,13 @@ export class ReportFormComponent implements OnInit {
 
   private initializeForm(): void {
     this.reportForm = this.fb.group({
-      title: [this.report?.title || '', [Validators.required, Validators.minLength(3)]],
-      clientId: [this.report?.clientId || '', Validators.required],
-      startDate: [this.formatDateForInput(this.report?.startDate), Validators.required],
-      endDate: [this.formatDateForInput(this.report?.endDate), Validators.required],
-      summary: [this.report?.summary || ''],
-      notes: [this.report?.notes || ''],
-      status: [this.report?.status || 'draft'],
+      title: ['Rapport du ' + (this.report ? new Date(this.report.dateDebutSemaine).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR')), [Validators.required, Validators.minLength(3)]],
+      clientId: [this.report?.utilisateurId || '', Validators.required],
+      startDate: [this.formatDateForInput(this.report?.dateDebutSemaine), Validators.required],
+      endDate: [this.formatDateForInput(this.report?.dateFinSemaine), Validators.required],
+      summary: [this.report?.resume || ''],
+      notes: [this.report?.recommandations || ''],
+      status: ['draft'], // Default status since RapportProgres doesn't have this field
       includeWeight: [true],
       includeActivity: [true],
       includeNutrition: [true],
@@ -107,8 +107,8 @@ export class ReportFormComponent implements OnInit {
   }
 
   private getClientName(clientId: string): string {
-    const client = this.clients.find(c => c.id === clientId);
-    return client ? `${client.nom} ${client.prenom}` : '';
+    const client = this.clients.find(c => c.id.toString() === clientId);
+    return client ? client.name : '';
   }
 
   // Quick date setters

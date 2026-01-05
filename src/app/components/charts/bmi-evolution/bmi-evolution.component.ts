@@ -264,7 +264,10 @@ export class BMIEvolutionComponent implements OnInit, OnChanges {
     this.createChart(data);
   }
 
-  getBMICategory(bmi: number): { label: string; class: string } {
+  getBMICategory(bmi: number | null): { label: string; class: string } {
+    if (!bmi) {
+      return { label: 'Non disponible', class: 'normal' };
+    }
     if (bmi < 18.5) {
       return { label: 'Insuffisance pondérale', class: 'underweight' };
     } else if (bmi < 25) {
@@ -308,6 +311,7 @@ export class BMIEvolutionComponent implements OnInit, OnChanges {
             fill: true,
             tension: 0.4,
             pointBackgroundColor: bmiData.map(bmi => {
+              if (!bmi) return '#6c757d';
               if (bmi < 18.5) return '#17a2b8';
               if (bmi < 25) return '#28a745';
               if (bmi < 30) return '#ffc107';
@@ -403,7 +407,7 @@ export class BMIEvolutionComponent implements OnInit, OnChanges {
     };
 
     this.chart = new Chart(ctx, config);
-    this.chart.register(plugin);
+    Chart.register(plugin);
   }
 
   ngOnDestroy() {

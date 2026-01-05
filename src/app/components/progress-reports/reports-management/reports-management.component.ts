@@ -143,7 +143,7 @@ export class ReportsManagementComponent implements OnInit, OnDestroy {
     this.showReportForm = false;
   }
 
-  onReportDeleted(reportId: string): void {
+  onReportDeleted(reportId: number): void {
     this.reports = this.reports.filter(r => r.id !== reportId);
     this.totalReports--;
     if (this.selectedReport?.id === reportId) {
@@ -151,11 +151,20 @@ export class ReportsManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  onReportDeletedFromChild(reportId: string): void {
+    this.onReportDeleted(parseInt(reportId, 10));
+  }
+
+  getReportStatus(report: RapportProgres): string {
+    // Use the service method to determine status
+    return this.rapportService.getReportStatus(report);
+  }
+
   deleteReport(report: RapportProgres): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le rapport "${report.title}" ?`)) {
-      const deleteSub = this.rapportService.deleteReport(report.id).subscribe({
+    if (confirm(`Êtes-vous sûr de vouloir supprimer le rapport du ${new Date(report.dateDebutSemaine).toLocaleDateString('fr-FR')} ?`)) {
+      const deleteSub = this.rapportService.deleteReport(report.id!).subscribe({
         next: () => {
-          this.onReportDeleted(report.id);
+          this.onReportDeleted(report.id!);
         },
         error: (error) => {
           console.error('Error deleting report:', error);
@@ -168,7 +177,7 @@ export class ReportsManagementComponent implements OnInit, OnDestroy {
   duplicateReport(report: RapportProgres): void {
     this.isCreatingReport = true;
     
-    const duplicateSub = this.rapportService.duplicateReport(report.id).subscribe({
+    const duplicateSub = this.rapportService.duplicateReport(report.id!).subscribe({
       next: (newReport) => {
         this.reports.unshift(newReport);
         this.totalReports++;
@@ -184,7 +193,7 @@ export class ReportsManagementComponent implements OnInit, OnDestroy {
   }
 
   shareReport(report: RapportProgres): void {
-    const shareSub = this.rapportService.shareReport(report.id).subscribe({
+    const shareSub = this.rapportService.shareReport(report.id!).subscribe({
       next: (sharedReport) => {
         const index = this.reports.findIndex(r => r.id === report.id);
         if (index !== -1) {
@@ -202,12 +211,12 @@ export class ReportsManagementComponent implements OnInit, OnDestroy {
   }
 
   exportReport(report: RapportProgres, format: 'pdf' | 'excel'): void {
-    const exportSub = this.rapportService.exportReport(report.id, format).subscribe({
+    const exportSub = this.rapportService.exportReport(report.id!, format).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${report.title}.${format}`;
+        link.download = `rapport_${new Date(report.dateDebutSemaine).toISOString().split('T')[0]}.${format}`;
         link.click();
         window.URL.revokeObjectURL(url);
       },

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, interval } from 'rxjs';
 import { StorageService } from './storage-service.service';
-import { NotificationHistory, NotificationPreferences } from '../models/notification.model';
+import { NotificationHistory, NotificationPreferences, NotificationDTO } from '../models/notification.model';
 
 const BASE_URL = "http://localhost:8095/";
 

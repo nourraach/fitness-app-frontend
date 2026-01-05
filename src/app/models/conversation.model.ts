@@ -12,7 +12,14 @@ export interface ConversationDTO {
   lastMessageContent?: string;
   coachName?: string;
   userName?: string;
+  // Additional properties for UI
+  participantName?: string;
+  participantAvatar?: string;
+  isOnline?: boolean;
 }
+
+// Alias for backward compatibility
+export interface Conversation extends ConversationDTO {}
 
 export interface ConversationListItemDTO {
   conversationId: string;

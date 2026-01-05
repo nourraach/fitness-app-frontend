@@ -49,12 +49,12 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   }
 
   exportToPDF(): void {
-    this.rapportService.exportReport(this.report.id, 'pdf').subscribe({
+    this.rapportService.exportReport(this.report.id!, 'pdf').subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${this.report.title}.pdf`;
+        link.download = `rapport_${new Date(this.report.dateDebutSemaine).toISOString().split('T')[0]}.pdf`;
         link.click();
         window.URL.revokeObjectURL(url);
       },
@@ -65,7 +65,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   }
 
   shareReport(): void {
-    this.rapportService.shareReport(this.report.id).subscribe({
+    this.rapportService.shareReport(this.report.id!).subscribe({
       next: (updatedReport) => {
         this.reportUpdated.emit(updatedReport);
       },
@@ -73,6 +73,10 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         console.error('Error sharing report:', error);
       }
     });
+  }
+
+  getReportStatus(): string {
+    return this.rapportService.getReportStatus(this.report);
   }
 
   formatDate(date: Date | string): string {

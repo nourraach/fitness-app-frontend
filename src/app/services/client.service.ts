@@ -35,4 +35,9 @@ export class ClientService {
   getClientDetails(clientId: number): Observable<Client> {
     return this.http.get<Client>(`${this.apiUrl}/${clientId}`);
   }
+
+  // Get enhanced clients with additional statistics
+  getEnhancedClients(): Observable<import('../models/enhanced-client.model').EnhancedClientDTO[]> {
+    return this.http.get<import('../models/enhanced-client.model').EnhancedClientDTO[]>(`${this.apiUrl}/enhanced`);
+  }
 }

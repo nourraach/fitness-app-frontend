@@ -9,7 +9,10 @@ import {
   HistoryFilters,
   ApiResponse,
   WeekDay,
-  NotificationType
+  NotificationType,
+  NotificationDTO,
+  TypeNotification,
+  PreferenceNotificationDTO
 } from '../models/notification.model';
 
 @Component({
@@ -21,7 +24,48 @@ import {
 export class NotificationsComponent implements OnInit {
   notifications: NotificationDTO[] = [];
   notificationsNonLues: NotificationDTO[] = [];
-  preferences: PreferenceNotificationDTO = {};
+  preferences: PreferenceNotificationDTO = {
+    userId: 0, // Will be set from user service
+    
+    // General settings
+    notificationsActives: true,
+    
+    // Meal reminders
+    mealRemindersEnabled: true,
+    rappelPetitDejeuner: true,
+    rappelDejeuner: true,
+    rappelDiner: true,
+    rappelCollation: false,
+    
+    // Meal times
+    breakfastTime: '08:00',
+    lunchTime: '12:00',
+    dinnerTime: '19:00',
+    heurePetitDejeuner: '08:00',
+    heureDejeuner: '12:00',
+    heureDiner: '19:00',
+    heureCollation: '15:00',
+    
+    // Workout settings
+    workoutRemindersEnabled: true,
+    rappelActivite: true,
+    workoutTime: '18:00',
+    heureActivite: '18:00',
+    
+    // Motivational settings
+    motivationalMessagesEnabled: true,
+    motivationQuotidienne: true,
+    motivationalFrequency: 3,
+    heureMotivation: '09:00',
+    
+    // Hydration settings
+    hydrationRemindersEnabled: false,
+    
+    // Limits and preferences
+    maxDailyNotifications: 10,
+    soundEnabled: true,
+    vibrationEnabled: true
+  };
   
   afficherPreferences: boolean = false;
   afficherToutesNotifications: boolean = false;
@@ -68,7 +112,23 @@ export class NotificationsComponent implements OnInit {
   chargerPreferences(): void {
     this.notificationService.getPreferences().subscribe({
       next: (data) => {
-        this.preferences = data;
+        // Convert NotificationPreferences to PreferenceNotificationDTO
+        this.preferences = {
+          ...this.preferences,
+          ...data,
+          rappelPetitDejeuner: data.mealRemindersEnabled,
+          rappelDejeuner: data.mealRemindersEnabled,
+          rappelDiner: data.mealRemindersEnabled,
+          rappelCollation: data.snackTimes && data.snackTimes.length > 0,
+          rappelActivite: data.workoutRemindersEnabled,
+          motivationQuotidienne: data.motivationalMessagesEnabled,
+          heurePetitDejeuner: data.breakfastTime,
+          heureDejeuner: data.lunchTime,
+          heureDiner: data.dinnerTime,
+          heureActivite: data.workoutTime,
+          heureCollation: data.snackTimes && data.snackTimes.length > 0 ? data.snackTimes[0] : '15:00',
+          heureMotivation: '09:00' // Default time for motivational messages
+        };
       },
       error: (err) => {
         console.error('Erreur chargement préférences:', err);
@@ -128,9 +188,54 @@ export class NotificationsComponent implements OnInit {
   }
 
   sauvegarderPreferences(): void {
-    this.notificationService.updatePreferences(this.preferences).subscribe({
+    // Convert PreferenceNotificationDTO to NotificationPreferences
+    const notificationPrefs: NotificationPreferences = {
+      id: this.preferences.id,
+      userId: this.preferences.userId,
+      mealRemindersEnabled: this.preferences.mealRemindersEnabled || this.preferences.rappelPetitDejeuner || false,
+      workoutRemindersEnabled: this.preferences.workoutRemindersEnabled || this.preferences.rappelActivite || false,
+      motivationalMessagesEnabled: this.preferences.motivationalMessagesEnabled || this.preferences.motivationQuotidienne || false,
+      hydrationRemindersEnabled: this.preferences.hydrationRemindersEnabled || false,
+      breakfastTime: this.preferences.breakfastTime || this.preferences.heurePetitDejeuner || '08:00',
+      lunchTime: this.preferences.lunchTime || this.preferences.heureDejeuner || '12:00',
+      dinnerTime: this.preferences.dinnerTime || this.preferences.heureDiner || '19:00',
+      snackTimes: this.preferences.snackTimes || (this.preferences.heureCollation ? [this.preferences.heureCollation] : []),
+      workoutDays: this.preferences.workoutDays || [],
+      workoutTime: this.preferences.workoutTime || this.preferences.heureActivite || '18:00',
+      motivationalFrequency: this.preferences.motivationalFrequency || 3,
+      hydrationInterval: this.preferences.hydrationInterval || 60,
+      hydrationStartTime: this.preferences.hydrationStartTime || '08:00',
+      hydrationEndTime: this.preferences.hydrationEndTime || '22:00',
+      quietTimeEnabled: this.preferences.quietTimeEnabled || false,
+      quietTimeStart: this.preferences.quietTimeStart || '22:00',
+      quietTimeEnd: this.preferences.quietTimeEnd || '08:00',
+      activeDays: this.preferences.activeDays || [],
+      maxDailyNotifications: this.preferences.maxDailyNotifications || 10,
+      soundEnabled: this.preferences.soundEnabled || true,
+      vibrationEnabled: this.preferences.vibrationEnabled || true,
+      createdAt: this.preferences.createdAt,
+      updatedAt: this.preferences.updatedAt
+    };
+
+    this.notificationService.updatePreferences(notificationPrefs).subscribe({
       next: (data) => {
-        this.preferences = data;
+        // Convert back to PreferenceNotificationDTO
+        this.preferences = {
+          ...this.preferences,
+          ...data,
+          rappelPetitDejeuner: data.mealRemindersEnabled,
+          rappelDejeuner: data.mealRemindersEnabled,
+          rappelDiner: data.mealRemindersEnabled,
+          rappelCollation: data.snackTimes && data.snackTimes.length > 0,
+          rappelActivite: data.workoutRemindersEnabled,
+          motivationQuotidienne: data.motivationalMessagesEnabled,
+          heurePetitDejeuner: data.breakfastTime,
+          heureDejeuner: data.lunchTime,
+          heureDiner: data.dinnerTime,
+          heureActivite: data.workoutTime,
+          heureCollation: data.snackTimes && data.snackTimes.length > 0 ? data.snackTimes[0] : '15:00',
+          heureMotivation: '09:00' // Default time for motivational messages
+        };
         this.afficherMessage('Préférences enregistrées avec succès', 'success');
         // Programmer les notifications
         this.programmerNotifications();

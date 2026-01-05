@@ -312,8 +312,8 @@ export class ActivityDistributionComponent implements OnInit, OnChanges {
     const durations = data.map(item => item.duration);
     const colors = data.map((_, index) => this.getActivityColor(index));
 
-    const config: ChartConfiguration = {
-      type: 'doughnut' as ChartType,
+    const config: ChartConfiguration<'doughnut'> = {
+      type: 'doughnut',
       data: {
         labels,
         datasets: [

@@ -194,7 +194,7 @@
             [class.other-message]="message.expediteurId !== currentUserId">
             
             <app-message-bubble
-              [message]="message"
+              [message]="convertMessageForTemplate(message)"
               [isOwnMessage]="message.expediteurId === currentUserId">
             </app-message-bubble>
           </div>
@@ -216,8 +216,7 @@
             [conversationId]="(state$ | async)?.selectedConversationId ?? null"
             [disabled]="!isConnected()"
             (messageSent)="sendMessage($event.content, $event.type)"
-            (typingStarted)="sendTypingIndicator(true)"
-            (typingStopped)="sendTypingIndicator(false)">
+            (typingStatusChanged)="sendTypingIndicator($event)">
           </app-chat-window>
         </div>
       </div>

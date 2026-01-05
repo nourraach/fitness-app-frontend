@@ -312,4 +312,28 @@ export class DefiService {
       }))
     );
   }
+
+  // Get user's challenges (alias for getDefisActifs for backward compatibility)
+  getMesDefis(): Observable<DefiDTO[]> {
+    return this.getDefisActifs();
+  }
+
+  // Create challenge between friends
+  creerDefiEntreAmis(request: CreerDefiRequest): Observable<DefiDTO> {
+    return this.creerDefi(request);
+  }
+
+  // Accept challenge invitation
+  accepterDefi(defiId: number): Observable<ParticipantDefiDTO> {
+    return this.rejoindreDefi(defiId);
+  }
+
+  // Refuse challenge invitation
+  refuserDefi(defiId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${defiId}/refuser`, { headers: this.getHeaders() })
+      .pipe(
+        retry(2),
+        catchError(this.handleError)
+      );
+  }
 }

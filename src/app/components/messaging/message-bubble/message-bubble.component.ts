@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Message } from '../../../models/message.model';
+import { Message, MessageType } from '../../../models/message.model';
 
 @Component({
   selector: 'app-message-bubble',
@@ -45,51 +45,29 @@ export class MessageBubbleComponent {
   }
 
   getStatusIcon(): string {
-    switch (this.message.status) {
-      case 'sending':
-        return 'fas fa-clock';
-      case 'sent':
-        return 'fas fa-check';
-      case 'delivered':
-        return 'fas fa-check-double';
-      case 'read':
-        return 'fas fa-check-double text-primary';
-      case 'failed':
-        return 'fas fa-exclamation-triangle text-danger';
-      default:
-        return '';
+    if (this.message.isRead) {
+      return 'fas fa-check-double text-primary';
     }
+    return 'fas fa-check';
   }
 
   getStatusText(): string {
-    switch (this.message.status) {
-      case 'sending':
-        return 'Envoi en cours...';
-      case 'sent':
-        return 'Envoyé';
-      case 'delivered':
-        return 'Livré';
-      case 'read':
-        return 'Lu';
-      case 'failed':
-        return 'Échec de l\'envoi';
-      default:
-        return '';
+    if (this.message.isRead) {
+      return 'Lu';
     }
+    return 'Envoyé';
   }
 
   onRetryClick(): void {
-    if (this.message.status === 'failed') {
-      this.retryMessage.emit(this.message);
-    }
+    this.retryMessage.emit(this.message);
   }
 
   isSystemMessage(): boolean {
-    return this.message.type === 'system';
+    return this.message.type === MessageType.SYSTEM;
   }
 
   isTextMessage(): boolean {
-    return this.message.type === 'text' || !this.message.type;
+    return this.message.type === MessageType.TEXT || !this.message.type;
   }
 
   formatMessageContent(content: string): string {

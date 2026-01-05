@@ -12,7 +12,8 @@ import {
   ConversationDTO, 
   TypingIndicatorDTO,
   EnvoyerMessageRequest,
-  MessageType 
+  MessageType,
+  Message
 } from '../../../models/message.model';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble.component';
 import { ChatWindowComponent } from '../chat-window/chat-window.component';
@@ -779,5 +780,19 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
 
   trackByMessageId(index: number, message: MessageDTO): number {
     return message.id || index;
+  }
+
+  // Convert MessageDTO to Message for template compatibility
+  convertMessageForTemplate(messageDTO: MessageDTO): Message {
+    return {
+      id: messageDTO.id,
+      conversationId: messageDTO.conversationId ? parseInt(messageDTO.conversationId) : 0,
+      senderId: messageDTO.expediteurId,
+      receiverId: messageDTO.destinataireId,
+      content: messageDTO.contenu,
+      timestamp: new Date(messageDTO.dateEnvoi),
+      isRead: messageDTO.lu,
+      type: messageDTO.type
+    };
   }
 }

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, E
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { Message } from '../../../models/message.model';
+import { Message, MessageType } from '../../../models/message.model';
 import { Conversation } from '../../../models/conversation.model';
 import { MessageService } from '../../../services/message.service';
 import { WebsocketService } from '../../../services/websocket.service';
@@ -17,8 +17,11 @@ import { MessageBubbleComponent } from '../message-bubble/message-bubble.compone
 })
 export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {
   @Input() conversation: Conversation | null = null;
+  @Input() conversationId: string | null = null;
   @Input() currentUserId: number = 0;
+  @Input() disabled: boolean = false;
   @Output() messagesSent = new EventEmitter<Message>();
+  @Output() messageSent = new EventEmitter<{content: string, type: MessageType}>();
   @Output() typingStatusChanged = new EventEmitter<boolean>();
 
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
@@ -63,7 +66,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
     // Listen for new messages
     const messagesSub = this.websocketService.onMessage().subscribe(
-      (message: Message) => {
+      (messageDTO: any) => {
+        // Convert MessageDTO to Message
+        const message: Message = this.convertMessageDTOToMessage(messageDTO);
         if (message.conversationId === this.conversation?.id) {
           this.messages.push(message);
           this.shouldScrollToBottom = true;
@@ -75,8 +80,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
     // Listen for typing indicators
     const typingSub = this.websocketService.onTyping().subscribe(
-      (data: { conversationId: string; userId: string; isTyping: boolean }) => {
-        if (data.conversationId === this.conversation?.id && data.userId !== this.currentUserId) {
+      (data: any) => {
+        if (data.conversationId === this.conversation?.id?.toString() && data.userId !== this.currentUserId) {
           this.otherUserTyping = data.isTyping;
         }
       }
@@ -85,14 +90,27 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
     // Listen for message status updates
     const statusSub = this.websocketService.onMessageStatus().subscribe(
-      (data: { messageId: string; status: 'sent' | 'delivered' | 'read' }) => {
-        const message = this.messages.find(m => m.id === data.messageId);
+      (data: any) => {
+        const message = this.messages.find(m => m.id?.toString() === data.messageId);
         if (message) {
-          message.status = data.status;
+          message.isRead = data.status === 'read';
         }
       }
     );
     this.subscriptions.push(statusSub);
+  }
+
+  private convertMessageDTOToMessage(dto: any): Message {
+    return {
+      id: dto.id,
+      conversationId: dto.conversationId ? parseInt(dto.conversationId) : 0,
+      senderId: dto.expediteurId || dto.senderId,
+      receiverId: dto.destinataireId || dto.receiverId,
+      content: dto.contenu || dto.content,
+      timestamp: new Date(dto.dateEnvoi || dto.timestamp),
+      isRead: dto.lu || dto.isRead || false,
+      type: dto.type || MessageType.TEXT
+    };
   }
 
   private loadMessages(): void {
@@ -100,8 +118,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
     this.isLoading = true;
     const messagesSub = this.messageService.getMessages(this.conversation.id).subscribe({
-      next: (messages) => {
-        this.messages = messages;
+      next: (messageDTOs) => {
+        this.messages = messageDTOs.map(dto => this.convertMessageDTOToMessage(dto));
         this.isLoading = false;
         this.shouldScrollToBottom = true;
         this.markAllMessagesAsRead();
@@ -115,20 +133,27 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   sendMessage(): void {
-    if (!this.newMessage.trim() || !this.conversation?.id) return;
+    if (!this.newMessage.trim() || !this.conversation?.id || this.disabled) return;
 
     const messageContent = this.newMessage.trim();
     this.newMessage = '';
     this.stopTyping();
 
+    // Emit the message content and type
+    this.messageSent.emit({
+      content: messageContent,
+      type: MessageType.TEXT
+    });
+
     const tempMessage: Message = {
-      id: 'temp-' + Date.now(),
+      id: Date.now(),
       conversationId: this.conversation.id,
       senderId: this.currentUserId,
+      receiverId: this.conversation.coachId === this.currentUserId ? this.conversation.userId : this.conversation.coachId,
       content: messageContent,
       timestamp: new Date(),
-      status: 'sending',
-      type: 'text'
+      isRead: false,
+      type: MessageType.TEXT
     };
 
     // Add message optimistically
@@ -136,25 +161,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.shouldScrollToBottom = true;
 
     // Send message via service
-    const sendSub = this.messageService.sendMessage(this.conversation.id, messageContent).subscribe({
-      next: (sentMessage) => {
-        // Replace temp message with real message
-        const tempIndex = this.messages.findIndex(m => m.id === tempMessage.id);
-        if (tempIndex !== -1) {
-          this.messages[tempIndex] = sentMessage;
-        }
-        this.messagesSent.emit(sentMessage);
-      },
-      error: (error) => {
-        console.error('Error sending message:', error);
-        // Mark temp message as failed
-        const tempIndex = this.messages.findIndex(m => m.id === tempMessage.id);
-        if (tempIndex !== -1) {
-          this.messages[tempIndex].status = 'failed';
-        }
-      }
+    this.messageService.sendMessage({
+      destinataireId: tempMessage.receiverId,
+      contenu: messageContent,
+      type: MessageType.TEXT
     });
-    this.subscriptions.push(sendSub);
   }
 
   onMessageInputChange(): void {
@@ -186,7 +197,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   private startTyping(): void {
     if (!this.isTyping && this.conversation?.id) {
       this.isTyping = true;
-      this.websocketService.sendTypingStatus(this.conversation.id, true);
+      this.websocketService.sendTypingStatus(this.conversation.id.toString(), true);
       this.typingStatusChanged.emit(true);
     }
   }
@@ -194,7 +205,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   private stopTyping(): void {
     if (this.isTyping && this.conversation?.id) {
       this.isTyping = false;
-      this.websocketService.sendTypingStatus(this.conversation.id, false);
+      this.websocketService.sendTypingStatus(this.conversation.id.toString(), false);
       this.typingStatusChanged.emit(false);
     }
   }
@@ -211,10 +222,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   private markMessageAsRead(message: Message): void {
-    if (message.senderId !== this.currentUserId && message.status !== 'read') {
+    if (message.senderId !== this.currentUserId && !message.isRead && message.id) {
       this.messageService.markAsRead(message.id).subscribe({
         next: () => {
-          message.status = 'read';
+          message.isRead = true;
         },
         error: (error) => {
           console.error('Error marking message as read:', error);
@@ -225,7 +236,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
   private markAllMessagesAsRead(): void {
     const unreadMessages = this.messages.filter(
-      m => m.senderId !== this.currentUserId && m.status !== 'read'
+      m => m.senderId !== this.currentUserId && !m.isRead
     );
 
     unreadMessages.forEach(message => {
@@ -234,32 +245,16 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   retryMessage(message: Message): void {
-    if (message.status === 'failed' && this.conversation?.id) {
-      message.status = 'sending';
-      
-      const retrySub = this.messageService.sendMessage(this.conversation.id, message.content).subscribe({
-        next: (sentMessage) => {
-          const messageIndex = this.messages.findIndex(m => m.id === message.id);
-          if (messageIndex !== -1) {
-            this.messages[messageIndex] = sentMessage;
-          }
-        },
-        error: (error) => {
-          console.error('Error retrying message:', error);
-          message.status = 'failed';
-        }
+    if (this.conversation?.id && message.content) {
+      this.messageService.sendMessage({
+        destinataireId: message.receiverId,
+        contenu: message.content,
+        type: MessageType.TEXT
       });
-      this.subscriptions.push(retrySub);
     }
   }
 
-  focusInput(): void {
-    if (this.messageInput) {
-      this.messageInput.nativeElement.focus();
-    }
-  }
-
-  trackByMessage(index: number, message: Message): string {
-    return message.id || index.toString();
+  trackByMessage(index: number, message: Message): string | number {
+    return message.id || index;
   }
 }

@@ -64,6 +64,23 @@ export class WebsocketService {
     return this.messageSubject.asObservable();
   }
 
+  // Backward compatibility methods
+  onMessage(): Observable<MessageDTO> {
+    return this.messages$;
+  }
+
+  onTyping(): Observable<TypingIndicatorDTO> {
+    return this.typingIndicators$;
+  }
+
+  onMessageStatus(): Observable<MessageStatus> {
+    return this.messageStatus$;
+  }
+
+  sendTypingStatus(conversationId: string, isTyping: boolean): void {
+    this.sendTypingIndicator(conversationId, isTyping);
+  }
+
   // Observable pour le statut de connexion
   get connectionStatus$(): Observable<boolean> {
     return this.connectionSubject.asObservable();

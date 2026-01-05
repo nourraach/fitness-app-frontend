@@ -11,7 +11,7 @@
           <select id="clientId" formControlName="clientId" (change)="generateTitle()">
             <option value="">Sélectionner un client</option>
             <option *ngFor="let client of clients" [value]="client.id">
-              {{ client.nom }} {{ client.prenom }}
+              {{ client.name }}
             </option>
           </select>
           <div class="error-message">{{ getFormError('clientId') }}</div>

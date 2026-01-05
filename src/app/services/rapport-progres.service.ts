@@ -215,4 +215,64 @@ export class RapportProgresService {
     if (achievementPercentage >= 60) return 'good';
     return 'needs-improvement';
   }
+
+  // Missing methods that components are trying to use
+  createReport(reportData: any): Observable<RapportProgresDTO> {
+    return this.creerRapport(reportData);
+  }
+
+  updateReport(id: number, reportData: any): Observable<RapportProgresDTO> {
+    return this.updateRapport(id, reportData);
+  }
+
+  getReports(filters?: any): Observable<{ reports: RapportProgresDTO[], total: number }> {
+    // For now, return all reports - in a real implementation, this would handle filtering
+    return this.getRapportsCoach().pipe(
+      map(reports => ({ reports, total: reports.length }))
+    );
+  }
+
+  deleteReport(id: number): Observable<any> {
+    return this.supprimerRapport(id);
+  }
+
+  duplicateReport(id: number): Observable<RapportProgresDTO> {
+    return this.getRapportById(id).pipe(
+      map(report => {
+        const duplicatedReport = {
+          ...report,
+          id: undefined,
+          dateGeneration: new Date(),
+          resume: `Copie de ${report.resume || 'Rapport'}`
+        };
+        return duplicatedReport;
+      }),
+      // In a real implementation, this would call the backend to create the duplicate
+      // For now, we'll just return the modified report
+    );
+  }
+
+  shareReport(id: number): Observable<RapportProgresDTO> {
+    // In a real implementation, this would handle sharing logic
+    return this.getRapportById(id);
+  }
+
+  exportReport(id: number, format: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/export?format=${format}`, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
+    }).pipe(
+      retry(2),
+      catchError(this.handleError)
+    );
+  }
+
+  getReportChartData(id: number): Observable<any> {
+    return this.getRapportById(id).pipe(
+      map(report => {
+        const compiledData = this.parseCompiledData(report.donneesCompilees);
+        return compiledData ? this.generateChartData(compiledData) : null;
+      })
+    );
+  }
 }
