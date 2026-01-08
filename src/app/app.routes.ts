@@ -23,7 +23,7 @@ import { CoachClientsComponent } from './coach-clients/coach-clients.component';
 import { SocialComponent } from './social/social.component';
 import { CoachDashboardComponent } from './components/coach/coach-dashboard/coach-dashboard.component';
 import { NutritionPlanComponent } from './components/coach/nutrition-plan/nutrition-plan.component';
-import { MessagingComponent } from './messaging/messaging.component';
+import { MessagingContainerComponent } from './components/messaging/messaging-container/messaging-container.component';
 
 export const routes: Routes = [
 { path: 'register', component: RegisterComponent },     
@@ -36,7 +36,7 @@ export const routes: Routes = [
 { path: 'coach-clients', component: CoachClientsComponent },
 { path: 'coach-dashboard', component: CoachDashboardComponent },
 { path: 'nutrition-plans', component: NutritionPlanComponent },
-{ path: 'enhanced-messaging', component: MessagingComponent },
+{ path: 'enhanced-messaging', component: MessagingContainerComponent },
 { path: 'programmes', component: ProgrammesComponent },
 { path: 'gestion-programmes', component: GestionProgrammesComponent },
 { path: 'nutrition', component: NutritionComponent },
@@ -44,7 +44,7 @@ export const routes: Routes = [
 { path: 'evolution-poids', component: EvolutionPoidsComponent },
 { path: 'plan-nutritionnel', component: PlanNutritionnelComponent },
 { path: 'rapports-progres', component: RapportsProgresComponent },
-{ path: 'messaging', component: MessagingComponent },
+{ path: 'messaging', component: MessagingContainerComponent },
 { path: 'social', component: SocialComponent, canActivate: [AuthGuard] },
 { path: 'friend-challenges', 
   loadComponent: () => import('./components/social/friend-challenges/friend-challenges.component').then(m => m.FriendChallengesComponent),
