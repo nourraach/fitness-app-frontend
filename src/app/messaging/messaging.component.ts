@@ -47,11 +47,11 @@ import {
               *ngFor="let conv of conversations"
               class="conversation-item"
               [class.selected]="selectedConversation?.conversationId === conv.conversationId"
-              [class.unread]="conv.messagesNonLus > 0"
+              [class.unread]="(conv.messagesNonLus || conv.unreadMessageCount || 0) > 0"
               (click)="selectConversation(conv)">
               
               <div class="conversation-avatar">
-                {{ getInitials(conv.autreUtilisateurNom) }}
+                {{ getInitials(conv.autreUtilisateurNom || conv.participantName || conv.userName || 'U') }}
                 <div class="role-badge" [class.coach]="conv.autreUtilisateurRole === 'Coach'">
                   {{ conv.autreUtilisateurRole === 'Coach' ? '👨‍⚕️' : '👤' }}
                 </div>
@@ -59,12 +59,12 @@ import {
               
               <div class="conversation-info">
                 <div class="conversation-header">
-                  <h3>{{ conv.autreUtilisateurNom }}</h3>
-                  <span class="time">{{ formatTime(conv.dateDernierMessage) }}</span>
+                  <h3>{{ conv.autreUtilisateurNom || conv.participantName || conv.userName }}</h3>
+                  <span class="time">{{ formatTime(conv.dateDernierMessage || conv.lastMessageAt) }}</span>
                 </div>
                 <div class="last-message">
-                  <p>{{ conv.dernierMessage }}</p>
-                  <span class="unread-count" *ngIf="conv.messagesNonLus > 0">{{ conv.messagesNonLus }}</span>
+                  <p>{{ conv.dernierMessage || conv.lastMessageContent }}</p>
+                  <span class="unread-count" *ngIf="(conv.messagesNonLus || conv.unreadMessageCount || 0) > 0">{{ conv.messagesNonLus || conv.unreadMessageCount }}</span>
                 </div>
               </div>
             </div>
@@ -96,9 +96,9 @@ import {
             <!-- En-tête du chat -->
             <div class="chat-header">
               <div class="chat-user-info">
-                <div class="chat-avatar">{{ getInitials(selectedConversation.autreUtilisateurNom) }}</div>
+                <div class="chat-avatar">{{ getInitials(selectedConversation.autreUtilisateurNom || selectedConversation.participantName || selectedConversation.userName || 'U') }}</div>
                 <div>
-                  <h3>{{ selectedConversation.autreUtilisateurNom }}</h3>
+                  <h3>{{ selectedConversation.autreUtilisateurNom || selectedConversation.participantName || selectedConversation.userName }}</h3>
                   <span class="user-role">{{ selectedConversation.autreUtilisateurRole }}</span>
                 </div>
               </div>
@@ -117,16 +117,16 @@ import {
               </div>
               
               <div 
-                *ngFor="let message of getMessagesForConversation(selectedConversation.conversationId)"
+                *ngFor="let message of getMessagesForConversation(selectedConversation.conversationId || '')"
                 class="message-wrapper"
-                [class.own-message]="message.expediteurId === currentUserId">
+                [class.own-message]="message.senderId === currentUserId">
                 
-                <div class="message-bubble" [class.own]="message.expediteurId === currentUserId">
-                  <p>{{ message.contenu }}</p>
+                <div class="message-bubble" [class.own]="message.senderId === currentUserId">
+                  <p>{{ message.content }}</p>
                   <div class="message-meta">
-                    <span class="message-time">{{ formatMessageTime(message.dateEnvoi) }}</span>
-                    <span *ngIf="message.expediteurId === currentUserId" class="message-status">
-                      <i class="pi pi-check" [class.read]="message.lu"></i>
+                    <span class="message-time">{{ formatMessageTime(message.timestamp) }}</span>
+                    <span *ngIf="message.senderId === currentUserId" class="message-status">
+                      <i class="pi pi-check" [class.read]="message.isRead"></i>
                     </span>
                   </div>
                 </div>
@@ -714,13 +714,16 @@ export class MessagingComponent implements OnInit, OnDestroy {
     );
     
     if (conversation) {
-      conversation.dernierMessage = message.contenu;
-      conversation.dateDernierMessage = message.dateEnvoi;
+      conversation.dernierMessage = message.content;
+      conversation.lastMessageContent = message.content;
+      conversation.dateDernierMessage = new Date(message.timestamp);
+      conversation.lastMessageAt = message.timestamp;
       
       // Increment unread count if not from current user and not in current conversation
-      if (message.expediteurId !== this.currentUserId && 
+      if (message.senderId !== this.currentUserId && 
           (!this.selectedConversation || this.selectedConversation.conversationId !== message.conversationId)) {
-        conversation.messagesNonLus++;
+        conversation.messagesNonLus = (conversation.messagesNonLus || 0) + 1;
+        conversation.unreadMessageCount = (conversation.unreadMessageCount || 0) + 1;
       }
     }
   }
@@ -733,23 +736,29 @@ export class MessagingComponent implements OnInit, OnDestroy {
     this.selectedConversation = conversation;
     this.isLoadingMessages = true;
 
+    const convId = conversation.conversationId || '';
+    
     // Mark messages as read
-    this.messageService.markMessagesAsRead(conversation.conversationId).subscribe();
+    if (convId) {
+      this.messageService.markMessagesAsRead(convId).subscribe();
 
-    // Load messages for this conversation
-    this.messageService.loadMessagesForConversation(conversation.conversationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.isLoadingMessages = false;
-          // Scroll to bottom after messages load
-          setTimeout(() => this.scrollToBottom(), 100);
-        },
-        error: (error) => {
-          console.error('Erreur lors du chargement des messages:', error);
-          this.isLoadingMessages = false;
-        }
-      });
+      // Load messages for this conversation
+      this.messageService.loadMessagesForConversation(convId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.isLoadingMessages = false;
+            // Scroll to bottom after messages load
+            setTimeout(() => this.scrollToBottom(), 100);
+          },
+          error: (error) => {
+            console.error('Erreur lors du chargement des messages:', error);
+            this.isLoadingMessages = false;
+          }
+        });
+    } else {
+      this.isLoadingMessages = false;
+    }
   }
 
   sendMessage(): void {
@@ -759,8 +768,12 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
     this.isSending = true;
     
+    const destinataireId = this.selectedConversation.autreUtilisateurId || 
+                           this.selectedConversation.coachId || 
+                           this.selectedConversation.userId || 0;
+    
     const request: EnvoyerMessageRequest = {
-      destinataireId: this.selectedConversation.autreUtilisateurId,
+      destinataireId: destinataireId,
       contenu: this.newMessage.trim(),
       type: MessageType.TEXT,
       conversationId: this.selectedConversation.conversationId
@@ -791,14 +804,16 @@ export class MessagingComponent implements OnInit, OnDestroy {
   }
 
   getTotalUnread(): number {
-    return this.conversations.reduce((total, conv) => total + conv.messagesNonLus, 0);
+    return this.conversations.reduce((total, conv) => total + (conv.messagesNonLus || conv.unreadMessageCount || 0), 0);
   }
 
-  getInitials(name: string): string {
+  getInitials(name: string | undefined | null): string {
+    if (!name) return 'U';
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().substring(0, 2);
   }
 
-  formatTime(date: Date): string {
+  formatTime(date: Date | string | undefined | null): string {
+    if (!date) return '';
     const now = new Date();
     const messageDate = new Date(date);
     const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
@@ -813,7 +828,8 @@ export class MessagingComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatMessageTime(date: Date): string {
+  formatMessageTime(date: Date | string | undefined | null): string {
+    if (!date) return '';
     return new Date(date).toLocaleTimeString('fr-FR', { 
       hour: '2-digit', 
       minute: '2-digit' 
@@ -827,17 +843,22 @@ export class MessagingComponent implements OnInit, OnDestroy {
   refreshMessages(): void {
     if (this.selectedConversation) {
       this.isLoadingMessages = true;
-      this.messageService.loadMessagesForConversation(this.selectedConversation.conversationId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.isLoadingMessages = false;
-          },
-          error: (error) => {
-            console.error('Erreur lors de l\'actualisation des messages:', error);
-            this.isLoadingMessages = false;
-          }
-        });
+      const convId = this.selectedConversation.conversationId || '';
+      if (convId) {
+        this.messageService.loadMessagesForConversation(convId)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.isLoadingMessages = false;
+            },
+            error: (error) => {
+              console.error('Erreur lors de l\'actualisation des messages:', error);
+              this.isLoadingMessages = false;
+            }
+          });
+      } else {
+        this.isLoadingMessages = false;
+      }
     }
   }
 

@@ -1,3 +1,13 @@
+/* Variables - Same as User Theme */
+:root {
+  --primary-green: #84cabe;
+  --light-green: #a8ddd3;
+  --dark-green: #6bb5a7;
+  --text-dark: #2C3E50;
+  --text-light: #7F8C8D;
+  --bg-light: #F8F9FA;
+}
+
 .rapports-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -13,11 +23,11 @@
 
 .header h2 {
   margin: 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 28px;
 }
 
-/* Boutons */
+/* Boutons - Green Theme */
 .btn-primary, .btn-secondary {
   padding: 12px 24px;
   border: none;
@@ -25,16 +35,17 @@
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s;
+  font-weight: 600;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(132, 202, 190, 0.4);
 }
 
 .btn-secondary {
@@ -56,11 +67,11 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .btn-close:hover {
-  color: #333;
+  color: #2C3E50;
 }
 
 /* Alertes */
@@ -82,19 +93,20 @@
   border: 1px solid #f5c6cb;
 }
 
-/* Formulaire de génération */
+/* Formulaire de génération - Green Theme */
 .generate-form {
   background: white;
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   margin-bottom: 30px;
+  border-left: 4px solid #84cabe;
 }
 
 .generate-form h3 {
   margin-top: 0;
   margin-bottom: 20px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .form-group {
@@ -110,17 +122,34 @@
 
 .form-control {
   width: 100%;
-  padding: 10px 15px;
+  padding: 12px 15px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 16px;
   box-sizing: border-box;
+  transition: all 0.3s;
 }
 
 .form-control:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #84cabe;
+  box-shadow: 0 0 0 3px rgba(132, 202, 190, 0.1);
+}
+
+select.form-control {
+  cursor: pointer;
+  background: white;
+}
+
+.hint {
+  display: block;
+  font-size: 13px;
+  color: #7F8C8D;
+  margin-top: 6px;
+}
+
+.text-warning {
+  color: #ffc107 !important;
 }
 
 .form-row {
@@ -139,7 +168,7 @@
 .loading, .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .empty-state p {
@@ -170,7 +199,7 @@
 
 .rapport-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(132, 202, 190, 0.2);
 }
 
 .rapport-header {
@@ -182,19 +211,20 @@
 
 .rapport-header h3 {
   margin: 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 20px;
 }
 
 .rapport-header .date {
-  color: #999;
+  color: #7F8C8D;
   font-size: 14px;
 }
 
 .rapport-periode {
-  color: #666;
+  color: #84cabe;
   margin-bottom: 15px;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .rapport-stats {
@@ -212,7 +242,7 @@
 
 .rapport-stats .stat .label {
   font-size: 12px;
-  color: #999;
+  color: #7F8C8D;
   text-transform: uppercase;
 }
 
@@ -223,7 +253,7 @@
 
 .rapport-tendance {
   padding: 12px;
-  background: #f8f9fa;
+  background: #e8f5f3;
   border-radius: 6px;
   font-size: 14px;
   color: #555;
@@ -232,15 +262,11 @@
 
 /* Classes de couleur */
 .text-success {
-  color: #28a745 !important;
+  color: #6bb5a7 !important;
 }
 
 .text-danger {
   color: #dc3545 !important;
-}
-
-.text-warning {
-  color: #ffc107 !important;
 }
 
 /* Modal */
@@ -278,7 +304,7 @@
 
 .modal-header h2 {
   margin: 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .modal-body {
@@ -291,13 +317,13 @@
 
 .rapport-info h3 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 24px;
 }
 
 .rapport-info p {
   margin: 5px 0;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .stats-section {
@@ -314,7 +340,7 @@
 
 .stats-card h4 {
   margin: 0 0 15px 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 18px;
 }
 
@@ -332,13 +358,18 @@
 
 .stat-item .label {
   font-size: 13px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .stat-item .value {
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: #2C3E50;
+}
+
+.stats-card.analyse {
+  background: #e8f5f3;
+  border-left: 4px solid #84cabe;
 }
 
 .stats-card.analyse p {
@@ -355,7 +386,7 @@
 
 .resume-section h4 {
   margin: 0 0 15px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .resume-section pre {
@@ -367,7 +398,7 @@
   font-family: 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
+  color: #2C3E50;
   margin: 0;
 }
 
@@ -398,4 +429,99 @@
   .form-actions button {
     width: 100%;
   }
+}
+
+
+/* Boutons d'export PDF */
+.rapport-actions {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.btn-export i {
+  font-size: 14px;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-export-modal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-export-modal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.btn-export-modal i {
+  font-size: 16px;
+}
+
+
+/* Bouton export direct PDF */
+.btn-export-direct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-export-direct:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.btn-export-direct:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-export-direct i {
+  font-size: 18px;
 }

@@ -83,33 +83,23 @@ export class EnhancedMessagingService {
   }
 
   /**
-   * Send message via WebSocket (primary) or REST API (fallback)
+   * Send message via REST API (always) + WebSocket for real-time
    */
   sendMessage(request: EnvoyerMessageRequest): Observable<MessageDTO> {
-    // Try WebSocket first
-    if (this.websocketService.isConnected) {
-      this.websocketService.sendMessage(request);
-      
-      // Create optimistic message for immediate UI update
-      const optimisticMessage: MessageDTO = {
-        id: Date.now(), // Temporary ID
-        expediteurId: this.getCurrentUserId(),
-        expediteurNom: 'Vous',
-        destinataireId: request.destinataireId,
-        destinataireNom: '',
-        contenu: request.contenu,
-        dateEnvoi: new Date(),
-        lu: false,
-        type: request.type || MessageType.TEXT,
-        conversationId: request.conversationId || this.generateConversationId(this.getCurrentUserId(), request.destinataireId)
-      };
-      
-      this.addMessageToConversation(optimisticMessage);
-      return of(optimisticMessage);
-    }
+    console.log('📬 EnhancedMessagingService.sendMessage called:', request);
+    console.log('📬 WebSocket connected:', this.websocketService.isConnected);
     
-    // Fallback to REST API
-    return this.sendMessageREST(request);
+    // ALWAYS use REST API to persist the message
+    console.log('📬 Envoi via REST API pour persistance');
+    return this.sendMessageREST(request).pipe(
+      tap(message => {
+        // Also send via WebSocket for real-time delivery if connected
+        if (this.websocketService.isConnected) {
+          console.log('📬 Envoi également via WebSocket pour temps réel');
+          this.websocketService.sendMessage(request);
+        }
+      })
+    );
   }
 
   /**
@@ -117,14 +107,26 @@ export class EnhancedMessagingService {
    */
   private sendMessageREST(request: EnvoyerMessageRequest): Observable<MessageDTO> {
     const headers = this.createAuthHeaders();
-    const userId = this.getCurrentUserId();
     
-    return this.http.post<MessageDTO>(`${this.apiUrl}/envoyer?userId=${userId}`, request, { headers })
+    // Transform request to match backend expected format
+    // Backend might expect: receiverId, content, type (English names)
+    const backendRequest = {
+      receiverId: request.destinataireId,
+      content: request.contenu,
+      type: request.type || MessageType.TEXT
+    };
+    
+    console.log('📬 REST API call: POST /api/messages', backendRequest);
+    
+    // Use the correct endpoint: POST /api/messages (without userId param - identified via JWT)
+    return this.http.post<MessageDTO>(`http://localhost:8095/api/messages`, backendRequest, { headers })
       .pipe(
         tap(message => {
+          console.log('📬 REST API response:', message);
           this.addMessageToConversation(message);
         }),
         catchError(error => {
+          console.error('📬 REST API error:', error);
           this.errorHandler.logError('sendMessageREST', error);
           throw error;
         })
@@ -163,8 +165,26 @@ export class EnhancedMessagingService {
     params = params.set('page', page.toString());
     params = params.set('size', size.toString());
     
-    return this.http.get<MessageDTO[]>(`${this.apiUrl}/conversation/paginated`, { headers, params })
+    console.log('📬 API Call: GET /conversation/paginated', { userId, autreUserId: otherUserId, page, size });
+    
+    return this.http.get<any>(`${this.apiUrl}/conversation/paginated`, { headers, params })
       .pipe(
+        map(response => {
+          console.log('📬 API Response raw:', response);
+          // Handle different response formats
+          let messages: MessageDTO[] = [];
+          if (Array.isArray(response)) {
+            messages = response;
+          } else if (response?.content && Array.isArray(response.content)) {
+            messages = response.content;
+          } else if (response?.messages && Array.isArray(response.messages)) {
+            messages = response.messages;
+          } else if (response?.data && Array.isArray(response.data)) {
+            messages = response.data;
+          }
+          console.log('📬 Parsed messages:', messages.length, messages);
+          return messages;
+        }),
         tap(messages => {
           const conversationId = this.generateConversationId(userId, otherUserId);
           const currentMessages = this.messagesSubject.value;
@@ -211,7 +231,6 @@ export class EnhancedMessagingService {
   markMessageAsRead(messageId: number, conversationId: string): Observable<boolean> {
     // Try WebSocket first
     if (this.websocketService.isConnected) {
-      const request: MessageReadRequest = { messageId, conversationId };
       this.websocketService.markMessageAsRead(messageId.toString());
       return of(true);
     }
@@ -424,14 +443,17 @@ export class EnhancedMessagingService {
 
     const conversationId = `conv_${this.getCurrentUserId()}_${request.participantId}`;
     const newConversation: ConversationDTO = {
+      id: Date.now(),
       conversationId,
-      autreUtilisateurId: contact.id,
-      autreUtilisateurNom: contact.name,
-      autreUtilisateurRole: contact.role,
-      dernierMessage: request.initialMessage || 'Nouvelle conversation',
-      dateDernierMessage: new Date(),
-      messagesNonLus: 0,
-      isActive: true
+      userId: this.getCurrentUserId(),
+      userName: 'Vous',
+      coachId: contact.isCoach ? contact.id : undefined,
+      coachName: contact.isCoach ? contact.name : undefined,
+      lastMessageContent: request.initialMessage || 'Nouvelle conversation',
+      lastMessageAt: new Date().toISOString(),
+      unreadMessageCount: 0,
+      isActive: true,
+      participantName: contact.name
     };
 
     // Add to conversations list
@@ -442,14 +464,14 @@ export class EnhancedMessagingService {
     if (request.initialMessage) {
       const initialMessage: MessageDTO = {
         id: Date.now(),
-        expediteurId: this.getCurrentUserId(),
-        expediteurNom: 'Vous',
-        destinataireId: contact.id,
-        destinataireNom: contact.name,
-        contenu: request.initialMessage,
-        dateEnvoi: new Date(),
+        senderId: this.getCurrentUserId(),
+        senderName: 'Vous',
+        receiverId: contact.id,
+        receiverName: contact.name,
+        content: request.initialMessage,
+        timestamp: new Date().toISOString(),
         conversationId,
-        lu: false,
+        isRead: false,
         type: MessageType.TEXT
       };
       
@@ -472,7 +494,7 @@ export class EnhancedMessagingService {
     const existingMessage = conversationMessages.find(m => m.id === message.id);
     if (!existingMessage) {
       const updatedMessages = [...conversationMessages, message].sort((a, b) => 
-        new Date(a.dateEnvoi).getTime() - new Date(b.dateEnvoi).getTime()
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
       
       this.messagesSubject.next({
@@ -493,7 +515,7 @@ export class EnhancedMessagingService {
     });
     
     return merged.sort((a, b) => 
-      new Date(a.dateEnvoi).getTime() - new Date(b.dateEnvoi).getTime()
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
   }
 
@@ -524,7 +546,7 @@ export class EnhancedMessagingService {
   getTotalUnreadCount(): Observable<number> {
     return this.conversations$.pipe(
       map(conversations => 
-        conversations.reduce((total, conv) => total + conv.messagesNonLus, 0)
+        conversations.reduce((total, conv) => total + (conv.unreadMessageCount || 0), 0)
       )
     );
   }

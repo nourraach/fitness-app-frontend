@@ -1,62 +1,35 @@
-export interface FoodRecognitionResultDTO {
-  recognized: boolean;
-  confidence: number;
-  foodId?: number;
-  foodName?: string;
-  name?: string; // Alias for foodName
-  category?: string;
-  message?: string;
-  nutritionalInfo?: NutritionalInfoDTO;
-  alternatives?: FoodSuggestionDTO[]; // Alternative suggestions
-}
-
-export interface NutritionalInfoDTO {
+export interface NutritionalInfo {
   foodName: string;
   quantity: number;
   calories: number;
   proteines: number;
-  protein?: number; // Alias for proteines
   lipides: number;
-  fat?: number; // Alias for lipides
   glucides: number;
-  carbohydrates?: number; // Alias for glucides
-  fiber?: number; // Fiber content
-  sugar?: number; // Sugar content
-  sodium?: number; // Sodium content
-  vitamins?: { [key: string]: number }; // Vitamin content
-  unit: string;
 }
 
-export interface FoodSuggestionDTO {
-  id: number;
-  name: string;
-  category: string;
-  commonName?: string;
-  brand?: string; // Brand name
-  caloriesPer100g?: number; // Calories per 100g
+export interface FoodRecognitionResult {
+  recognized: boolean;
+  confidence: number;
+  foodId?: number;
+  foodName?: string;
+  category?: string;
+  message?: string;
+  alternatives?: string[];
+  nutritionalInfo?: NutritionalInfo;
 }
 
-export interface ManualFoodEntryDTO {
+export interface ConfirmedFood {
+  foodId: number;
   foodName: string;
-  quantity?: number;
+  quantity: number;
+  nutritionalInfo: NutritionalInfo;
 }
 
-export enum FoodCategory {
-  FRUITS = 'FRUITS',
-  VEGETABLES = 'VEGETABLES',
-  PROTEINS = 'PROTEINS',
-  GRAINS = 'GRAINS',
-  DAIRY = 'DAIRY',
-  FATS = 'FATS',
-  BEVERAGES = 'BEVERAGES',
-  SNACKS = 'SNACKS',
-  OTHER = 'OTHER'
-}
-
-export interface FoodRecognitionState {
-  isUploading: boolean;
-  isRecognizing: boolean;
-  result?: FoodRecognitionResultDTO;
+export interface FileValidationResult {
+  valid: boolean;
   error?: string;
-  suggestions: FoodSuggestionDTO[];
 }
+
+// Aliases for DTO naming convention compatibility
+export type NutritionalInfoDTO = NutritionalInfo;
+export type FoodRecognitionResultDTO = FoodRecognitionResult;

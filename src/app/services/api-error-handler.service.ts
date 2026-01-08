@@ -89,8 +89,6 @@ export class ApiErrorHandlerService {
     }
 
     switch (context) {
-      case 'food-recognition':
-        return 'Image non reconnue. Essayez avec une autre photo ou saisissez manuellement.';
       case 'programme-management':
         return 'Données du programme invalides. Vérifiez les champs requis.';
       case 'nutrition-plan':
@@ -112,8 +110,6 @@ export class ApiErrorHandlerService {
         return 'Aucun log d\'audit trouvé pour ces critères.';
       case 'programme-management':
         return 'Programme non trouvé ou supprimé.';
-      case 'food-recognition':
-        return 'Aliment non trouvé dans la base de données.';
       case 'nutrition-plan':
         return 'Plan nutritionnel non trouvé.';
       case 'challenge':

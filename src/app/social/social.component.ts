@@ -1,12 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { UserSearchComponent } from '../components/social/user-search/user-search.component';
 import { FriendsManagerComponent } from '../components/social/friends-manager/friends-manager.component';
 import { SocialFeedComponent } from '../components/social/social-feed/social-feed.component';
-import { ChallengesManagerComponent } from '../components/social/challenges-manager/challenges-manager.component';
 import { FriendService } from '../services/friend.service';
-import { ChallengeService } from '../services/challenge.service';
 import { JwtService } from '../service/jwt.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -17,10 +14,8 @@ import { of } from 'rxjs';
   imports: [
     CommonModule, 
     RouterModule, 
-    UserSearchComponent, 
     FriendsManagerComponent, 
-    SocialFeedComponent, 
-    ChallengesManagerComponent
+    SocialFeedComponent
   ],
   template: `
     <div class="social-container">
@@ -79,21 +74,6 @@ import { of } from 'rxjs';
             Amis
             <span class="badge" *ngIf="friendRequestsCount > 0">{{ friendRequestsCount }}</span>
           </button>
-          <button 
-            class="nav-tab"
-            [class.active]="activeTab === 'challenges'"
-            (click)="setActiveTab('challenges')">
-            <i class="fas fa-trophy"></i>
-            Défis
-            <span class="badge" *ngIf="challengeInvitesCount > 0">{{ challengeInvitesCount }}</span>
-          </button>
-          <button 
-            class="nav-tab"
-            [class.active]="activeTab === 'search'"
-            (click)="setActiveTab('search')">
-            <i class="fas fa-search"></i>
-            Rechercher
-          </button>
         </div>
 
         <!-- Content Area -->
@@ -106,16 +86,6 @@ import { of } from 'rxjs';
           <!-- Friends Management -->
           <div *ngIf="activeTab === 'friends'" class="tab-content">
             <app-friends-manager></app-friends-manager>
-          </div>
-
-          <!-- Challenges -->
-          <div *ngIf="activeTab === 'challenges'" class="tab-content">
-            <app-challenges-manager></app-challenges-manager>
-          </div>
-
-          <!-- User Search -->
-          <div *ngIf="activeTab === 'search'" class="tab-content">
-            <app-user-search></app-user-search>
           </div>
         </div>
       </div>
@@ -307,7 +277,6 @@ import { of } from 'rxjs';
 export class SocialComponent implements OnInit {
   activeTab: string = 'feed';
   friendRequestsCount: number = 0;
-  challengeInvitesCount: number = 0;
   isLoading: boolean = true;
   hasError: boolean = false;
   errorMessage: string = '';
@@ -315,7 +284,6 @@ export class SocialComponent implements OnInit {
 
   constructor(
     private friendService: FriendService,
-    private challengeService: ChallengeService,
     private jwtService: JwtService
   ) {}
 
@@ -358,16 +326,6 @@ export class SocialComponent implements OnInit {
       ).subscribe(requests => {
         this.friendRequestsCount = requests.length;
         this.isLoading = false;
-      });
-
-      // Load challenge invitations count with error handling
-      this.challengeService.invitations$.pipe(
-        catchError(error => {
-          console.warn('Erreur lors du chargement des invitations de défis:', error);
-          return of([]);
-        })
-      ).subscribe(invitations => {
-        this.challengeInvitesCount = invitations.length;
       });
     } catch (error) {
       console.error('Erreur lors de l\'initialisation des services sociaux:', error);

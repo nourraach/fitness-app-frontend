@@ -1,0 +1,273 @@
+<app-coach-navbar *ngIf="isCoach"></app-coach-navbar>
+<app-navbar *ngIf="!isCoach"></app-navbar>
+
+<!-- Hero Section -->
+<section class="nutrition-hero">
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1 class="hero-title">PLAN<br><span class="text-green">NUTRITIONNEL</span></h1>
+      <p class="hero-subtitle">Plan personnalisé basé sur vos objectifs ({{ caloriesCibles }} kcal/jour)</p>
+      <div class="hero-features">
+        <div class="feature-badge">
+          <i class="pi pi-check-circle"></i>
+          <span>Plans personnalisés</span>
+        </div>
+        <div class="feature-badge">
+          <i class="pi pi-heart"></i>
+          <span>Recettes équilibrées</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-image-wrapper">
+      <img src="assets/images/chouka_w_khodhramfaskha.png" alt="Nutrition saine" class="hero-image-normal">
+      <div class="hero-decoration"></div>
+    </div>
+  </div>
+</section>
+
+<div class="plan-container">
+
+  <!-- Message de succès -->
+  <div class="success-message" *ngIf="successMessage">
+    <i class="pi pi-check-circle"></i> {{ successMessage }}
+  </div>
+
+  <!-- Préférences alimentaires -->
+  <div class="preferences-section">
+    <h3>🥗 Préférences alimentaires</h3>
+    <div class="preferences-grid">
+      <button *ngFor="let pref of preferencesDisponibles"
+              class="pref-btn"
+              [class.active]="isPreferenceSelected(pref)"
+              (click)="togglePreference(pref)">
+        {{ pref }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Toggle Vue -->
+  <div class="view-toggle">
+    <button [class.active]="viewMode === 'daily'" (click)="viewMode = 'daily'">
+      <i class="pi pi-calendar"></i> Vue Journalière
+    </button>
+    <button [class.active]="viewMode === 'weekly'" (click)="viewMode = 'weekly'">
+      <i class="pi pi-calendar-plus"></i> Vue Hebdomadaire
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <i class="pi pi-spin pi-spinner"></i> Génération du plan...
+  </div>
+
+  <!-- Vue Journalière -->
+  <div class="daily-view" *ngIf="!isLoading && viewMode === 'daily' && planJournalier">
+    <div class="meals-container">
+      <div class="meals-grid">
+        <!-- Petit-déjeuner -->
+        <div class="meal-card breakfast">
+          <div class="meal-image">
+            <img [src]="planJournalier.petitDejeuner.image" [alt]="planJournalier.petitDejeuner.name" />
+          </div>
+          <div class="meal-header">
+            <span class="meal-icon">🌅</span>
+            <span class="meal-type">Petit-déjeuner</span>
+            <span class="meal-percent">25%</span>
+          </div>
+          <div class="meal-content">
+            <h3>{{ planJournalier.petitDejeuner.name }}</h3>
+            <p class="meal-desc">{{ planJournalier.petitDejeuner.description }}</p>
+            <div class="meal-macros">
+              <span class="calories">{{ planJournalier.petitDejeuner.calories }} kcal</span>
+              <span>P: {{ planJournalier.petitDejeuner.proteines }}g</span>
+              <span>G: {{ planJournalier.petitDejeuner.glucides }}g</span>
+              <span>L: {{ planJournalier.petitDejeuner.lipides }}g</span>
+            </div>
+            <div class="meal-tags">
+              <span *ngFor="let tag of planJournalier.petitDejeuner.tags" class="tag">{{ tag }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Déjeuner -->
+        <div class="meal-card lunch">
+          <div class="meal-image">
+            <img [src]="planJournalier.dejeuner.image" [alt]="planJournalier.dejeuner.name" />
+          </div>
+          <div class="meal-header">
+            <span class="meal-icon">☀️</span>
+            <span class="meal-type">Déjeuner</span>
+            <span class="meal-percent">35%</span>
+          </div>
+          <div class="meal-content">
+            <h3>{{ planJournalier.dejeuner.name }}</h3>
+            <p class="meal-desc">{{ planJournalier.dejeuner.description }}</p>
+            <div class="meal-macros">
+              <span class="calories">{{ planJournalier.dejeuner.calories }} kcal</span>
+              <span>P: {{ planJournalier.dejeuner.proteines }}g</span>
+              <span>G: {{ planJournalier.dejeuner.glucides }}g</span>
+              <span>L: {{ planJournalier.dejeuner.lipides }}g</span>
+            </div>
+            <div class="meal-tags">
+              <span *ngFor="let tag of planJournalier.dejeuner.tags" class="tag">{{ tag }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dîner -->
+        <div class="meal-card dinner">
+          <div class="meal-image">
+            <img [src]="planJournalier.diner.image" [alt]="planJournalier.diner.name" />
+          </div>
+          <div class="meal-header">
+            <span class="meal-icon">🌙</span>
+            <span class="meal-type">Dîner</span>
+            <span class="meal-percent">30%</span>
+          </div>
+          <div class="meal-content">
+            <h3>{{ planJournalier.diner.name }}</h3>
+            <p class="meal-desc">{{ planJournalier.diner.description }}</p>
+            <div class="meal-macros">
+              <span class="calories">{{ planJournalier.diner.calories }} kcal</span>
+              <span>P: {{ planJournalier.diner.proteines }}g</span>
+              <span>G: {{ planJournalier.diner.glucides }}g</span>
+              <span>L: {{ planJournalier.diner.lipides }}g</span>
+            </div>
+            <div class="meal-tags">
+              <span *ngFor="let tag of planJournalier.diner.tags" class="tag">{{ tag }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collation -->
+        <div class="meal-card snack">
+          <div class="meal-image">
+            <img [src]="planJournalier.collation.image" [alt]="planJournalier.collation.name" />
+          </div>
+          <div class="meal-header">
+            <span class="meal-icon">🍎</span>
+            <span class="meal-type">Collation</span>
+            <span class="meal-percent">10%</span>
+          </div>
+          <div class="meal-content">
+            <h3>{{ planJournalier.collation.name }}</h3>
+            <p class="meal-desc">{{ planJournalier.collation.description }}</p>
+            <div class="meal-macros">
+              <span class="calories">{{ planJournalier.collation.calories }} kcal</span>
+              <span>P: {{ planJournalier.collation.proteines }}g</span>
+              <span>G: {{ planJournalier.collation.glucides }}g</span>
+              <span>L: {{ planJournalier.collation.lipides }}g</span>
+            </div>
+            <div class="meal-tags">
+              <span *ngFor="let tag of planJournalier.collation.tags" class="tag">{{ tag }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Totaux journaliers -->
+    <div class="daily-totals">
+      <h3>📊 Totaux du jour</h3>
+      <div class="totals-grid">
+        <div class="total-item calories-total">
+          <span class="total-value">{{ planJournalier.totalCalories }}</span>
+          <span class="total-label">Calories</span>
+        </div>
+        <div class="total-item">
+          <span class="total-value">{{ planJournalier.totalProteines }}g</span>
+          <span class="total-label">Protéines</span>
+        </div>
+        <div class="total-item">
+          <span class="total-value">{{ planJournalier.totalGlucides }}g</span>
+          <span class="total-label">Glucides</span>
+        </div>
+        <div class="total-item">
+          <span class="total-value">{{ planJournalier.totalLipides }}g</span>
+          <span class="total-label">Lipides</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue Hebdomadaire -->
+  <div class="weekly-view" *ngIf="!isLoading && viewMode === 'weekly' && planHebdomadaire">
+    <!-- Sélecteur de jour -->
+    <div class="day-selector">
+      <button *ngFor="let jour of joursNoms; let i = index"
+              [class.active]="jourSelectionne === i"
+              (click)="jourSelectionne = i">
+        {{ jour.substring(0, 3) }}
+      </button>
+    </div>
+
+    <!-- Plan du jour sélectionné -->
+    <div class="selected-day" *ngIf="getPlanJourSelectionne() as plan">
+      <h2>{{ joursNoms[jourSelectionne] }} - {{ formatDate(plan.date) }}</h2>
+      
+      <div class="meals-list">
+        <div class="meal-row">
+          <span class="meal-time">🌅 Petit-déjeuner</span>
+          <span class="meal-name">{{ plan.petitDejeuner.name }}</span>
+          <span class="meal-cal">{{ plan.petitDejeuner.calories }} kcal</span>
+        </div>
+        <div class="meal-row">
+          <span class="meal-time">☀️ Déjeuner</span>
+          <span class="meal-name">{{ plan.dejeuner.name }}</span>
+          <span class="meal-cal">{{ plan.dejeuner.calories }} kcal</span>
+        </div>
+        <div class="meal-row">
+          <span class="meal-time">🌙 Dîner</span>
+          <span class="meal-name">{{ plan.diner.name }}</span>
+          <span class="meal-cal">{{ plan.diner.calories }} kcal</span>
+        </div>
+        <div class="meal-row">
+          <span class="meal-time">🍎 Collation</span>
+          <span class="meal-name">{{ plan.collation.name }}</span>
+          <span class="meal-cal">{{ plan.collation.calories }} kcal</span>
+        </div>
+        <div class="meal-row total-row">
+          <span class="meal-time">📊 Total</span>
+          <span class="meal-name"></span>
+          <span class="meal-cal">{{ plan.totalCalories }} kcal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résumé hebdomadaire -->
+    <div class="weekly-summary">
+      <h3>📈 Moyennes hebdomadaires</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="value">{{ planHebdomadaire.moyenneCalories }}</span>
+          <span class="label">kcal/jour</span>
+        </div>
+        <div class="summary-item">
+          <span class="value">{{ planHebdomadaire.moyenneProteines }}g</span>
+          <span class="label">Protéines</span>
+        </div>
+        <div class="summary-item">
+          <span class="value">{{ planHebdomadaire.moyenneGlucides }}g</span>
+          <span class="label">Glucides</span>
+        </div>
+        <div class="summary-item">
+          <span class="value">{{ planHebdomadaire.moyenneLipides }}g</span>
+          <span class="label">Lipides</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions" *ngIf="!isLoading">
+    <button class="btn-regenerate" (click)="regenererPlan()">
+      <i class="pi pi-refresh"></i> Régénérer le plan
+    </button>
+    <button class="btn-export" (click)="exporterPDF()" *ngIf="viewMode === 'daily'">
+      <i class="pi pi-file-pdf"></i> Exporter PDF
+    </button>
+    <button class="btn-export" (click)="exporterPlanHebdoPDF()" *ngIf="viewMode === 'weekly'">
+      <i class="pi pi-file-pdf"></i> Exporter semaine PDF
+    </button>
+  </div>
+</div>

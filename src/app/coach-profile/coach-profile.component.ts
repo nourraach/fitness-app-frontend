@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { JwtService } from '../service/jwt.service';
+import { CoachNavbarComponent } from '../coach-navbar/coach-navbar.component';
 
 interface CoachProfile {
   id?: number;

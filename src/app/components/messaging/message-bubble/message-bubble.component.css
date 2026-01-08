@@ -1,42 +1,110 @@
-/* System Message */
+/* ============================================
+   MESSAGE BUBBLE - MODERN CREATIVE DESIGN
+   Asymmetric corners + Gradients + Animations
+   ============================================ */
+
+:host {
+  /* Theme Colors */
+  --primary: #84cabe;
+  --primary-light: #a8ddd3;
+  --primary-dark: #6bb5a7;
+  --own-message-gradient: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
+  
+  /* Glass Effects */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  
+  /* Text Colors */
+  --text-primary: #2C3E50;
+  --text-secondary: #7F8C8D;
+  --text-white: #ffffff;
+  
+  /* Status Colors */
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  
+  /* Shadows */
+  --shadow-own: 0 4px 20px rgba(132, 202, 190, 0.3);
+  --shadow-other: 0 2px 12px rgba(0, 0, 0, 0.08);
+  
+  /* Border Radius */
+  --radius-lg: 20px;
+  --radius-sm: 8px;
+  
+  /* Transitions */
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   SYSTEM MESSAGE
+   ============================================ */
 .system-message {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 16px 0;
+  margin: 20px 0;
   padding: 0 20px;
+  animation: systemFadeIn 0.4s ease-out;
+}
+
+@keyframes systemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .system-content {
-  background: #f0f0f0;
-  color: #666;
-  padding: 8px 16px;
-  border-radius: 16px;
-  font-size: 13px;
+  background: linear-gradient(135deg, rgba(132, 202, 190, 0.15) 0%, rgba(168, 221, 211, 0.1) 100%);
+  color: var(--text-secondary);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   max-width: 80%;
   text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(132, 202, 190, 0.2);
 }
 
 .system-content i {
-  font-size: 12px;
-  opacity: 0.7;
+  font-size: 0.9rem;
+  color: var(--primary);
 }
 
 .system-timestamp {
-  font-size: 11px;
-  color: #999;
-  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  opacity: 0.7;
 }
 
-/* Regular Message Container */
+/* ============================================
+   MESSAGE BUBBLE CONTAINER
+   ============================================ */
 .message-bubble-container {
   display: flex;
   align-items: flex-end;
-  margin-bottom: 12px;
-  gap: 8px;
+  margin-bottom: 8px;
+  gap: 10px;
+  animation: bubbleSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bubbleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .message-bubble-container.own-message {
@@ -44,21 +112,48 @@
   justify-content: flex-start;
 }
 
-/* Avatar */
+/* ============================================
+   AVATAR
+   ============================================ */
 .message-avatar {
   flex-shrink: 0;
   margin-bottom: 4px;
 }
 
 .avatar-image {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e0e0e0;
+  border: 2px solid var(--glass-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: var(--transition-normal);
 }
 
-/* Message Content */
+.avatar-image:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(132, 202, 190, 0.3);
+}
+
+/* Avatar with initials (fallback) */
+.avatar-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(132, 202, 190, 0.3);
+  transition: var(--transition-normal);
+}
+
+/* ============================================
+   MESSAGE CONTENT
+   ============================================ */
 .message-content {
   max-width: 70%;
   display: flex;
@@ -70,138 +165,223 @@
   align-items: flex-end;
 }
 
-/* Message Bubble */
+/* ============================================
+   MESSAGE BUBBLE - ASYMMETRIC DESIGN
+   ============================================ */
 .message-bubble {
   background: #ffffff;
   border: 1px solid #e0e0e0;
-  border-radius: 18px;
-  padding: 12px 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-other);
   position: relative;
   word-wrap: break-word;
   word-break: break-word;
+  transition: var(--transition-normal);
+  color: #2C3E50;
+  
+  /* Asymmetric corners for received messages */
+  border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
 }
 
+.message-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Own Message - Gradient Style */
 .message-bubble.own-bubble {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
+  background: var(--own-message-gradient);
+  color: var(--text-white);
+  border: none;
+  box-shadow: var(--shadow-own);
+  
+  /* Asymmetric corners for own messages */
+  border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
 }
 
+.message-bubble.own-bubble:hover {
+  box-shadow: 0 8px 32px rgba(132, 202, 190, 0.4);
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* Failed Message */
 .message-bubble.failed-bubble {
-  background: #ffe6e6;
-  border-color: #ff6b6b;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   color: #d63031;
+  border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
 }
 
-/* Message Text */
+/* ============================================
+   MESSAGE TEXT
+   ============================================ */
 .message-text {
-  font-size: 14px;
-  line-height: 1.4;
-  margin-bottom: 4px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  color: #2C3E50;
 }
 
 .message-text:last-child {
   margin-bottom: 0;
 }
 
+/* Text color for own messages */
+.own-bubble .message-text {
+  color: #ffffff;
+}
+
 /* Links in messages */
-.message-text :global(a) {
+.message-text a {
   color: inherit;
   text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  transition: var(--transition-normal);
 }
 
-.own-bubble .message-text :global(a) {
-  color: #cce7ff;
+.message-text a:hover {
+  text-decoration-style: solid;
 }
 
-/* Message Metadata */
+.own-bubble .message-text a {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================
+   MESSAGE METADATA
+   ============================================ */
 .message-metadata {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .message-time {
-  font-size: 11px;
+  font-size: 0.7rem;
   opacity: 0.7;
   white-space: nowrap;
+  font-weight: 500;
+  color: #666666;
 }
 
 .own-bubble .message-time {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Message Status */
+/* ============================================
+   MESSAGE STATUS ICONS
+   ============================================ */
 .message-status {
   display: flex;
   align-items: center;
 }
 
 .message-status i {
-  font-size: 12px;
-  opacity: 0.8;
+  font-size: 0.75rem;
+  transition: var(--transition-normal);
+}
+
+/* Sent status */
+.message-status i.fa-check {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Read status - double check with animation */
+.message-status i.fa-check-double {
+  color: #10b981;
+  animation: checkPop 0.3s ease-out;
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.own-bubble .message-status i.fa-check-double {
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .message-status .text-primary {
-  color: #4caf50 !important;
+  color: var(--success-color) !important;
 }
 
 .message-status .text-danger {
-  color: #f44336 !important;
+  color: var(--error-color) !important;
 }
 
-.own-bubble .message-status i {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.own-bubble .message-status .text-primary {
-  color: #4caf50 !important;
-}
-
-/* Retry Button */
+/* ============================================
+   RETRY BUTTON
+   ============================================ */
 .retry-button {
-  background: #ff6b6b;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
   border-radius: 12px;
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.retry-button:hover {
-  background: #ff5252;
-}
-
-.retry-button i {
-  font-size: 10px;
-}
-
-/* Sending Indicator */
-.sending-indicator {
+  margin-top: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #666;
+  transition: var(--transition-normal);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.retry-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.retry-button:active {
+  transform: scale(0.98);
+}
+
+.retry-button i {
+  font-size: 0.7rem;
+  animation: retryRotate 0.5s ease-out;
+}
+
+@keyframes retryRotate {
+  from { transform: rotate(-180deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* ============================================
+   SENDING INDICATOR
+   ============================================ */
+.sending-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  background: rgba(132, 202, 190, 0.1);
+  border-radius: 12px;
 }
 
 .sending-spinner {
-  width: 12px;
-  height: 12px;
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #007bff;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(132, 202, 190, 0.3);
+  border-top: 2px solid var(--primary);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -209,60 +389,48 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Message Bubble Tails */
+/* ============================================
+   MESSAGE BUBBLE DECORATIVE ELEMENTS
+   ============================================ */
+
+/* Subtle gradient overlay on hover */
 .message-bubble::before {
   content: '';
   position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
-  width: 0;
-  height: 0;
-  border: 6px solid transparent;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  opacity: 0;
+  transition: var(--transition-normal);
+  pointer-events: none;
 }
 
-/* Received message tail */
-.message-bubble:not(.own-bubble)::before {
-  left: -11px;
-  border-right-color: #ffffff;
-  border-bottom-color: #ffffff;
-  border-left: none;
-  border-top: none;
+.message-bubble:hover::before {
+  opacity: 1;
 }
 
-/* Own message tail */
-.message-bubble.own-bubble::before {
-  right: -11px;
-  border-left-color: #007bff;
-  border-bottom-color: #007bff;
-  border-right: none;
-  border-top: none;
-}
-
-/* Failed message tail */
-.message-bubble.failed-bubble::before {
-  right: -11px;
-  border-left-color: #ffe6e6;
-  border-bottom-color: #ffe6e6;
-  border-right: none;
-  border-top: none;
-}
-
-/* Responsive Design */
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
 @media (max-width: 768px) {
   .message-content {
     max-width: 85%;
   }
   
   .message-bubble {
-    padding: 10px 14px;
+    padding: 12px 16px;
   }
   
   .message-text {
-    font-size: 13px;
+    font-size: 0.9rem;
   }
   
   .avatar-image {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 }
 
@@ -272,11 +440,50 @@
   }
   
   .message-bubble {
-    padding: 8px 12px;
+    padding: 10px 14px;
   }
   
   .system-content {
-    max-width: 90%;
-    padding: 6px 12px;
+    max-width: 95%;
+    padding: 8px 14px;
+    font-size: 0.8rem;
   }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (Future)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  :host {
+    --glass-bg: rgba(30, 30, 30, 0.9);
+    --glass-border: rgba(60, 60, 60, 0.6);
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --shadow-other: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .message-bubble-container,
+  .system-message,
+  .message-bubble,
+  .retry-button i,
+  .sending-spinner {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus states for keyboard navigation */
+.message-bubble:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.retry-button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }

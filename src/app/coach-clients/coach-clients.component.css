@@ -1,3 +1,13 @@
+/* Variables - Same as User Theme */
+:root {
+  --primary-green: #84cabe;
+  --light-green: #a8ddd3;
+  --dark-green: #6bb5a7;
+  --text-dark: #2C3E50;
+  --text-light: #7F8C8D;
+  --bg-light: #F8F9FA;
+}
+
 .coach-clients-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -15,17 +25,18 @@
 .header-content h1 {
   margin: 0 0 8px 0;
   font-size: 32px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .subtitle {
   margin: 0;
-  color: #666;
+  color: #7F8C8D;
   font-size: 16px;
 }
 
+/* Primary Button - Green Theme */
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -41,7 +52,7 @@
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(132, 202, 190, 0.4);
 }
 
 .btn-primary:disabled {
@@ -89,7 +100,7 @@
 }
 
 .search-section i {
-  color: #999;
+  color: #7F8C8D;
   font-size: 18px;
 }
 
@@ -98,11 +109,11 @@
   border: none;
   outline: none;
   font-size: 16px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: #7F8C8D;
 }
 
 .filter-section {
@@ -116,9 +127,14 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
-  color: #333;
+  color: #2C3E50;
   background: white;
   cursor: pointer;
+}
+
+.sort-select:focus {
+  border-color: #84cabe;
+  outline: none;
 }
 
 .filter-btn {
@@ -127,7 +143,7 @@
   border-radius: 6px;
   font-size: 14px;
   background: white;
-  color: #666;
+  color: #7F8C8D;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -140,12 +156,12 @@
 }
 
 .filter-btn.active {
-  background: #ffc107;
-  color: #856404;
-  border-color: #ffc107;
+  background: #84cabe;
+  color: white;
+  border-color: #84cabe;
 }
 
-/* Enhanced Stats Summary */
+/* Stats Summary - Green Theme */
 .stats-summary {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -184,6 +200,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
+  border-left: 4px solid #84cabe;
 }
 
 .stat-icon {
@@ -197,13 +214,13 @@
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #667eea;
+  color: #84cabe;
   margin-bottom: 4px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 /* Loading & Empty States */
@@ -222,12 +239,12 @@
 
 .empty-state h3 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .empty-state p {
   margin: 0 0 20px 0;
-  color: #666;
+  color: #7F8C8D;
 }
 
 /* Clients Grid */
@@ -247,7 +264,7 @@
 
 .client-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(132, 202, 190, 0.2);
 }
 
 .client-card.inactive-client {
@@ -290,7 +307,7 @@
 }
 
 .progress-excellent {
-  color: #28a745 !important;
+  color: #6bb5a7 !important;
 }
 
 .inactive-warning {
@@ -308,11 +325,12 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
+/* Client Avatar - Green Theme */
 .client-avatar {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,13 +346,13 @@
 .client-info h3 {
   margin: 0 0 5px 0;
   font-size: 18px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .client-email {
   margin: 0 0 8px 0;
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .status-badge {
@@ -370,11 +388,11 @@
   gap: 8px;
   margin-bottom: 8px;
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .detail-item i {
-  color: #999;
+  color: #84cabe;
 }
 
 .client-stats {
@@ -393,30 +411,14 @@
 
 .stat-item .stat-label {
   font-size: 12px;
-  color: #666;
+  color: #7F8C8D;
   margin-bottom: 5px;
 }
 
 .stat-item .stat-value {
   font-size: 20px;
   font-weight: 700;
-  color: #333;
-}
-
-.progress-excellent {
-  color: #28a745 !important;
-}
-
-.progress-good {
-  color: #17a2b8 !important;
-}
-
-.progress-average {
-  color: #ffc107 !important;
-}
-
-.progress-low {
-  color: #dc3545 !important;
+  color: #2C3E50;
 }
 
 .client-actions {
@@ -424,6 +426,7 @@
   gap: 10px;
 }
 
+/* Action Buttons - Green Theme */
 .btn-view, .btn-remove {
   flex: 1;
   padding: 10px;
@@ -440,12 +443,12 @@
 }
 
 .btn-view {
-  background: #667eea;
+  background: #84cabe;
   color: white;
 }
 
 .btn-view:hover {
-  background: #5568d3;
+  background: #6bb5a7;
 }
 
 .btn-remove {
@@ -498,7 +501,7 @@
 .modal-header h2 {
   margin: 0;
   font-size: 22px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .btn-close {
@@ -506,7 +509,7 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: #7F8C8D;
   padding: 0;
   width: 32px;
   height: 32px;
@@ -519,14 +522,14 @@
 
 .btn-close:hover {
   background: #f0f0f0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .modal-body {
   padding: 30px;
 }
 
-/* Available Clients List */
+/* Available Clients List - Green Theme */
 .available-clients-list {
   display: flex;
   flex-direction: column;
@@ -544,14 +547,14 @@
 }
 
 .available-client-item:hover {
-  background: #e9ecef;
+  background: #e8f5f3;
 }
 
 .client-avatar-small {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -567,17 +570,17 @@
 .client-info-small h4 {
   margin: 0 0 4px 0;
   font-size: 16px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .client-info-small p {
   margin: 0;
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .btn-assign {
-  background: #28a745;
+  background: #6bb5a7;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -592,7 +595,7 @@
 }
 
 .btn-assign:hover:not(:disabled) {
-  background: #218838;
+  background: #5aa396;
 }
 
 .btn-assign:disabled {
@@ -610,7 +613,7 @@
 .detail-section h3 {
   margin: 0 0 15px 0;
   font-size: 18px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .detail-grid {
@@ -629,11 +632,11 @@
 
 .detail-row .label {
   font-weight: 600;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .detail-row .value {
-  color: #333;
+  color: #2C3E50;
 }
 
 .detail-actions {

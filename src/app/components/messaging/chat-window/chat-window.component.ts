@@ -257,4 +257,13 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   trackByMessage(index: number, message: Message): string | number {
     return message.id || index;
   }
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  }
 }

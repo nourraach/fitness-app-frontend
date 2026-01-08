@@ -5,44 +5,54 @@ import { ProgrammeService } from '../services/programme.service';
 import { ClientService } from '../services/client.service';
 import { Client } from '../models/client.model';
 import { JwtService } from '../service/jwt.service';
-import { ProgrammeEntrainement, Exercice, CreerProgrammeRequest } from '../models/programme.model';
+import { 
+  ProgrammeEntrainement, 
+  Exercice, 
+  CreerProgrammeRequest,
+  ProgrammeStatut 
+} from '../models/programme.model';
 import { CoachNavbarComponent } from '../coach-navbar/coach-navbar.component';
-import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-gestion-programmes',
   standalone: true,
-  imports: [CommonModule, FormsModule, CoachNavbarComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, CoachNavbarComponent],
   templateUrl: './gestion-programmes.component.html',
   styleUrl: './gestion-programmes.component.css'
 })
 export class GestionProgrammesComponent implements OnInit {
+  // Liste des programmes
   programmes: ProgrammeEntrainement[] = [];
+  
+  // Liste des clients du coach
   clients: Client[] = [];
+  
+  // État du formulaire
   showForm = false;
   isEditing = false;
   currentProgrammeId?: number;
   
-  programme: CreerProgrammeRequest = {
+  // Données du formulaire - conforme au contrat backend
+  formData = {
     clientId: 0,
     nom: '',
     description: '',
     dateDebut: '',
     dateFin: '',
-    exercices: []
+    exercices: [] as Exercice[]
   };
 
+  // Nouvel exercice - conforme au contrat backend
   nouvelExercice: Exercice = {
     nom: '',
-    description: '',
-    series: 0,
-    repetitions: 0,
-    dureeMinutes: 0,
-    intensite: 'MOYENNE',
-    notes: ''
+    series: 1,
+    repetitions: 10,
+    tempsRepos: 60,
+    poids: 0
   };
 
-  userRole: string = '';
+  // État UI
+  userRole = '';
   loading = false;
   error = '';
   success = '';
@@ -54,55 +64,74 @@ export class GestionProgrammesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Récupérer le rôle depuis le JWT
-    const role = this.jwtService.getRole();
-    console.log('Rôle utilisateur:', role);
-    
-    // Le rôle dans le JWT peut être "ROLE_COACH", "coach", etc.
-    // On normalise en minuscules et on retire le préfixe ROLE_ si présent
-    if (role) {
-      this.userRole = role.replace('ROLE_', '').toLowerCase();
-    }
-    
+    this.initUserRole();
     this.chargerProgrammes();
+    
     if (this.userRole === 'coach') {
       this.chargerClients();
     }
   }
 
+  /**
+   * Initialise le rôle utilisateur depuis le JWT
+   */
+  private initUserRole(): void {
+    const role = this.jwtService.getRole();
+    if (role) {
+      this.userRole = role.replace('ROLE_', '').toLowerCase();
+    }
+    console.log('👤 Rôle utilisateur:', this.userRole);
+  }
+
+  /**
+   * Charge les programmes selon le rôle
+   */
   chargerProgrammes(): void {
     this.loading = true;
+    this.error = '';
+    
     const observable = this.userRole === 'coach' 
       ? this.programmeService.getProgrammesCoach()
       : this.programmeService.getProgrammesClient();
 
     observable.subscribe({
       next: (data) => {
-        this.programmes = data;
+        // Pour les clients, filtrer les programmes annulés
+        if (this.userRole !== 'coach') {
+          this.programmes = data.filter(p => p.statut !== 'CANCELLED');
+        } else {
+          this.programmes = data;
+        }
         this.loading = false;
+        console.log('📋 Programmes chargés:', this.programmes.length);
       },
       error: (err) => {
-        this.error = 'Erreur lors du chargement des programmes';
+        this.error = err.message || 'Erreur lors du chargement des programmes';
         this.loading = false;
+        console.error('❌ Erreur chargement:', err);
       }
     });
   }
 
+  /**
+   * Charge la liste des clients du coach
+   */
   chargerClients(): void {
     this.clientService.getMyClients().subscribe({
       next: (data: Client[]) => {
         this.clients = data;
+        console.log('👥 Clients chargés:', data.length);
       },
-      error: (err: any) => {
-        console.error('Erreur lors du chargement des clients:', err);
-        // Fallback avec des données de test
-        this.clients = [
-          { id: 2, name: 'Marie Martin', email: 'marie@example.com' },
-          { id: 3, name: 'Paul Durand', email: 'paul@example.com' }
-        ];
+      error: (err) => {
+        console.error('❌ Erreur chargement clients:', err);
+        this.error = 'Impossible de charger la liste des clients';
       }
     });
   }
+
+  // ============================================
+  // GESTION DU FORMULAIRE
+  // ============================================
 
   afficherFormulaire(): void {
     this.showForm = true;
@@ -116,7 +145,7 @@ export class GestionProgrammesComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.programme = {
+    this.formData = {
       clientId: 0,
       nom: '',
       description: '',
@@ -124,130 +153,176 @@ export class GestionProgrammesComponent implements OnInit {
       dateFin: '',
       exercices: []
     };
-    this.nouvelExercice = {
-      nom: '',
-      description: '',
-      series: 0,
-      repetitions: 0,
-      dureeMinutes: 0,
-      intensite: 'MOYENNE',
-      notes: ''
-    };
+    this.resetExercice();
     this.error = '';
-    this.success = '';
+    this.currentProgrammeId = undefined;
   }
 
+  resetExercice(): void {
+    this.nouvelExercice = {
+      nom: '',
+      series: 1,
+      repetitions: 10,
+      tempsRepos: 60,
+      poids: 0
+    };
+  }
+
+  // ============================================
+  // GESTION DES EXERCICES
+  // ============================================
+
   ajouterExercice(): void {
-    if (this.nouvelExercice.nom.trim()) {
-      this.programme.exercices.push({ ...this.nouvelExercice });
-      this.nouvelExercice = {
-        nom: '',
-        description: '',
-        series: 0,
-        repetitions: 0,
-        dureeMinutes: 0,
-        intensite: 'MOYENNE',
-        notes: ''
-      };
+    if (!this.nouvelExercice.nom.trim()) {
+      this.error = 'Le nom de l\'exercice est requis';
+      return;
     }
+
+    // Validation des valeurs positives (comme le backend)
+    if (this.nouvelExercice.series <= 0 || 
+        this.nouvelExercice.repetitions <= 0 || 
+        this.nouvelExercice.tempsRepos < 0 || 
+        this.nouvelExercice.poids < 0) {
+      this.error = 'Les valeurs de l\'exercice doivent être positives';
+      return;
+    }
+
+    this.formData.exercices.push({ ...this.nouvelExercice });
+    this.resetExercice();
+    this.error = '';
+    console.log('➕ Exercice ajouté, total:', this.formData.exercices.length);
   }
 
   retirerExercice(index: number): void {
-    this.programme.exercices.splice(index, 1);
+    this.formData.exercices.splice(index, 1);
+    console.log('➖ Exercice retiré, total:', this.formData.exercices.length);
   }
 
+  // ============================================
+  // SOUMISSION DU FORMULAIRE
+  // ============================================
+
   soumettreProgramme(): void {
+    console.log('🚀 soumettreProgramme() appelée');
+    
     if (!this.validerFormulaire()) {
+      console.log('⛔ Validation échouée, arrêt');
       return;
     }
 
     this.loading = true;
+    this.error = '';
+
+    // Construction du body conforme au contrat backend
+    const request: CreerProgrammeRequest = {
+      clientId: Number(this.formData.clientId),
+      nom: this.formData.nom.trim(),
+      description: this.formData.description?.trim() || undefined,
+      dateDebut: this.formData.dateDebut,
+      dateFin: this.formData.dateFin,
+      exercices: this.formData.exercices,
+      statut: 'ACTIVE'  // Statut par défaut pour les nouveaux programmes
+    };
+
+    console.log('📤 Envoi au backend:', JSON.stringify(request, null, 2));
+
     const observable = this.isEditing && this.currentProgrammeId
-      ? this.programmeService.updateProgramme(this.currentProgrammeId, this.programme)  // NOUVELLE API PUT
-      : this.programmeService.creerProgramme(this.programme);
+      ? this.programmeService.updateProgramme(this.currentProgrammeId, request)
+      : this.programmeService.creerProgramme(request);
 
     observable.subscribe({
-      next: () => {
-        this.success = this.isEditing ? 'Programme modifié avec succès' : 'Programme créé avec succès';
+      next: (response) => {
+        this.success = this.isEditing 
+          ? 'Programme modifié avec succès' 
+          : 'Programme créé avec succès';
         this.loading = false;
         this.showForm = false;
         this.chargerProgrammes();
-        setTimeout(() => this.success = '', 3000);
+        console.log('✅ Succès:', response);
+        setTimeout(() => this.success = '', 4000);
       },
       error: (err) => {
-        this.error = err.error?.erreur || err.message || 'Erreur lors de la sauvegarde du programme';
+        this.error = err.message || 'Erreur lors de la sauvegarde';
         this.loading = false;
+        console.error('❌ Erreur:', err);
       }
     });
   }
 
+  /**
+   * Validation côté frontend (le backend fait aussi ses validations)
+   */
   validerFormulaire(): boolean {
-    if (!this.programme.clientId || this.programme.clientId === 0) {
+    this.error = '';
+
+    console.log('🔍 Validation du formulaire:', {
+      clientId: this.formData.clientId,
+      nom: this.formData.nom,
+      dateDebut: this.formData.dateDebut,
+      dateFin: this.formData.dateFin,
+      exercices: this.formData.exercices.length
+    });
+
+    if (!this.formData.clientId || this.formData.clientId === 0) {
       this.error = 'Veuillez sélectionner un client';
+      console.log('❌ Validation échouée: pas de client');
       return false;
     }
-    if (!this.programme.nom.trim()) {
-      this.error = 'Veuillez saisir un nom pour le programme';
+
+    if (!this.formData.nom.trim()) {
+      this.error = 'Le nom du programme est requis';
+      console.log('❌ Validation échouée: pas de nom');
       return false;
     }
-    if (!this.programme.dateDebut || !this.programme.dateFin) {
-      this.error = 'Veuillez saisir les dates de début et de fin';
+
+    if (!this.formData.dateDebut || !this.formData.dateFin) {
+      this.error = 'Les dates de début et de fin sont requises';
+      console.log('❌ Validation échouée: dates manquantes');
       return false;
     }
-    if (this.programme.exercices.length === 0) {
-      this.error = 'Veuillez ajouter au moins un exercice';
+
+    // Validation des dates - comparaison directe des strings ISO (YYYY-MM-DD)
+    // Les inputs type="date" retournent des strings au format YYYY-MM-DD
+    console.log('📅 Dates brutes:', {
+      dateDebut: this.formData.dateDebut,
+      dateFin: this.formData.dateFin,
+      typeDebut: typeof this.formData.dateDebut,
+      typeFin: typeof this.formData.dateFin
+    });
+
+    // Comparaison simple de strings ISO - fonctionne car YYYY-MM-DD est triable alphabétiquement
+    if (this.formData.dateFin <= this.formData.dateDebut) {
+      this.error = 'La date de fin doit être après la date de début';
+      console.log('❌ Validation échouée: date fin <= date début');
       return false;
     }
+
+    if (this.formData.exercices.length === 0) {
+      this.error = 'Ajoutez au moins un exercice';
+      console.log('❌ Validation échouée: pas d\'exercices');
+      return false;
+    }
+
+    console.log('✅ Validation réussie');
     return true;
   }
+
+  // ============================================
+  // ACTIONS SUR LES PROGRAMMES
+  // ============================================
 
   modifierProgramme(programme: ProgrammeEntrainement): void {
     this.isEditing = true;
     this.currentProgrammeId = programme.id;
-    this.programme = {
+    this.formData = {
       clientId: programme.clientId,
       nom: programme.nom,
       description: programme.description || '',
       dateDebut: programme.dateDebut,
       dateFin: programme.dateFin,
-      exercices: [...programme.exercices]
+      exercices: programme.exercices ? [...programme.exercices] : []
     };
     this.showForm = true;
-  }
-
-  // NOUVELLE MÉTHODE - Utilise la nouvelle API PUT
-  modifierProgrammeAvecAPI(programme: ProgrammeEntrainement): void {
-    this.isEditing = true;
-    this.currentProgrammeId = programme.id;
-    this.programme = {
-      clientId: programme.clientId,
-      nom: programme.nom,
-      description: programme.description || '',
-      dateDebut: programme.dateDebut,
-      dateFin: programme.dateFin,
-      exercices: [...programme.exercices]
-    };
-    this.showForm = true;
-  }
-
-  // NOUVELLE MÉTHODE - Utilise la nouvelle API DELETE
-  supprimerProgrammeAvecAPI(id: number): void {
-    if (!id || !confirm('Êtes-vous sûr de vouloir supprimer ce programme ?')) {
-      return;
-    }
-
-    this.loading = true;
-    this.programmeService.deleteProgramme(id).subscribe({
-      next: () => {
-        this.success = 'Programme supprimé avec succès';
-        this.chargerProgrammes();
-        setTimeout(() => this.success = '', 3000);
-      },
-      error: (err) => {
-        this.error = err.message || 'Erreur lors de la suppression du programme';
-        this.loading = false;
-      }
-    });
   }
 
   changerStatut(id: number, statut: string): void {
@@ -260,7 +335,7 @@ export class GestionProgrammesComponent implements OnInit {
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = 'Erreur lors du changement de statut';
+        this.error = err.message || 'Erreur lors du changement de statut';
       }
     });
   }
@@ -270,25 +345,98 @@ export class GestionProgrammesComponent implements OnInit {
       return;
     }
 
-    this.programmeService.supprimerProgramme(id).subscribe({
+    this.loading = true;
+    this.programmeService.deleteProgramme(id).subscribe({
       next: () => {
         this.success = 'Programme supprimé avec succès';
+        this.loading = false;
         this.chargerProgrammes();
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = 'Erreur lors de la suppression du programme';
+        this.error = err.message || 'Erreur lors de la suppression';
+        this.loading = false;
       }
     });
   }
 
+  // ============================================
+  // HELPERS UI
+  // ============================================
+
   getStatutClass(statut?: string): string {
-    switch (statut) {
-      case 'ACTIF': return 'statut-actif';
-      case 'TERMINE': return 'statut-termine';
-      case 'SUSPENDU': return 'statut-suspendu';
-      case 'ANNULE': return 'statut-annule';
-      default: return '';
+    const mapping: Record<string, string> = {
+      'ACTIVE': 'statut-actif',
+      'ACTIF': 'statut-actif',
+      'PAUSED': 'statut-suspendu',
+      'SUSPENDU': 'statut-suspendu',
+      'COMPLETED': 'statut-termine',
+      'TERMINE': 'statut-termine',
+      'CANCELLED': 'statut-annule',
+      'ANNULE': 'statut-annule'
+    };
+    return mapping[statut || ''] || '';
+  }
+
+  getStatutLabel(statut?: string): string {
+    const mapping: Record<string, string> = {
+      'ACTIVE': 'Actif',
+      'ACTIF': 'Actif',
+      'PAUSED': 'En pause',
+      'SUSPENDU': 'Suspendu',
+      'COMPLETED': 'Terminé',
+      'TERMINE': 'Terminé',
+      'CANCELLED': 'Annulé',
+      'ANNULE': 'Annulé'
+    };
+    return mapping[statut || ''] || statut || '';
+  }
+
+  isStatutActif(statut?: string): boolean {
+    return statut === 'ACTIVE' || statut === 'ACTIF';
+  }
+
+  isStatutPause(statut?: string): boolean {
+    return statut === 'PAUSED' || statut === 'SUSPENDU';
+  }
+
+  /**
+   * Permet au client de marquer un programme comme terminé
+   */
+  marquerTermine(programme: ProgrammeEntrainement): void {
+    if (!programme.id) return;
+    
+    if (confirm('Êtes-vous sûr d\'avoir terminé ce programme ? Votre coach sera notifié.')) {
+      this.loading = true;
+      this.programmeService.changerStatut(programme.id, 'COMPLETED').subscribe({
+        next: () => {
+          this.success = '🎉 Félicitations ! Programme marqué comme terminé. Votre coach a été notifié.';
+          this.chargerProgrammes();
+          setTimeout(() => this.success = '', 5000);
+        },
+        error: (err) => {
+          this.error = err.message || 'Erreur lors de la mise à jour du statut';
+          this.loading = false;
+        }
+      });
+    }
+  }
+
+  /**
+   * Force une valeur à être positive (>= 1) pour séries et répétitions
+   */
+  forcePositive(field: 'series' | 'repetitions'): void {
+    if (this.nouvelExercice[field] < 1) {
+      this.nouvelExercice[field] = 1;
+    }
+  }
+
+  /**
+   * Force une valeur à être non-négative (>= 0) pour repos et poids
+   */
+  forceNonNegative(field: 'tempsRepos' | 'poids'): void {
+    if (this.nouvelExercice[field] < 0) {
+      this.nouvelExercice[field] = 0;
     }
   }
 }

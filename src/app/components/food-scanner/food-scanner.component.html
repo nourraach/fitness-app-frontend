@@ -1,0 +1,119 @@
+<!-- Hero Section - Food Recognition AI -->
+<div class="hero-cards-section">
+  <div class="hero-card food-recognition-hero">
+    <div class="hero-card-content">
+      <div class="hero-text">
+        <h1 class="hero-title">La magie de l'IA <span class="text-gradient">dans votre assiette</span></h1>
+        <div class="hero-features">
+          <div class="hero-feature-item">
+            <span class="feature-icon">⚡</span>
+            <span>Reconnaissance instantanée grâce à l'intelligence artificielle</span>
+          </div>
+          <div class="hero-feature-item">
+            <span class="feature-icon">🥗</span>
+            <span>Suggestions santé et conseils nutritionnels personnalisés</span>
+          </div>
+          <div class="hero-feature-item">
+            <span class="feature-icon">👥</span>
+            <span>Partagez vos découvertes culinaires avec vos amis</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-image-wrapper">
+        <div class="hero-image-glow food-glow"></div>
+        <img src="assets/images/camaimfaskha.png" alt="Reconnaissance alimentaire" class="hero-image" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="food-scanner">
+  <h2>📷 Scanner un aliment</h2>
+
+  <!-- Upload Section -->
+  <div class="upload-section" *ngIf="!result && !loading">
+    <label class="file-input-label">
+      <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" (change)="onFileSelected($event)" hidden>
+      <span class="btn btn-primary">📸 Prendre une photo ou choisir une image</span>
+    </label>
+    
+    <div *ngIf="imagePreview" class="preview">
+      <img [src]="imagePreview" alt="Aperçu">
+      <button class="btn btn-success" (click)="analyzeImage()" [disabled]="!selectedImage">🔍 Analyser</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Analyse en cours...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error-box">
+    <p>❌ {{ error }}</p>
+    <button class="btn btn-secondary" (click)="retry()">🔄 Réessayer</button>
+    <button class="btn btn-link" (click)="showManualEntry = true">✏️ Saisie manuelle</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="confirmed" class="success-box">
+    <p>✅ Aliment ajouté avec succès !</p>
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="result?.recognized && !confirmed" class="results">
+    <div class="food-info">
+      <h3>{{ result?.foodName }}</h3>
+      <span class="category">{{ result?.category }}</span>
+      <span class="confidence">Confiance: {{ ((result?.confidence || 0) * 100) | number:'1.0-0' }}%</span>
+    </div>
+
+    <!-- Nutritional Info -->
+    <div *ngIf="calculatedNutrition" class="nutrition-card">
+      <h4>Valeurs nutritionnelles</h4>
+      <div class="quantity-input">
+        <label>Quantité (g):</label>
+        <input type="number" [(ngModel)]="quantity" min="1" max="2000">
+      </div>
+      <div class="nutrition-grid">
+        <div class="nutrient"><span class="value">{{ calculatedNutrition.calories }}</span><span class="label">kcal</span></div>
+        <div class="nutrient"><span class="value">{{ calculatedNutrition.proteines | number:'1.1-1' }}g</span><span class="label">Protéines</span></div>
+        <div class="nutrient"><span class="value">{{ calculatedNutrition.lipides | number:'1.1-1' }}g</span><span class="label">Lipides</span></div>
+        <div class="nutrient"><span class="value">{{ calculatedNutrition.glucides | number:'1.1-1' }}g</span><span class="label">Glucides</span></div>
+      </div>
+    </div>
+
+    <!-- Alternatives -->
+    <div *ngIf="result?.alternatives?.length" class="alternatives">
+      <p>Pas le bon aliment ? Essayez :</p>
+      <div class="alt-buttons">
+        <button *ngFor="let alt of result?.alternatives" class="btn btn-outline" (click)="selectAlternative(alt)">{{ alt }}</button>
+      </div>
+    </div>
+
+    <!-- Confirm -->
+    <button class="btn btn-success btn-lg" (click)="confirmFood()">✅ Confirmer</button>
+  </div>
+
+  <!-- Not Recognized -->
+  <div *ngIf="result && !result.recognized && !confirmed" class="not-recognized">
+    <p>🤔 Aliment non reconnu</p>
+    <button class="btn btn-primary" (click)="showManualEntry = true">✏️ Saisie manuelle</button>
+  </div>
+
+  <!-- Manual Entry -->
+  <div *ngIf="showManualEntry" class="manual-entry">
+    <h4>Rechercher un aliment</h4>
+    <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" placeholder="Tapez le nom de l'aliment...">
+    <div *ngIf="searchResults.length" class="search-results">
+      <button *ngFor="let r of searchResults" class="search-item" (click)="selectSearchResult(r)">
+        {{ r.foodName }} <span *ngIf="r.category">({{ r.category }})</span>
+      </button>
+    </div>
+    <p *ngIf="searchQuery.length >= 2 && !searchResults.length" class="no-results">Aucun résultat</p>
+  </div>
+
+  <!-- Reset -->
+  <button *ngIf="result || error" class="btn btn-link reset-btn" (click)="reset()">🔄 Recommencer</button>
+</div>

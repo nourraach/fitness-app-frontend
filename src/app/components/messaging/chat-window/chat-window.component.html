@@ -2,12 +2,9 @@
   <!-- Chat Header -->
   <div class="chat-header">
     <div class="participant-info">
-      <img
-        [src]="conversation.participantAvatar || '/assets/images/default-avatar.png'"
-        [alt]="'Avatar de ' + conversation.participantName"
-        class="participant-avatar"
-        onerror="this.src='/assets/images/default-avatar.png'"
-      />
+      <div class="participant-avatar-initials">
+        {{ getInitials(conversation.participantName || '') }}
+      </div>
       <div class="participant-details">
         <h3 class="participant-name">{{ conversation.participantName }}</h3>
         <span class="participant-status" [class.online]="conversation.isOnline">

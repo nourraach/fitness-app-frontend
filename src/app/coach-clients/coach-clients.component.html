@@ -37,61 +37,7 @@
         <option value="programsCount">Trier par programmes</option>
         <option value="lastActivity">Trier par activité</option>
       </select>
-      
-      <button 
-        class="filter-btn" 
-        [class.active]="showInactiveOnly"
-        (click)="toggleInactiveFilter()">
-        <i class="pi pi-exclamation-triangle"></i>
-        Inactifs seulement
-      </button>
     </div>
-  </div>
-
-  <!-- Enhanced Stats Summary -->
-  <div class="stats-summary">
-    <div class="stat-card">
-      <div class="stat-icon">👥</div>
-      <div class="stat-content">
-        <div class="stat-value">{{ clientStatistics?.totalClients || myClients.length }}</div>
-        <div class="stat-label">Clients Totaux</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">✅</div>
-      <div class="stat-content">
-        <div class="stat-value">{{ clientStatistics?.activeClients || getActiveClientsCount() }}</div>
-        <div class="stat-label">Clients Actifs</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">⚠️</div>
-      <div class="stat-content">
-        <div class="stat-value">{{ getInactiveClientsCount() }}</div>
-        <div class="stat-label">Clients Inactifs</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">📊</div>
-      <div class="stat-content">
-        <div class="stat-value">{{ getClientsWithProgramsCount() }}</div>
-        <div class="stat-label">Avec Programmes</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">📈</div>
-      <div class="stat-content">
-        <div class="stat-value">{{ getAverageProgressRate() }}%</div>
-        <div class="stat-label">Progrès Moyen</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Inactive Clients Alert -->
-  <div *ngIf="hasInactiveAlerts()" class="alert alert-warning">
-    <i class="pi pi-exclamation-triangle"></i>
-    <strong>Attention:</strong> {{ getInactiveAlerts().length }} client(s) inactif(s) depuis plus de 7 jours.
-    <button class="btn-link" (click)="showInactiveOnly = true">Voir les clients inactifs</button>
   </div>
 
   <!-- Clients List -->

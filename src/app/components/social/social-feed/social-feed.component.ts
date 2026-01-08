@@ -25,37 +25,7 @@ import { SocialActivity } from '../../../models/friend.model';
         </div>
       </div>
 
-      <!-- Activity Filters -->
-      <div class="activity-filters">
-        <button 
-          class="filter-btn"
-          [class.active]="activeFilter === 'all'"
-          (click)="setFilter('all')">
-          <i class="fas fa-globe"></i>
-          Tout
-        </button>
-        <button 
-          class="filter-btn"
-          [class.active]="activeFilter === 'workout'"
-          (click)="setFilter('workout')">
-          <i class="fas fa-dumbbell"></i>
-          Entraînements
-        </button>
-        <button 
-          class="filter-btn"
-          [class.active]="activeFilter === 'achievement'"
-          (click)="setFilter('achievement')">
-          <i class="fas fa-trophy"></i>
-          Achievements
-        </button>
-        <button 
-          class="filter-btn"
-          [class.active]="activeFilter === 'friend_added'"
-          (click)="setFilter('friend_added')">
-          <i class="fas fa-user-plus"></i>
-          Nouveaux amis
-        </button>
-      </div>
+
 
       <!-- Activities Feed -->
       <div class="activities-feed">
@@ -65,10 +35,10 @@ import { SocialActivity } from '../../../models/friend.model';
           [class.liked]="activity.hasLiked">
           
           <!-- Activity Header -->
-          <div class="activity-header">
+          <div class="activity-header" *ngIf="activity?.userInfo">
             <div class="user-avatar">
               <div class="avatar-circle" [style.background]="getAvatarColor(activity.userInfo.nom)">
-                {{ activity.userInfo.nom.charAt(0).toUpperCase() }}
+                {{ (activity.userInfo.nom || 'U').charAt(0).toUpperCase() }}
               </div>
               <div class="activity-type-badge" [class]="'type-' + activity.type">
                 <i [class]="getActivityIcon(activity.type)"></i>
@@ -76,7 +46,7 @@ import { SocialActivity } from '../../../models/friend.model';
             </div>
             
             <div class="activity-info">
-              <div class="user-name">{{ activity.userInfo.nom }}</div>
+              <div class="user-name">{{ activity.userInfo.nom || 'Utilisateur' }}</div>
               <div class="activity-time">{{ formatActivityTime(activity.createdAt) }}</div>
             </div>
 
@@ -109,29 +79,26 @@ import { SocialActivity } from '../../../models/friend.model';
               <i class="fas fa-medal"></i>
               <span>Nouvel Achievement!</span>
             </div>
+
+            <!-- Challenge Joined Badge -->
+            <div *ngIf="activity.type === 'challenge_joined'" class="challenge-badge challenge-joined">
+              <i class="fas fa-flag-checkered"></i>
+              <span>A rejoint un défi!</span>
+            </div>
+
+            <!-- Challenge Completed Badge -->
+            <div *ngIf="activity.type === 'challenge_completed'" class="challenge-badge challenge-completed">
+              <i class="fas fa-trophy"></i>
+              <span>Défi terminé! 🎉</span>
+            </div>
+
+            <!-- Goal Achieved Badge -->
+            <div *ngIf="activity.type === 'goal_achieved'" class="achievement-badge">
+              <i class="fas fa-bullseye"></i>
+              <span>Objectif atteint!</span>
+            </div>
           </div>
 
-          <!-- Activity Actions -->
-          <div class="activity-actions">
-            <button 
-              class="action-btn like-btn"
-              [class.liked]="activity.hasLiked"
-              (click)="toggleLike(activity.id)"
-              [disabled]="isProcessingLike">
-              <i class="fas fa-heart"></i>
-              <span>{{ activity.likes }}</span>
-            </button>
-            
-            <button class="action-btn comment-btn" (click)="openComments(activity.id)">
-              <i class="fas fa-comment"></i>
-              <span>{{ activity.comments }}</span>
-            </button>
-            
-            <button class="action-btn share-btn" (click)="shareActivity(activity.id)">
-              <i class="fas fa-share"></i>
-              Partager
-            </button>
-          </div>
         </div>
       </div>
 
@@ -332,6 +299,31 @@ import { SocialActivity } from '../../../models/friend.model';
       color: white;
     }
 
+    .type-challenge_joined {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .type-goal_achieved {
+      background: #28a745;
+      color: white;
+    }
+
+    .type-program_started {
+      background: #6f42c1;
+      color: white;
+    }
+
+    .type-program_completed {
+      background: #20c997;
+      color: white;
+    }
+
+    .type-weight_milestone {
+      background: #fd7e14;
+      color: white;
+    }
+
     .activity-info {
       flex: 1;
     }
@@ -408,46 +400,29 @@ import { SocialActivity } from '../../../models/friend.model';
       font-size: 0.9rem;
     }
 
-    .activity-actions {
-      display: flex;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #f8f9fa;
-      gap: 1rem;
-    }
-
-    .action-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      display: flex;
+    .challenge-badge {
+      display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      color: #6c757d;
-      font-weight: 500;
       padding: 0.5rem 1rem;
       border-radius: 25px;
-      transition: all 0.2s ease;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: white;
     }
 
-    .action-btn:hover {
-      background: #f8f9fa;
-      color: #495057;
+    .challenge-badge.challenge-joined {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
     }
 
-    .like-btn.liked {
-      color: #dc3545;
-      background: #fff5f5;
+    .challenge-badge.challenge-completed {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      animation: celebrationPulse 1s ease-in-out infinite;
     }
 
-    .like-btn.liked i {
-      animation: heartBeat 0.6s ease;
-    }
-
-    @keyframes heartBeat {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.3); }
-      100% { transform: scale(1); }
+    @keyframes celebrationPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 0 20px 5px rgba(40, 167, 69, 0.2); }
     }
 
     .empty-feed {
@@ -570,11 +545,6 @@ import { SocialActivity } from '../../../models/friend.model';
         padding: 1rem;
       }
 
-      .activity-actions {
-        padding: 1rem;
-        justify-content: space-around;
-      }
-
       .empty-actions {
         flex-direction: column;
         align-items: center;
@@ -587,7 +557,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   filteredActivities: SocialActivity[] = [];
   activeFilter: string = 'all';
   isLoading: boolean = false;
-  isProcessingLike: boolean = false;
   hasMoreActivities: boolean = true;
 
   private destroy$ = new Subject<void>();
@@ -609,7 +578,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.friendService.socialFeed$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(activities => {
-      this.activities = activities;
+      // Defensive check: ensure activities is always an array
+      this.activities = Array.isArray(activities) ? activities : [];
       this.applyFilter();
       this.isLoading = false;
     });
@@ -621,6 +591,11 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   }
 
   private applyFilter(): void {
+    // Ensure activities is an array before filtering
+    if (!Array.isArray(this.activities)) {
+      this.activities = [];
+    }
+    
     if (this.activeFilter === 'all') {
       this.filteredActivities = [...this.activities];
     } else {
@@ -631,41 +606,17 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   }
 
   refreshFeed(): void {
-    this.loadFeed();
-  }
-
-  toggleLike(activityId: number): void {
-    if (this.isProcessingLike) return;
-    
-    this.isProcessingLike = true;
-    this.friendService.likeActivity(activityId).subscribe({
-      next: () => {
-        // Update the activity in the list
-        const activity = this.activities.find(a => a.id === activityId);
-        if (activity) {
-          activity.hasLiked = !activity.hasLiked;
-          activity.likes += activity.hasLiked ? 1 : -1;
-        }
-        this.applyFilter();
-        this.isProcessingLike = false;
-      },
-      error: (error) => {
-        console.error('Error toggling like:', error);
-        this.isProcessingLike = false;
-      }
-    });
+    this.isLoading = true;
+    // Forcer le rechargement des données (génère de nouvelles activités)
+    this.friendService.refreshAllData();
+    // Petit délai pour l'animation de chargement
+    setTimeout(() => {
+      this.isLoading = false;
+    }, 500);
   }
 
   toggleMenu(activityId: number): void {
     console.log('Toggle menu for activity:', activityId);
-  }
-
-  openComments(activityId: number): void {
-    console.log('Open comments for activity:', activityId);
-  }
-
-  shareActivity(activityId: number): void {
-    console.log('Share activity:', activityId);
   }
 
   goToFriends(): void {
@@ -687,12 +638,17 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       'workout': 'fas fa-dumbbell',
       'achievement': 'fas fa-trophy',
       'friend_added': 'fas fa-user-plus',
-      'challenge_completed': 'fas fa-medal'
+      'challenge_completed': 'fas fa-medal',
+      'challenge_joined': 'fas fa-flag-checkered',
+      'goal_achieved': 'fas fa-bullseye',
+      'program_started': 'fas fa-play-circle',
+      'program_completed': 'fas fa-check-circle',
+      'weight_milestone': 'fas fa-weight'
     };
     return icons[type] || 'fas fa-circle';
   }
 
-  getAvatarColor(name: string): string {
+  getAvatarColor(name: string | undefined | null): string {
     const colors = [
       'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -701,7 +657,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
       'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
     ];
-    const index = name.charCodeAt(0) % colors.length;
+    const safeName = name || 'U';
+    const index = safeName.charCodeAt(0) % colors.length;
     return colors[index];
   }
 

@@ -5,7 +5,7 @@ import { NutritionService } from '../service/nutrition.service';
 import { ActiviteService } from '../service/activite.service';
 import { Aliment } from '../models/aliment.model';
 import { TotauxJournaliers } from '../models/repas.model';
-import { BilanJournalier, ActivitePhysique, TotauxActivites } from '../models/activite.model';
+import { BilanJournalier, ActivitePhysique, TotauxActivites, calculerCalories } from '../models/activite.model';
 
 @Component({
   selector: 'app-suivi',
@@ -48,6 +48,7 @@ export class SuiviComponent implements OnInit {
   typeActivite: string = '';
   dureeMinutes: number = 30;
   intensite: string = 'MODEREE';
+  notesActivite: string = '';
   
   intensites = [
     { value: 'FAIBLE', label: 'Faible' },
@@ -104,15 +105,27 @@ export class SuiviComponent implements OnInit {
   chargerDonnees(): void {
     this.loading = true;
     
+    console.log('🔄 Chargement des données pour la date:', this.dateSelectionnee);
+    
     // Charger le bilan complet
     this.activiteService.getBilanJournalier(this.dateSelectionnee).subscribe({
       next: (bilan) => {
         this.bilanJournalier = bilan;
         this.loading = false;
+        console.log('✅ Bilan journalier chargé:', bilan);
       },
       error: (err) => {
-        console.error('Erreur bilan', err);
+        console.error('❌ Erreur bilan journalier:', err);
+        console.error('❌ Status:', err.status);
+        console.error('❌ Message:', err.error);
         this.loading = false;
+        
+        // Afficher un message à l'utilisateur si c'est un problème d'authentification
+        if (err.status === 401) {
+          this.afficherMessage('Session expirée - Veuillez vous reconnecter', 'error');
+        } else if (err.status === 400) {
+          this.afficherMessage('Erreur de chargement des données', 'error');
+        }
       }
     });
     
@@ -120,16 +133,31 @@ export class SuiviComponent implements OnInit {
     this.nutritionService.getTotauxJournaliers(this.dateSelectionnee).subscribe({
       next: (data) => {
         this.totauxRepas = data;
+        console.log('✅ Repas chargés:', data);
       },
-      error: (err) => console.error('Erreur repas', err)
+      error: (err) => {
+        console.error('❌ Erreur repas:', err);
+      }
     });
     
     // Charger les activités
     this.activiteService.getTotauxActivites(this.dateSelectionnee).subscribe({
       next: (data) => {
         this.totauxActivites = data;
+        console.log('✅ Activités chargées:', data);
       },
-      error: (err) => console.error('Erreur activités', err)
+      error: (err) => {
+        console.error('❌ Erreur activités:', err);
+        console.error('❌ Status:', err.status);
+        console.error('❌ Message:', err.error);
+        
+        // Afficher un message à l'utilisateur si c'est un problème d'authentification
+        if (err.status === 401) {
+          this.afficherMessage('Session expirée - Veuillez vous reconnecter', 'error');
+        } else if (err.status === 400) {
+          this.afficherMessage('Erreur de chargement des activités', 'error');
+        }
+      }
     });
   }
 
@@ -369,35 +397,66 @@ export class SuiviComponent implements OnInit {
     this.typeActivite = '';
     this.dureeMinutes = 30;
     this.intensite = 'MODEREE';
+    this.notesActivite = '';
   }
 
   enregistrerActivite(): void {
-    if (!this.typeActivite || this.dureeMinutes <= 0) {
-      this.afficherMessage('Veuillez remplir tous les champs', 'error');
+    // Validation des champs requis
+    if (!this.typeActivite || this.typeActivite.trim() === '') {
+      this.afficherMessage('Veuillez sélectionner un type d\'activité', 'error');
       return;
     }
 
+    if (!this.dureeMinutes || this.dureeMinutes <= 0) {
+      this.afficherMessage('Veuillez saisir une durée valide', 'error');
+      return;
+    }
+
+    if (!this.intensite || !['FAIBLE', 'MODEREE', 'ELEVEE'].includes(this.intensite)) {
+      this.afficherMessage('Veuillez sélectionner une intensité valide', 'error');
+      return;
+    }
+
+    // Calculer les calories automatiquement
+    const caloriesBrulees = calculerCalories(
+      this.typeActivite, 
+      this.dureeMinutes, 
+      this.intensite as 'FAIBLE' | 'MODEREE' | 'ELEVEE'
+    );
+
+    // Construire la requête avec le bon nom de champ pour le backend
     const request = {
       typeActivite: this.typeActivite,
       dureeMinutes: this.dureeMinutes,
-      intensite: this.intensite,
-      date: this.dateSelectionnee
+      caloriesBrulees: caloriesBrulees,
+      intensite: this.intensite as 'FAIBLE' | 'MODEREE' | 'ELEVEE',
+      date: this.dateSelectionnee, // Backend attend 'date', pas 'dateActivite'
+      notes: this.notesActivite || ''
     };
 
-    console.log('Envoi de la requête activité:', request);
+    console.log('🚀 Envoi de la requête activité (composant):', request);
+
+    // Validation simplifiée (le service fait la validation complète)
+    if (!request.date || !/^\d{4}-\d{2}-\d{2}$/.test(request.date)) {
+      this.afficherMessage('La date est invalide', 'error');
+      return;
+    }
 
     this.activiteService.creerActivite(request).subscribe({
       next: (response) => {
-        console.log('Activité créée avec succès:', response);
-        this.afficherMessage('Activité enregistrée avec succès', 'success');
+        console.log('✅ Activité créée avec succès:', response);
+        this.afficherMessage(`Activité enregistrée avec succès (${caloriesBrulees} calories brûlées)`, 'success');
         this.fermerModalActivite();
         this.chargerDonnees();
       },
       error: (err) => {
-        console.error('Erreur complète:', err);
-        console.error('Status:', err.status);
-        console.error('Message:', err.error);
+        console.error('❌ Erreur lors de l\'enregistrement de l\'activité:', err);
+        console.error('❌ Status:', err.status);
+        console.error('❌ Message backend:', err.error);
+        console.error('❌ Request envoyée:', request);
+        
         let messageErreur = 'Erreur lors de l\'enregistrement';
+        
         if (err.error?.message) {
           messageErreur = err.error.message;
         } else if (err.status === 0) {
@@ -405,8 +464,11 @@ export class SuiviComponent implements OnInit {
         } else if (err.status === 401) {
           messageErreur = 'Non autorisé - Veuillez vous reconnecter';
         } else if (err.status === 400) {
-          messageErreur = 'Données invalides';
+          messageErreur = 'Données invalides - Vérifiez les champs requis';
+        } else if (err.status === 500) {
+          messageErreur = 'Erreur serveur - Veuillez réessayer plus tard';
         }
+        
         this.afficherMessage(messageErreur, 'error');
       }
     });

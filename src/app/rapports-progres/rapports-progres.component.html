@@ -18,8 +18,17 @@
   <div *ngIf="isCoach && showGenerateForm" class="generate-form">
     <h3>Générer un nouveau rapport</h3>
     <div class="form-group">
-      <label>ID du client *</label>
-      <input type="number" [(ngModel)]="clientId" placeholder="Ex: 2" class="form-control">
+      <label>Sélectionner un client *</label>
+      <select [(ngModel)]="clientId" class="form-control">
+        <option [value]="0" disabled>-- Choisir un client --</option>
+        <option *ngFor="let client of mesClients" [value]="client.id">
+          {{ client.name }} ({{ client.email }})
+        </option>
+      </select>
+      <small *ngIf="loadingClients" class="hint">Chargement des clients...</small>
+      <small *ngIf="!loadingClients && mesClients.length === 0" class="hint text-warning">
+        Aucun client assigné. Assignez d'abord des clients depuis "Mes Clients".
+      </small>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -32,11 +41,9 @@
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn-secondary" (click)="genererRapportSemaineCourante()" [disabled]="loading || !clientId">
-        Semaine courante
-      </button>
-      <button class="btn-primary" (click)="genererRapport()" [disabled]="loading">
-        Générer le rapport
+      <button class="btn-export-direct" (click)="genererEtExporterPDF()" [disabled]="loading || !clientId">
+        <span *ngIf="!loading"><i class="pi pi-file-excel"></i> Exporter Excel</span>
+        <span *ngIf="loading">Génération...</span>
       </button>
     </div>
   </div>
@@ -81,6 +88,11 @@
       <div class="rapport-tendance" *ngIf="rapport.statistiques?.tendanceGenerale">
         {{ rapport.statistiques?.tendanceGenerale }}
       </div>
+      <div class="rapport-actions" *ngIf="isCoach">
+        <button class="btn-export" (click)="exporterPDF(rapport); $event.stopPropagation()" title="Exporter en PDF">
+          <i class="pi pi-file-pdf"></i> PDF
+        </button>
+      </div>
     </div>
   </div>
 
@@ -89,7 +101,12 @@
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Rapport détaillé</h2>
-        <button class="btn-close" (click)="fermerDetails()">✕</button>
+        <div class="modal-header-actions">
+          <button class="btn-export-modal" (click)="exporterPDF(rapportSelectionne!)" *ngIf="isCoach" title="Exporter en PDF">
+            <i class="pi pi-file-pdf"></i> Exporter PDF
+          </button>
+          <button class="btn-close" (click)="fermerDetails()">✕</button>
+        </div>
       </div>
       
       <div class="modal-body">

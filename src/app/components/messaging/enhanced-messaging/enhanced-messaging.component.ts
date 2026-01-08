@@ -58,9 +58,9 @@ import { JwtService } from '../../../service/jwt.service';
           <div class="search-results" *ngIf="searchResults.length > 0">
             <h4>Résultats de recherche</h4>
             <div class="search-result" *ngFor="let message of searchResults" (click)="selectConversationFromMessage(message)">
-              <div class="result-sender">{{ message.expediteurNom }}</div>
-              <div class="result-content">{{ message.contenu }}</div>
-              <div class="result-date">{{ formatDate(message.dateEnvoi) }}</div>
+              <div class="result-sender">{{ message.senderName }}</div>
+              <div class="result-content">{{ message.content }}</div>
+              <div class="result-date">{{ formatDate(message.timestamp) }}</div>
             </div>
           </div>
 
@@ -68,22 +68,22 @@ import { JwtService } from '../../../service/jwt.service';
           <div class="conversations-list" *ngIf="!searchResults.length">
             <div class="conversation-item" 
                  *ngFor="let conversation of conversations"
-                 [class.active]="currentConversation?.conversationId === conversation.conversationId"
+                 [class.active]="currentConversation?.id === conversation.id"
                  (click)="selectConversation(conversation)">
               <div class="conversation-avatar">
                 <i class="pi pi-user"></i>
               </div>
               <div class="conversation-info">
-                <div class="conversation-name">{{ conversation.autreUtilisateurNom }}</div>
-                <div class="conversation-last-message">{{ conversation.dernierMessage }}</div>
-                <div class="conversation-time">{{ formatTime(conversation.dateDernierMessage) }}</div>
+                <div class="conversation-name">{{ conversation.participantName || conversation.coachName || conversation.userName }}</div>
+                <div class="conversation-last-message">{{ conversation.lastMessageContent }}</div>
+                <div class="conversation-time">{{ formatTime(conversation.lastMessageAt) }}</div>
               </div>
               <div class="conversation-status">
-                <span class="unread-count" *ngIf="conversation.messagesNonLus > 0">
-                  {{ conversation.messagesNonLus }}
+                <span class="unread-count" *ngIf="(conversation.unreadMessageCount || 0) > 0">
+                  {{ conversation.unreadMessageCount }}
                 </span>
-                <span class="role-badge" [class]="conversation.autreUtilisateurRole.toLowerCase()">
-                  {{ conversation.autreUtilisateurRole }}
+                <span class="role-badge" [class]="conversation.coachId ? 'coach' : 'client'">
+                  {{ conversation.coachId ? 'Coach' : 'Client' }}
                 </span>
               </div>
             </div>
@@ -105,8 +105,8 @@ import { JwtService } from '../../../service/jwt.service';
                 <i class="pi pi-user"></i>
               </div>
               <div class="chat-user-details">
-                <h3>{{ currentConversation.autreUtilisateurNom }}</h3>
-                <span class="user-role">{{ currentConversation.autreUtilisateurRole }}</span>
+                <h3>{{ currentConversation.participantName || currentConversation.coachName || currentConversation.userName }}</h3>
+                <span class="user-role">{{ currentConversation.coachId ? 'Coach' : 'Client' }}</span>
               </div>
             </div>
             <div class="chat-actions">
@@ -123,10 +123,10 @@ import { JwtService } from '../../../service/jwt.service';
                    [class.own-message]="isMessageFromCurrentUser(message)"
                    [class.other-message]="!isMessageFromCurrentUser(message)">
                 <div class="message-content">
-                  <div class="message-text">{{ message.contenu }}</div>
+                  <div class="message-text">{{ message.content }}</div>
                   <div class="message-meta">
-                    <span class="message-time">{{ formatTime(message.dateEnvoi) }}</span>
-                    <i class="pi pi-check" *ngIf="isMessageFromCurrentUser(message) && message.lu" class="read-indicator"></i>
+                    <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+                    <i class="pi pi-check" *ngIf="isMessageFromCurrentUser(message) && message.isRead" class="read-indicator"></i>
                   </div>
                 </div>
               </div>
@@ -767,7 +767,8 @@ export class EnhancedMessagingComponent implements OnInit, OnDestroy, AfterViewC
       .pipe(takeUntil(this.destroy$))
       .subscribe(messagesMap => {
         if (this.currentConversation) {
-          const conversationMessages = messagesMap[this.currentConversation.conversationId] || [];
+          const convId = this.currentConversation.id?.toString() || '';
+          const conversationMessages = messagesMap[convId] || [];
           if (conversationMessages.length !== this.messages.length) {
             this.messages = conversationMessages;
             this.shouldScrollToBottom = true;
@@ -809,7 +810,8 @@ export class EnhancedMessagingComponent implements OnInit, OnDestroy, AfterViewC
       .subscribe(content => {
         if (this.currentConversation) {
           const isTyping = content.length > 0;
-          this.messagingService.sendTypingIndicator(this.currentConversation.conversationId, isTyping);
+          const convId = this.currentConversation.conversationId || this.currentConversation.id?.toString() || '';
+          this.messagingService.sendTypingIndicator(convId, isTyping);
         }
       });
   }
@@ -849,8 +851,12 @@ export class EnhancedMessagingComponent implements OnInit, OnDestroy, AfterViewC
   loadConversationHistory(): void {
     if (!this.currentConversation) return;
 
+    const otherUserId = this.currentConversation.autreUtilisateurId || 
+                        this.currentConversation.coachId || 
+                        this.currentConversation.userId || 0;
+    
     this.messagingService.loadConversationHistory(
-      this.currentConversation.autreUtilisateurId,
+      otherUserId,
       this.currentPage,
       this.pageSize
     ).subscribe(messages => {
@@ -872,11 +878,16 @@ export class EnhancedMessagingComponent implements OnInit, OnDestroy, AfterViewC
   sendMessage(): void {
     if (!this.newMessageContent.trim() || !this.currentConversation) return;
 
+    const destinataireId = this.currentConversation.autreUtilisateurId || 
+                           this.currentConversation.coachId || 
+                           this.currentConversation.userId || 0;
+    const convId = this.currentConversation.conversationId || this.currentConversation.id?.toString();
+
     const request: EnvoyerMessageRequest = {
-      destinataireId: this.currentConversation.autreUtilisateurId,
+      destinataireId: destinataireId,
       contenu: this.newMessageContent.trim(),
       type: MessageType.TEXT,
-      conversationId: this.currentConversation.conversationId
+      conversationId: convId
     };
 
     this.messagingService.sendMessage(request).subscribe({
@@ -945,14 +956,14 @@ export class EnhancedMessagingComponent implements OnInit, OnDestroy, AfterViewC
   }
 
   // Format methods for template
-  formatTime(date: Date): string {
+  formatTime(date: Date | string): string {
     return new Intl.DateTimeFormat('fr-FR', {
       hour: '2-digit',
       minute: '2-digit'
     }).format(new Date(date));
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: Date | string): string {
     const messageDate = new Date(date);
     const today = new Date();
     const yesterday = new Date(today);
@@ -972,7 +983,7 @@ export class EnhancedMessagingComponent implements OnInit, OnDestroy, AfterViewC
   }
 
   isMessageFromCurrentUser(message: MessageDTO): boolean {
-    return message.expediteurId === this.getCurrentUserId();
+    return message.senderId === this.getCurrentUserId();
   }
 
   getTypingUsersText(): string {

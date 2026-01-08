@@ -147,8 +147,8 @@
       
       <button type="submit" [disabled]="!reportForm.valid || isSubmitting" class="submit-btn">
         <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
-        <i class="fas fa-save" *ngIf="!isSubmitting"></i>
-        {{ isEditMode ? 'Mettre à jour' : 'Créer le rapport' }}
+        <i class="fas fa-file-pdf" *ngIf="!isSubmitting"></i>
+        {{ isSubmitting ? 'Génération...' : 'Exporter en PDF' }}
       </button>
     </div>
   </form>

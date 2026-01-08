@@ -15,7 +15,7 @@ import { GestionProgrammesComponent } from './gestion-programmes/gestion-program
 import { NutritionComponent } from './nutrition/nutrition.component';
 import { SuiviComponent } from './suivi/suivi.component';
 import { EvolutionPoidsComponent } from './evolution-poids/evolution-poids.component';
-import { NotificationsComponent } from './notifications/notifications.component';
+import { PlanNutritionnelComponent } from './plan-nutritionnel/plan-nutritionnel.component';
 import { RapportsProgresComponent } from './rapports-progres/rapports-progres.component';
 import { CoachHomeComponent } from './coach-home/coach-home.component';
 import { CoachProfileComponent } from './coach-profile/coach-profile.component';
@@ -23,7 +23,7 @@ import { CoachClientsComponent } from './coach-clients/coach-clients.component';
 import { SocialComponent } from './social/social.component';
 import { CoachDashboardComponent } from './components/coach/coach-dashboard/coach-dashboard.component';
 import { NutritionPlanComponent } from './components/coach/nutrition-plan/nutrition-plan.component';
-import { EnhancedMessagingComponent } from './components/messaging/enhanced-messaging/enhanced-messaging.component';
+import { MessagingComponent } from './messaging/messaging.component';
 
 export const routes: Routes = [
 { path: 'register', component: RegisterComponent },     
@@ -36,28 +36,22 @@ export const routes: Routes = [
 { path: 'coach-clients', component: CoachClientsComponent },
 { path: 'coach-dashboard', component: CoachDashboardComponent },
 { path: 'nutrition-plans', component: NutritionPlanComponent },
-{ path: 'enhanced-messaging', component: EnhancedMessagingComponent },
+{ path: 'enhanced-messaging', component: MessagingComponent },
 { path: 'programmes', component: ProgrammesComponent },
 { path: 'gestion-programmes', component: GestionProgrammesComponent },
 { path: 'nutrition', component: NutritionComponent },
 { path: 'suivi', component: SuiviComponent },
 { path: 'evolution-poids', component: EvolutionPoidsComponent },
-{ path: 'notifications', component: NotificationsComponent },
-{ path: 'notifications-new', 
-  loadComponent: () => import('./components/notifications/notifications-container/notifications-container.component').then(m => m.NotificationsContainerComponent)
-},
+{ path: 'plan-nutritionnel', component: PlanNutritionnelComponent },
 { path: 'rapports-progres', component: RapportsProgresComponent },
-{ path: 'messaging', 
-  loadComponent: () => import('./components/messaging/messaging-container/messaging-container.component').then(m => m.MessagingContainerComponent)
-},
+{ path: 'messaging', component: MessagingComponent },
 { path: 'social', component: SocialComponent, canActivate: [AuthGuard] },
 { path: 'friend-challenges', 
   loadComponent: () => import('./components/social/friend-challenges/friend-challenges.component').then(m => m.FriendChallengesComponent),
   canActivate: [AuthGuard]
 },
 
-// NOUVELLES ROUTES - INTÉGRATION BACKEND API
-// Admin routes avec lazy loading
+// Admin routes avec lazy loading - Dashboard et Gestion Utilisateurs uniquement
 {
   path: 'admin',
   canActivate: [AdminGuard],
@@ -70,23 +64,8 @@ export const routes: Routes = [
       path: 'users',
       loadComponent: () => import('./admin/user-management/user-management.component').then(m => m.UserManagementComponent)
     },
-    {
-      path: 'audit-logs',
-      loadComponent: () => import('./admin/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent)
-    },
-    {
-      path: 'moderation',
-      loadComponent: () => import('./admin/moderation-queue/moderation-queue.component').then(m => m.ModerationQueueComponent)
-    },
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
   ]
-},
-
-// Food Recognition routes
-{
-  path: 'food-recognition',
-  canActivate: [AuthGuard],
-  loadComponent: () => import('./food-recognition/food-recognition-container/food-recognition-container.component').then(m => m.FoodRecognitionContainerComponent)
 },
 
 // Progress Reports routes
@@ -109,26 +88,7 @@ export const routes: Routes = [
   ]
 },
 
-// Enhanced Notifications routes
-{
-  path: 'notifications-system',
-  canActivate: [AuthGuard],
-  children: [
-    {
-      path: 'preferences',
-      loadComponent: () => import('./components/notifications/notification-preferences/notification-preferences.component').then(m => m.NotificationPreferencesComponent)
-    },
-    {
-      path: 'history',
-      loadComponent: () => import('./components/notifications/notification-history/notification-history.component').then(m => m.NotificationHistoryComponent)
-    },
-    {
-      path: 'stats',
-      loadComponent: () => import('./components/notifications/notification-stats/notification-stats.component').then(m => m.NotificationStatsComponent)
-    },
-    { path: '', redirectTo: 'preferences', pathMatch: 'full' }
-  ]
-},
+
 
 // Nutrition Plans routes (US10)
 {
@@ -142,6 +102,20 @@ export const routes: Routes = [
   path: 'enhanced-challenges',
   canActivate: [AuthGuard],
   loadComponent: () => import('./components/social/enhanced-friend-challenges/enhanced-friend-challenges.component').then(m => m.EnhancedFriendChallengesComponent)
+},
+
+// Notification Preferences routes
+{
+  path: 'notification-preferences',
+  canActivate: [AuthGuard],
+  loadComponent: () => import('./components/notification-preferences/notification-preferences.component').then(m => m.NotificationPreferencesComponent)
+},
+
+// Food Recognition routes (US09)
+{
+  path: 'food-scanner',
+  canActivate: [AuthGuard],
+  loadComponent: () => import('./components/food-scanner/food-scanner.component').then(m => m.FoodScannerComponent)
 },
 
 // Routes existantes

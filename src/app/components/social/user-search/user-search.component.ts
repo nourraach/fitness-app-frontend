@@ -92,7 +92,7 @@ import { UserSearchResult, FriendshipStatus } from '../../../models/friend.model
             <!-- Action Button -->
             <div class="user-actions">
               <button 
-                *ngIf="result.friendshipStatus === 'NOT_FRIENDS'"
+                *ngIf="getButtonState(result.user.id) === 'add'"
                 (click)="sendFriendRequest(result.user.id)"
                 class="action-btn add-friend-btn"
                 [disabled]="isProcessing">
@@ -101,7 +101,7 @@ import { UserSearchResult, FriendshipStatus } from '../../../models/friend.model
               </button>
 
               <button 
-                *ngIf="result.friendshipStatus === 'REQUEST_SENT'"
+                *ngIf="getButtonState(result.user.id) === 'pending'"
                 class="action-btn request-sent-btn"
                 disabled>
                 <i class="fas fa-clock"></i>
@@ -118,7 +118,7 @@ import { UserSearchResult, FriendshipStatus } from '../../../models/friend.model
               </button>
 
               <button 
-                *ngIf="result.friendshipStatus === 'FRIENDS'"
+                *ngIf="getButtonState(result.user.id) === 'friend'"
                 class="action-btn friends-btn"
                 disabled>
                 <i class="fas fa-check-circle"></i>
@@ -504,6 +504,11 @@ export class UserSearchComponent implements OnInit, OnDestroy {
   suggestions: any[] = [];
   isSearching: boolean = false;
   isProcessing: boolean = false;
+  
+  // Gestion d'état pour les boutons
+  pendingRequestUserIds: Set<number> = new Set();
+  friendUserIds: Set<number> = new Set();
+  isLoadingState: boolean = true;
 
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
@@ -520,8 +525,57 @@ export class UserSearchComponent implements OnInit, OnDestroy {
       this.performSearch(query);
     });
 
+    // Charger les données d'état au démarrage
+    this.loadPendingRequests();
+    this.loadFriends();
+    
     // Load suggestions
     this.loadSuggestions();
+  }
+
+  // Charger les demandes envoyées
+  private loadPendingRequests(): void {
+    this.friendService.getSentRequests().subscribe({
+      next: (response) => {
+        this.pendingRequestUserIds = new Set(
+          response.requests.map(r => r.receiverId)
+        );
+        this.checkLoadingComplete();
+      },
+      error: (err) => {
+        console.error('Erreur chargement demandes:', err);
+        this.pendingRequestUserIds = new Set();
+        this.checkLoadingComplete();
+      }
+    });
+  }
+
+  // Charger la liste des amis
+  private loadFriends(): void {
+    this.friendService.getFriendsList().subscribe({
+      next: (response) => {
+        this.friendUserIds = new Set(
+          response.friends.map(f => f.id)
+        );
+        this.checkLoadingComplete();
+      },
+      error: (err) => {
+        console.error('Erreur chargement amis:', err);
+        this.friendUserIds = new Set();
+        this.checkLoadingComplete();
+      }
+    });
+  }
+
+  private checkLoadingComplete(): void {
+    this.isLoadingState = false;
+  }
+
+  // Déterminer l'état du bouton pour un utilisateur
+  getButtonState(userId: number): 'add' | 'pending' | 'friend' {
+    if (this.friendUserIds.has(userId)) return 'friend';
+    if (this.pendingRequestUserIds.has(userId)) return 'pending';
+    return 'add';
   }
 
   ngOnDestroy(): void {
@@ -575,19 +629,56 @@ export class UserSearchComponent implements OnInit, OnDestroy {
   sendFriendRequest(userId: number): void {
     this.isProcessing = true;
     this.friendService.sendFriendRequest(userId).subscribe({
-      next: () => {
-        // Update the result status
-        const result = this.searchResults.find(r => r.user.id === userId);
-        if (result) {
-          result.friendshipStatus = FriendshipStatus.REQUEST_SENT;
+      next: (success) => {
+        if (success) {
+          // Ajouter à pendingRequestUserIds
+          this.pendingRequestUserIds.add(userId);
+          // Update the result status
+          const result = this.searchResults.find(r => r.user.id === userId);
+          if (result) {
+            result.friendshipStatus = FriendshipStatus.REQUEST_SENT;
+          }
+          this.showSuccess('Demande envoyée !');
         }
         this.isProcessing = false;
       },
       error: (error) => {
-        console.error('Error sending friend request:', error);
+        // Gestion des erreurs HTTP 409
+        if (error.status === 409) {
+          const code = error.error?.code;
+          switch (code) {
+            case 'REQUEST_PENDING':
+              this.pendingRequestUserIds.add(userId);
+              this.showInfo('Demande déjà envoyée');
+              break;
+            case 'ALREADY_FRIENDS':
+              this.friendUserIds.add(userId);
+              this.showInfo('Vous êtes déjà amis');
+              break;
+            default:
+              this.showError(error.error?.erreur || error.error?.message || 'Conflit');
+          }
+        } else {
+          console.error('Error sending friend request:', error);
+          this.showError('Erreur lors de l\'envoi');
+        }
         this.isProcessing = false;
       }
     });
+  }
+
+  // Méthodes de notification
+  private showSuccess(message: string): void {
+    console.log('✅ Success:', message);
+    // TODO: Utiliser un service de toast si disponible
+  }
+
+  private showInfo(message: string): void {
+    console.log('ℹ️ Info:', message);
+  }
+
+  private showError(message: string): void {
+    console.error('❌ Error:', message);
   }
 
   acceptFriendRequest(userId: number): void {

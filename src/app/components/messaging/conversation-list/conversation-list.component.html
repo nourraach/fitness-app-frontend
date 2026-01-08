@@ -27,7 +27,7 @@
     <div
       *ngFor="let conversation of filteredConversations; trackBy: trackByConversation"
       class="conversation-item"
-      [class.selected]="selectedConversationId === conversation.id"
+      [class.selected]="selectedConversationId?.toString() === conversation.id.toString()"
       [class.unread]="getUnreadCount(conversation) > 0"
       (click)="selectConversation(conversation)"
       role="button"
@@ -38,12 +38,9 @@
     >
       <!-- Avatar -->
       <div class="avatar-container">
-        <img
-          [src]="conversation.participantAvatar || '/assets/images/default-avatar.png'"
-          [alt]="'Avatar de ' + conversation.participantName"
-          class="avatar"
-          onerror="this.src='/assets/images/default-avatar.png'"
-        />
+        <div class="avatar-initials">
+          {{ getInitials(conversation.participantName || '') }}
+        </div>
         <div
           *ngIf="conversation.isOnline"
           class="online-indicator"
@@ -56,16 +53,13 @@
         <div class="conversation-header">
           <h4 class="participant-name">{{ conversation.participantName }}</h4>
           <span class="last-message-time">
-            {{ formatLastMessageTime(conversation.lastMessageTime) }}
+            {{ formatLastMessageTime(conversation.lastMessageAt) }}
           </span>
         </div>
 
         <div class="conversation-preview">
           <p class="last-message" [class.unread-message]="getUnreadCount(conversation) > 0">
-            <span *ngIf="conversation.lastMessage?.senderId === conversation.currentUserId" class="message-prefix">
-              Vous: 
-            </span>
-            {{ truncateMessage(conversation.lastMessage?.content || 'Aucun message') }}
+            {{ truncateMessage(conversation.lastMessageContent || conversation.dernierMessage || 'Aucun message') }}
           </p>
           
           <!-- Unread Badge -->
@@ -78,15 +72,7 @@
           </div>
         </div>
 
-        <!-- Typing Indicator -->
-        <div *ngIf="conversation.isTyping" class="typing-indicator">
-          <span class="typing-text">{{ conversation.participantName }} est en train d'écrire</span>
-          <div class="typing-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
+        <!-- Typing Indicator - removed as isTyping not in model -->
       </div>
     </div>
 

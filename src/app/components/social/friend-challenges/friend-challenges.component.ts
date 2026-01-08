@@ -159,11 +159,7 @@ import { User } from '../../../models/friend.model';
           <div *ngIf="!isLoading && availableChallenges.length === 0" class="empty-state">
             <i class="fas fa-search fa-3x"></i>
             <h3>Aucun défi disponible</h3>
-            <p>Soyez le premier à créer un défi !</p>
-            <button class="btn-primary" (click)="setActiveTab('create')">
-              <i class="fas fa-plus"></i>
-              Créer un défi
-            </button>
+            <p>Soyez le premier à créer un défi en cliquant sur l'onglet "Créer un Défi" !</p>
           </div>
 
           <div *ngFor="let challenge of availableChallenges" class="challenge-card available-challenge">
@@ -231,11 +227,7 @@ import { User } from '../../../models/friend.model';
           <div *ngIf="!isLoading && createdChallenges.length === 0" class="empty-state">
             <i class="fas fa-crown fa-3x"></i>
             <h3>Aucun défi créé</h3>
-            <p>Créez votre premier défi et invitez vos amis !</p>
-            <button class="btn-primary" (click)="setActiveTab('create')">
-              <i class="fas fa-plus"></i>
-              Créer un défi
-            </button>
+            <p>Créez votre premier défi en cliquant sur l'onglet "Créer un Défi" !</p>
           </div>
 
           <div *ngFor="let challenge of createdChallenges" class="challenge-card created-challenge">
@@ -1439,6 +1431,9 @@ export class FriendChallengesComponent implements OnInit, OnDestroy {
   toastMessage: string = '';
   toastType: 'success' | 'error' | 'info' = 'info';
   
+  // Progress cache to avoid NG0100 error
+  private progressCache: Map<number, number> = new Map();
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -1470,7 +1465,47 @@ export class FriendChallengesComponent implements OnInit, OnDestroy {
       valeurCible: ['', [Validators.required, Validators.min(1)]],
       dateDebut: [today, Validators.required],
       dateFin: [nextWeek, Validators.required]
-    });
+    }, { validators: this.dateRangeValidator });
+  }
+
+  /**
+   * Custom validator to ensure end date is after start date
+   */
+  private dateRangeValidator(group: FormGroup): { [key: string]: boolean } | null {
+    const startDate = group.get('dateDebut')?.value;
+    const endDate = group.get('dateFin')?.value;
+    
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end <= start) {
+        return { dateRangeInvalid: true };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check if dates are valid (end > start)
+   */
+  areDatesValid(): boolean {
+    const startDate = this.createChallengeForm.get('dateDebut')?.value;
+    const endDate = this.createChallengeForm.get('dateFin')?.value;
+    return this.challengeService.validateChallengeDates(startDate, endDate);
+  }
+
+  /**
+   * Check if user is the creator of a challenge
+   */
+  isUserCreator(challenge: FriendChallenge): boolean {
+    return this.challengeService.isUserCreator(challenge);
+  }
+
+  /**
+   * Check if remaining days are urgent
+   */
+  isUrgent(joursRestants: number): boolean {
+    return this.challengeService.isUrgentRemainingDays(joursRestants);
   }
 
   private loadData(): void {
@@ -1539,12 +1574,14 @@ export class FriendChallengesComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabel(status: ChallengeStatus): string {
-    switch (status) {
-      case ChallengeStatus.ACTIVE: return 'Actif';
-      case ChallengeStatus.COMPLETED: return 'Terminé';
-      case ChallengeStatus.CANCELLED: return 'Annulé';
-      default: return status;
-    }
+    return this.challengeService.getStatusLabel(status);
+  }
+
+  /**
+   * Get CSS class for status badge
+   */
+  getStatusBadgeClass(status: ChallengeStatus): string {
+    return this.challengeService.getStatusBadgeClass(status);
   }
 
   formatDate(date: Date): string {
@@ -1552,12 +1589,16 @@ export class FriendChallengesComponent implements OnInit, OnDestroy {
   }
 
   getCurrentUserId(): number {
-    return this.challengeService['getCurrentUserId']();
+    return this.challengeService.getUserId();
   }
 
   getMyProgress(challengeId: number): number {
-    // Mock progress for demo
-    return Math.floor(Math.random() * 80) + 10;
+    // Use cached progress to avoid NG0100 error (ExpressionChangedAfterItHasBeenCheckedError)
+    if (!this.progressCache.has(challengeId)) {
+      // Generate a stable mock progress value for demo
+      this.progressCache.set(challengeId, Math.floor(Math.random() * 80) + 10);
+    }
+    return this.progressCache.get(challengeId) || 0;
   }
 
   // Form Actions

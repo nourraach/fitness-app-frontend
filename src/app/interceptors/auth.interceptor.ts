@@ -18,12 +18,23 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.jwtService.getToken();
     
     if (token && !req.url.includes('/login') && !req.url.includes('/signup')) {
-      req = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Ne pas définir Content-Type pour les requêtes multipart/form-data (upload de fichiers)
+      const isFormData = req.body instanceof FormData;
+      
+      if (isFormData) {
+        req = req.clone({
+          setHeaders: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      } else {
+        req = req.clone({
+          setHeaders: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
     }
 
     return next.handle(req).pipe(

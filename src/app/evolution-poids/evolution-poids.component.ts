@@ -8,6 +8,9 @@ import {
   StatistiquesProgressionDTO, 
   AjouterPoidsRequest 
 } from '../models/suivi-poids.model';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 Chart.register(...registerables);
 
@@ -353,5 +356,129 @@ export class EvolutionPoidsComponent implements OnInit {
       case 'BAISSE': return '#4CAF50';
       default: return '#666';
     }
+  }
+
+  // ===== EXPORT EXCEL =====
+  exporterExcel(): void {
+    if (!this.evolution || !this.evolution.historique || this.evolution.historique.length === 0) {
+      this.afficherMessage('Aucune donnée à exporter', 'error');
+      return;
+    }
+
+    // Préparer les données pour Excel
+    const donnees = this.evolution.historique.map(mesure => ({
+      'Date': new Date(mesure.date).toLocaleDateString('fr-FR'),
+      'Poids (kg)': mesure.poids,
+      'IMC': mesure.imc || '-',
+      'Notes': mesure.notes || ''
+    }));
+
+    // Ajouter les statistiques en bas
+    if (this.statistiques) {
+      donnees.push({} as any); // Ligne vide
+      donnees.push({ 'Date': 'STATISTIQUES', 'Poids (kg)': '', 'IMC': '', 'Notes': '' } as any);
+      donnees.push({ 'Date': 'Poids Min', 'Poids (kg)': this.statistiques.poidsMin || '-', 'IMC': '', 'Notes': '' } as any);
+      donnees.push({ 'Date': 'Poids Max', 'Poids (kg)': this.statistiques.poidsMax || '-', 'IMC': '', 'Notes': '' } as any);
+      donnees.push({ 'Date': 'Poids Moyen', 'Poids (kg)': this.statistiques.poidsMoyen || '-', 'IMC': '', 'Notes': '' } as any);
+      donnees.push({ 'Date': 'Variation Totale', 'Poids (kg)': this.statistiques.variationTotale || '-', 'IMC': '', 'Notes': '' } as any);
+    }
+
+    // Créer le workbook Excel
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(donnees);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Evolution Poids');
+
+    // Ajuster la largeur des colonnes
+    ws['!cols'] = [
+      { wch: 15 }, // Date
+      { wch: 12 }, // Poids
+      { wch: 10 }, // IMC
+      { wch: 30 }  // Notes
+    ];
+
+    // Télécharger le fichier
+    const dateExport = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `evolution_poids_${dateExport}.xlsx`);
+    
+    this.afficherMessage('Export Excel réussi !', 'success');
+  }
+
+  // ===== EXPORT PDF =====
+  exporterPDF(): void {
+    if (!this.evolution || !this.evolution.historique || this.evolution.historique.length === 0) {
+      this.afficherMessage('Aucune donnée à exporter', 'error');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const dateExport = new Date().toLocaleDateString('fr-FR');
+
+    // Titre
+    doc.setFontSize(18);
+    doc.setTextColor(17, 63, 103); // #113F67
+    doc.text('Évolution de mon Poids', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Exporté le ${dateExport}`, 14, 28);
+
+    // Résumé
+    if (this.evolution) {
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text('Résumé', 14, 40);
+      
+      doc.setFontSize(10);
+      doc.text(`Poids actuel: ${this.evolution.poidsActuel || '-'} kg`, 14, 48);
+      doc.text(`IMC actuel: ${this.evolution.imcActuel || '-'}`, 14, 54);
+      doc.text(`Variation: ${(this.evolution.variationPoids ?? 0) > 0 ? '+' : ''}${this.evolution.variationPoids ?? 0} kg`, 14, 60);
+    }
+
+    // Tableau des mesures
+    const tableData = this.evolution.historique.map(mesure => [
+      new Date(mesure.date).toLocaleDateString('fr-FR'),
+      `${mesure.poids} kg`,
+      mesure.imc ? mesure.imc.toString() : '-',
+      mesure.notes || ''
+    ]);
+
+    autoTable(doc, {
+      startY: 70,
+      head: [['Date', 'Poids', 'IMC', 'Notes']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [17, 63, 103], // #113F67
+        textColor: 255
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 250]
+      },
+      styles: {
+        fontSize: 9
+      }
+    });
+
+    // Statistiques
+    if (this.statistiques) {
+      const finalY = (doc as any).lastAutoTable.finalY + 15;
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text('Statistiques de la période', 14, finalY);
+      
+      doc.setFontSize(10);
+      doc.text(`Poids Min: ${this.statistiques.poidsMin || '-'} kg`, 14, finalY + 8);
+      doc.text(`Poids Max: ${this.statistiques.poidsMax || '-'} kg`, 14, finalY + 14);
+      doc.text(`Poids Moyen: ${this.statistiques.poidsMoyen || '-'} kg`, 14, finalY + 20);
+      doc.text(`Variation Totale: ${this.statistiques.variationTotale || '-'} kg`, 14, finalY + 26);
+      doc.text(`IMC Moyen: ${this.statistiques.imcMoyen || '-'}`, 14, finalY + 32);
+    }
+
+    // Télécharger le PDF
+    const dateFile = new Date().toISOString().split('T')[0];
+    doc.save(`evolution_poids_${dateFile}.pdf`);
+    
+    this.afficherMessage('Export PDF réussi !', 'success');
   }
 }

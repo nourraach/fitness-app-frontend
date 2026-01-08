@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { AdminService } from '../../services/admin.service';
 import { SystemStatsDTO } from '../../models/admin.model';
@@ -7,7 +8,7 @@ import { SystemStatsDTO } from '../../models/admin.model';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })

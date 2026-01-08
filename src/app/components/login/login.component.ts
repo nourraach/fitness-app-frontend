@@ -115,7 +115,10 @@ ngOnInit(): void {
               const role = this.service.getRole();
               console.log('🔍 Rôle détecté après délai:', role);
               
-              if (role === 'ROLE_COACH' || role?.toLowerCase() === 'coach') {
+              if (role === 'ROLE_ADMIN' || role?.toLowerCase() === 'admin') {
+                console.log('✅ Redirection vers /admin/dashboard');
+                this.router.navigateByUrl('/admin/dashboard');
+              } else if (role === 'ROLE_COACH' || role?.toLowerCase() === 'coach') {
                 console.log('✅ Redirection vers /coach-home');
                 this.router.navigateByUrl('/coach-home');
               } else {

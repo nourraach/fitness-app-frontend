@@ -82,4 +82,14 @@ export class MessageBubbleComponent {
     
     return formattedContent;
   }
+
+  getInitials(): string {
+    // Try to get initials from message sender name or use default
+    const name = (this.message as any).senderName || 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  }
 }

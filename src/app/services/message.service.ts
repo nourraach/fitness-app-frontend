@@ -77,7 +77,14 @@ export class MessageService {
 
   // Envoyer un message via REST (fallback)
   sendMessageRest(request: EnvoyerMessageRequest): Observable<MessageDTO> {
-    return this.http.post<MessageDTO>(`${this.apiUrl}/messages`, request, {
+    // Transform request to match backend expected format
+    const backendRequest = {
+      receiverId: request.destinataireId,
+      content: request.contenu,
+      type: request.type || MessageType.TEXT
+    };
+    
+    return this.http.post<MessageDTO>(`${this.apiUrl}/messages`, backendRequest, {
       headers: this.getAuthHeaders()
     });
   }
@@ -207,9 +214,9 @@ export class MessageService {
       if (conv.id === parseInt(message.conversationId || '0')) {
         return {
           ...conv,
-          lastMessageContent: message.contenu,
-          lastMessageAt: message.dateEnvoi,
-          unreadMessageCount: message.lu ? (conv.unreadMessageCount || 0) : ((conv.unreadMessageCount || 0) + 1)
+          lastMessageContent: message.content,
+          lastMessageAt: new Date(message.timestamp),
+          unreadMessageCount: message.isRead ? (conv.unreadMessageCount || 0) : ((conv.unreadMessageCount || 0) + 1)
         };
       }
       return conv;

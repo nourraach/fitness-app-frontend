@@ -29,8 +29,8 @@ export class RapportProgresService {
   }
 
   // Legacy methods (keeping for compatibility)
+  // CORRECTION: Utilise l'endpoint backend existant
   genererRapport(clientId: number, dateDebut: string, dateFin: string): Observable<RapportProgresDTO> {
-    // CORRECTION: Utilise POST /api/rapports/generer avec body
     const body = { clientId, dateDebut, dateFin };
     return this.http.post<RapportProgresDTO>(`${this.apiUrl}/generer`, body, { headers: this.getHeaders() })
       .pipe(
@@ -40,9 +40,9 @@ export class RapportProgresService {
   }
 
   genererRapportSemaineCourante(clientId: number): Observable<RapportProgresDTO> {
-    // CORRECTION: Utilise GET /api/rapports/semaine-courante avec query param
+    // CORRECTION: Utilise l'endpoint backend existant
     const params = new HttpParams().set('clientId', clientId.toString());
-    return this.http.get<RapportProgresDTO>(`${this.apiUrl}/semaine-courante`, { params, headers: this.getHeaders() })
+    return this.http.get<RapportProgresDTO>(`${this.apiUrl}/hebdomadaire`, { params, headers: this.getHeaders() })
       .pipe(
         retry(2),
         catchError(this.handleError)

@@ -1,0 +1,200 @@
+<div class="notification-preferences-container">
+  <!-- Header -->
+  <div class="header-section">
+    <i class="pi pi-bell"></i>
+    <h1>Préférences de Notifications</h1>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p-progressSpinner strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="hasLoadingError" class="error-container">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>{{ errorMessage }}</p>
+    <p-button label="Réessayer" icon="pi pi-refresh" (click)="onReload()" severity="secondary"></p-button>
+  </div>
+
+  <!-- Formulaire -->
+  <form [formGroup]="preferencesForm" (ngSubmit)="onSave()" *ngIf="!isLoading && !hasLoadingError" novalidate>
+    
+    <!-- Paramètres Généraux -->
+    <p-card styleClass="mb-3">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-cog"></i>
+          <span>Paramètres Généraux</span>
+        </div>
+      </ng-template>
+      <div formGroupName="generalSettings" class="form-section">
+        <div class="field-checkbox">
+          <p-checkbox formControlName="notifications" inputId="notifications" binary="true"></p-checkbox>
+          <label for="notifications">Activer les notifications</label>
+        </div>
+        <div class="field-checkbox">
+          <p-checkbox formControlName="email" inputId="email" binary="true"></p-checkbox>
+          <label for="email">Notifications par email</label>
+        </div>
+        <div class="field-checkbox">
+          <p-checkbox formControlName="push" inputId="push" binary="true"></p-checkbox>
+          <label for="push">Notifications push</label>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Rappels de Repas -->
+    <p-card styleClass="mb-3">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-clock"></i>
+          <span>Rappels de Repas</span>
+        </div>
+      </ng-template>
+      <div formGroupName="mealSettings" class="form-section">
+        <div class="field-checkbox mb-3">
+          <p-checkbox formControlName="mealRemindersEnabled" inputId="mealRemindersEnabled" binary="true"></p-checkbox>
+          <label for="mealRemindersEnabled">Activer les rappels de repas</label>
+        </div>
+        
+        <div class="time-grid" *ngIf="preferencesForm.get('mealSettings.mealRemindersEnabled')?.value">
+          <div class="time-field">
+            <label>Petit-déjeuner</label>
+            <input type="time" pInputText formControlName="breakfastTime" class="time-input">
+          </div>
+          <div class="time-field">
+            <label>Déjeuner</label>
+            <input type="time" pInputText formControlName="lunchTime" class="time-input">
+          </div>
+          <div class="time-field">
+            <label>Dîner</label>
+            <input type="time" pInputText formControlName="dinnerTime" class="time-input">
+          </div>
+        </div>
+
+        <p-divider *ngIf="preferencesForm.get('mealSettings.mealRemindersEnabled')?.value"></p-divider>
+
+        <div class="field-checkbox" *ngIf="preferencesForm.get('mealSettings.mealRemindersEnabled')?.value">
+          <p-checkbox formControlName="snackRemindersEnabled" inputId="snackRemindersEnabled" binary="true"></p-checkbox>
+          <label for="snackRemindersEnabled">Rappels de collations</label>
+        </div>
+
+        <div class="time-grid" *ngIf="preferencesForm.get('mealSettings.snackRemindersEnabled')?.value && preferencesForm.get('mealSettings.mealRemindersEnabled')?.value">
+          <div class="time-field">
+            <label>Collation matin</label>
+            <input type="time" pInputText formControlName="morningSnackTime" class="time-input">
+          </div>
+          <div class="time-field">
+            <label>Collation après-midi</label>
+            <input type="time" pInputText formControlName="afternoonSnackTime" class="time-input">
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Rappels d'Entraînement -->
+    <p-card styleClass="mb-3">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-heart"></i>
+          <span>Rappels d'Entraînement</span>
+        </div>
+      </ng-template>
+      <div formGroupName="workoutSettings" class="form-section">
+        <div class="field-checkbox mb-3">
+          <p-checkbox formControlName="workoutRemindersEnabled" inputId="workoutRemindersEnabled" binary="true"></p-checkbox>
+          <label for="workoutRemindersEnabled">Activer les rappels d'entraînement</label>
+        </div>
+
+        <div *ngIf="preferencesForm.get('workoutSettings.workoutRemindersEnabled')?.value">
+          <div class="time-field mb-3">
+            <label>Heure d'entraînement par défaut</label>
+            <input type="time" pInputText formControlName="defaultWorkoutTime" class="time-input">
+          </div>
+
+          <label class="block mb-2">Jours d'entraînement</label>
+          <div class="days-grid" formArrayName="activeDays">
+            <div *ngFor="let day of daysOfWeek; let i = index" class="day-chip">
+              <p-checkbox [formControlName]="i" [inputId]="'day-' + i" binary="true"></p-checkbox>
+              <label [for]="'day-' + i">{{ getDayShortLabel(day) }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Messages Motivationnels -->
+    <p-card styleClass="mb-3">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-star"></i>
+          <span>Messages Motivationnels</span>
+        </div>
+      </ng-template>
+      <div formGroupName="motivationalSettings" class="form-section">
+        <div class="field-checkbox mb-3">
+          <p-checkbox formControlName="motivationalMessagesEnabled" inputId="motivationalMessagesEnabled" binary="true"></p-checkbox>
+          <label for="motivationalMessagesEnabled">Activer les messages motivationnels</label>
+        </div>
+
+        <div *ngIf="preferencesForm.get('motivationalSettings.motivationalMessagesEnabled')?.value" class="frequency-field">
+          <label>Fréquence (messages par semaine)</label>
+          <p-inputNumber formControlName="motivationalFrequency" [min]="1" [max]="7" [showButtons]="true" buttonLayout="horizontal" spinnerMode="horizontal" styleClass="w-full"></p-inputNumber>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Heures de Silence -->
+    <p-card styleClass="mb-3">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-moon"></i>
+          <span>Heures de Silence</span>
+        </div>
+      </ng-template>
+      <div formGroupName="quietTimeSettings" class="form-section">
+        <div class="field-checkbox mb-3">
+          <p-checkbox formControlName="quietTimeEnabled" inputId="quietTimeEnabled" binary="true"></p-checkbox>
+          <label for="quietTimeEnabled">Activer les heures de silence</label>
+        </div>
+
+        <div class="time-grid" *ngIf="preferencesForm.get('quietTimeSettings.quietTimeEnabled')?.value">
+          <div class="time-field">
+            <label>Début du silence</label>
+            <input type="time" pInputText formControlName="quietTimeStart" class="time-input">
+          </div>
+          <div class="time-field">
+            <label>Fin du silence</label>
+            <input type="time" pInputText formControlName="quietTimeEnd" class="time-input">
+          </div>
+        </div>
+        <small *ngIf="preferencesForm.get('quietTimeSettings.quietTimeEnabled')?.value" class="hint-text">
+          Aucune notification ne sera envoyée pendant ces heures.
+        </small>
+      </div>
+    </p-card>
+
+    <!-- Boutons d'action -->
+    <div class="action-buttons">
+      <p-button 
+        label="Réinitialiser"
+        icon="pi pi-refresh"
+        (click)="onReload()"
+        [disabled]="isSaving"
+        severity="secondary"
+        styleClass="p-button-outlined">
+      </p-button>
+      <p-button 
+        [label]="isSaving ? 'Sauvegarde...' : 'Sauvegarder'"
+        [icon]="isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+        type="submit"
+        [disabled]="isSaving"
+        styleClass="p-button-primary">
+      </p-button>
+    </div>
+  </form>
+
+  <p-toast position="top-right"></p-toast>
+</div>

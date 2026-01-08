@@ -51,7 +51,6 @@
               <th>Email</th>
               <th>Rôle</th>
               <th>Statut</th>
-              <th>Dernière connexion</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -63,32 +62,28 @@
                     <i class="fas fa-user"></i>
                   </div>
                   <div class="user-details">
-                    <div class="user-name">{{ user.prenom || user.firstName }} {{ user.nom || user.lastName }}</div>
-                    <div class="user-id">#{{ user.id.toString().substring(0, 8) }}</div>
+                    <div class="user-name">{{ user.prenom }} {{ user.nom }}</div>
+                    <div class="user-id">#{{ user.id }}</div>
                   </div>
                 </div>
               </td>
               <td>{{ user.email }}</td>
               <td>
-                <span [class]="'role-badge ' + getRoleBadgeClass(user.role)">
-                  {{ user.role }}
+                <span [class]="'role-badge ' + getRoleBadgeClass(user.role || 'client')">
+                  {{ user.role || 'client' }}
                 </span>
               </td>
               <td>
-                <span [class]="'status-badge ' + getStatusBadgeClass(user.status || 'unknown')">
-                  {{ user.status || 'Unknown' }}
+                <span [class]="'status-badge ' + getStatusBadgeClass(user.status || 'active')">
+                  {{ user.status || 'active' }}
                 </span>
               </td>
-              <td>{{ user.lastLogin ? formatDate(user.lastLogin) : 'Jamais' }}</td>
               <td>
                 <div class="action-buttons">
                   <button (click)="toggleUserStatus(user); $event.stopPropagation()" 
-                          [class]="(user.status || 'inactive') === 'active' ? 'deactivate-btn' : 'activate-btn'"
-                          [title]="(user.status || 'inactive') === 'active' ? 'Désactiver' : 'Activer'">
-                    <i [class]="(user.status || 'inactive') === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
-                  </button>
-                  <button (click)="resetPassword(user); $event.stopPropagation()" class="reset-btn" title="Réinitialiser mot de passe">
-                    <i class="fas fa-key"></i>
+                          [class]="(user.status || 'active') === 'active' ? 'deactivate-btn' : 'activate-btn'"
+                          [title]="(user.status || 'active') === 'active' ? 'Désactiver' : 'Activer'">
+                    <i [class]="(user.status || 'active') === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
                   </button>
                   <button (click)="deleteUser(user); $event.stopPropagation()" class="delete-btn" title="Supprimer">
                     <i class="fas fa-trash"></i>
@@ -154,10 +149,6 @@
               <label>Téléphone</label>
               <span>{{ selectedUser.telephone || 'Non renseigné' }}</span>
             </div>
-            <div class="detail-item">
-              <label>Date de naissance</label>
-              <span>{{ selectedUser.dateNaissance ? formatDate(selectedUser.dateNaissance) : 'Non renseignée' }}</span>
-            </div>
           </div>
         </div>
 
@@ -166,63 +157,24 @@
           <div class="detail-grid">
             <div class="detail-item">
               <label>Rôle</label>
-              <span [class]="'role-badge ' + getRoleBadgeClass(selectedUser.role)">
-                {{ selectedUser.role }}
+              <span [class]="'role-badge ' + getRoleBadgeClass(selectedUser.role || 'client')">
+                {{ selectedUser.role || 'client' }}
               </span>
             </div>
             <div class="detail-item">
               <label>Statut</label>
-              <span [class]="'status-badge ' + getStatusBadgeClass(selectedUser.status || 'unknown')">
-                {{ selectedUser.status || 'Unknown' }}
+              <span [class]="'status-badge ' + getStatusBadgeClass(selectedUser.status || 'active')">
+                {{ selectedUser.status || 'active' }}
               </span>
-            </div>
-            <div class="detail-item">
-              <label>Date de création</label>
-              <span>{{ formatDate(selectedUser.createdAt) }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Dernière connexion</label>
-              <span>{{ selectedUser.lastLogin ? formatDate(selectedUser.lastLogin) : 'Jamais' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4>Statistiques</h4>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <i class="fas fa-sign-in-alt"></i>
-              <div class="stat-content">
-                <div class="stat-value">{{ selectedUser.loginCount || 0 }}</div>
-                <div class="stat-label">Connexions</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <i class="fas fa-calendar"></i>
-              <div class="stat-content">
-                <div class="stat-value">{{ selectedUser.programsCount || 0 }}</div>
-                <div class="stat-label">Programmes</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <i class="fas fa-comments"></i>
-              <div class="stat-content">
-                <div class="stat-value">{{ selectedUser.messagesCount || 0 }}</div>
-                <div class="stat-label">Messages</div>
-              </div>
             </div>
           </div>
         </div>
 
         <div class="detail-actions">
           <button (click)="toggleUserStatus(selectedUser)" 
-                  [class]="(selectedUser.status || 'inactive') === 'active' ? 'deactivate-btn' : 'activate-btn'">
-            <i [class]="(selectedUser.status || 'inactive') === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
-            {{ (selectedUser.status || 'inactive') === 'active' ? 'Désactiver' : 'Activer' }}
-          </button>
-          <button (click)="resetPassword(selectedUser)" class="reset-btn">
-            <i class="fas fa-key"></i>
-            Réinitialiser mot de passe
+                  [class]="(selectedUser.status || 'active') === 'active' ? 'deactivate-btn' : 'activate-btn'">
+            <i [class]="(selectedUser.status || 'active') === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+            {{ (selectedUser.status || 'active') === 'active' ? 'Désactiver' : 'Activer' }}
           </button>
           <button (click)="deleteUser(selectedUser)" class="delete-btn">
             <i class="fas fa-trash"></i>

@@ -1,7 +1,15 @@
 <div class="evolution-container">
   <div class="header">
     <h2>📊 Évolution de mon Poids</h2>
-    <button class="btn-add" (click)="ouvrirModalAjout()">+ Ajouter une mesure</button>
+    <div class="header-actions">
+      <button class="btn-export btn-excel" (click)="exporterExcel()" title="Exporter en Excel">
+        <i class="pi pi-file-excel"></i> Excel
+      </button>
+      <button class="btn-export btn-pdf" (click)="exporterPDF()" title="Exporter en PDF">
+        <i class="pi pi-file-pdf"></i> PDF
+      </button>
+      <button class="btn-add" (click)="ouvrirModalAjout()">+ Ajouter une mesure</button>
+    </div>
   </div>
 
   <div *ngIf="message" [class]="'alert alert-' + messageType">{{ message }}</div>
@@ -24,14 +32,6 @@
       <div class="card-content">
         <span class="card-label">Poids Actuel</span>
         <span class="card-value">{{ evolution.poidsActuel || '-' }} kg</span>
-      </div>
-    </div>
-
-    <div class="summary-card">
-      <div class="card-icon">🎯</div>
-      <div class="card-content">
-        <span class="card-label">Objectif</span>
-        <span class="card-value">{{ evolution.poidsObjectif || '-' }} kg</span>
       </div>
     </div>
 

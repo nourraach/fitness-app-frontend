@@ -8,8 +8,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { FloatLabel } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
-import { Toast } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+
 @Component({
     selector: 'app-register',
     templateUrl: './register.component.html',
@@ -31,7 +31,7 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {
     this.logoutUser();
     this.registerForm = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern('^[A-Za-z]+$')]], // Validation uniquement lettres
+      name: ['', [Validators.required, Validators.pattern('^[A-Za-z ]+$')]], // Validation lettres et espaces
       email: ['', [Validators.required, Validators.email, this.emailValidator]], // Validation de l'email
       phoneNumber: ['', [Validators.required, Validators.pattern('^[0-9]+$'), Validators.maxLength(8)]], // Numéro de téléphone (8 chiffres)
       password: ['', [Validators.required, Validators.minLength(8), this.passwordComplexity]], // Mot de passe fort
@@ -53,7 +53,7 @@ export class RegisterComponent implements OnInit {
   // Validateur personnalisé pour vérifier la complexité du mot de passe
   passwordComplexity(control: any): { [key: string]: boolean } | null {
     const value = control.value;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}[\]:;"'<>,.?/-]).{8,}$/;
     if (value && !passwordRegex.test(value)) {
       return { passwordComplexity: true };
     }
@@ -72,11 +72,9 @@ export class RegisterComponent implements OnInit {
 
   // Déconnexion de l'utilisateur (si connecté)
   logoutUser(): void {
-    // Nettoyage complet via le service JWT
     if (this.service) {
       this.service.logout();
     } else {
-      // Fallback si le service n'est pas disponible
       this.storageService.removeItem('jwt');
     }
     console.log('🔓 Register - Utilisateur déconnecté automatiquement.');
@@ -84,22 +82,29 @@ export class RegisterComponent implements OnInit {
 
   // Soumettre le formulaire d'enregistrement
   submitForm(): void {
+    // Construire le payload exact attendu par le backend
+    // Ne pas envoyer confirmPassword, et convertir phoneNumber en string
     const formData = {
-      ...this.registerForm.value,
-      role: 'user',
+      name: this.registerForm.value.name,
+      email: this.registerForm.value.email,
+      password: this.registerForm.value.password,
+      phoneNumber: this.registerForm.value.phoneNumber?.toString() // Convertir en string
     };
 
-    console.log(formData);
-    this.service.register(formData).subscribe(
-      (response) => {
+    console.log('📤 Payload envoyé au backend:', JSON.stringify(formData, null, 2));
+    
+    this.service.register(formData).subscribe({
+      next: (response) => {
+        console.log('✅ Réponse du backend:', response);
         if (response.id != null) {
-          alert("Inscription réussite!!");
-          this.router.navigate([`/login`]);
+          alert("Inscription réussie !!");
+          this.router.navigate(['/login']);
         }
       },
-      (error) => {
-        alert("Erreur lors de l\'inscription. Essayez à nouveau. Peut étre Cet email est déjà enregistré.");
+      error: (err) => {
+        console.error('❌ Erreur inscription:', err);
+        alert("Erreur lors de l'inscription. Essayez à nouveau. Peut-être cet email est déjà enregistré.");
       }
-    );
+    });
   }
 }

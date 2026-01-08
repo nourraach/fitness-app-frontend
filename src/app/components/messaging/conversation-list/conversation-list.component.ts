@@ -53,7 +53,8 @@ export class ConversationListComponent implements OnInit, OnDestroy {
       const term = this.searchTerm.toLowerCase();
       this.filteredConversations = this.conversations.filter(conversation =>
         conversation.participantName?.toLowerCase().includes(term) ||
-        conversation.lastMessage?.content?.toLowerCase().includes(term)
+        conversation.lastMessageContent?.toLowerCase().includes(term) ||
+        conversation.dernierMessage?.toLowerCase().includes(term)
       );
     }
   }
@@ -90,5 +91,14 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 
   trackByConversation(index: number, conversation: Conversation): string {
     return conversation.id || index.toString();
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
   }
 }

@@ -1,9 +1,36 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { AdminService } from '../../services/admin.service';
-import { AdminUserDTO } from '../../models/admin.model';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { JwtService } from '../../service/jwt.service';
+
+// Interface pour les données retournées par le backend
+interface BackendUser {
+  id: number;
+  name: string;
+  email: string;
+  role: 'USER' | 'COACH' | 'ADMIN';
+  phoneNumber: string;
+  enabled: boolean;
+}
+
+// Interface pour l'affichage frontend
+interface UserDTO {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: string;
+  status: string;
+  telephone: string;
+  dateNaissance?: Date;
+  createdAt?: Date;
+  lastLogin?: Date;
+  loginCount?: number;
+  programsCount?: number;
+  messagesCount?: number;
+}
 
 @Component({
   selector: 'app-user-management',
@@ -13,9 +40,9 @@ import { AdminUserDTO } from '../../models/admin.model';
   styleUrls: ['./user-management.component.css']
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-  users: AdminUserDTO[] = [];
-  filteredUsers: AdminUserDTO[] = [];
-  selectedUser: AdminUserDTO | null = null;
+  users: UserDTO[] = [];
+  filteredUsers: UserDTO[] = [];
+  selectedUser: UserDTO | null = null;
   
   isLoading = false;
   searchTerm = '';
@@ -30,120 +57,228 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   // Make Math available in template
   Math = Math;
   
+  // Search debounce
+  private searchSubject = new Subject<string>();
   private subscriptions: Subscription[] = [];
 
-  constructor(private adminService: AdminService) {}
+  constructor(private jwtService: JwtService) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    
+    // Setup search debounce
+    const searchSub = this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.loadUsers();
+    });
+    this.subscriptions.push(searchSub);
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
+  /**
+   * Mappe un utilisateur du format backend vers le format frontend
+   * Backend: { name, phoneNumber, enabled, role: "USER"|"COACH"|"ADMIN" }
+   * Frontend: { nom, prenom, telephone, status, role: "user"|"coach"|"admin" }
+   */
+  private mapBackendUser(user: BackendUser): UserDTO {
+    // Split le name en prenom et nom
+    const nameParts = (user.name || '').split(' ');
+    let prenom = '';
+    let nom = '';
+    
+    if (nameParts.length === 1) {
+      // Un seul mot: c'est le nom
+      nom = nameParts[0];
+      prenom = '';
+    } else {
+      // Plusieurs mots: premier = prenom, reste = nom
+      prenom = nameParts[0];
+      nom = nameParts.slice(1).join(' ');
+    }
+    
+    return {
+      id: user.id,
+      nom: nom,
+      prenom: prenom,
+      email: user.email || '',
+      role: (user.role || 'USER').toLowerCase(), // USER -> user, COACH -> coach, ADMIN -> admin
+      status: user.enabled ? 'active' : 'inactive', // boolean -> string
+      telephone: user.phoneNumber || ''
+    };
+  }
+
   private loadUsers(): void {
     this.isLoading = true;
     
-    const usersSub = this.adminService.getUsers({
-      page: this.currentPage,
-      size: this.pageSize,
-      search: this.searchTerm || undefined,
-      role: this.roleFilter === 'all' ? undefined : this.roleFilter as any,
-      status: this.statusFilter === 'all' ? undefined : this.statusFilter as any
-    }).subscribe({
-      next: (response: {users: AdminUserDTO[], total: number}) => {
-        this.users = response.users;
-        this.totalUsers = response.total;
+    const usersSub = this.jwtService.gestionUsers().subscribe({
+      next: (response: any) => {
+        console.log('Réponse API users:', response);
+        
+        // Gérer différents formats de réponse
+        let usersData: BackendUser[] = [];
+        if (Array.isArray(response)) {
+          usersData = response;
+        } else if (response && response.users) {
+          usersData = response.users;
+        } else if (response && response.content) {
+          usersData = response.content;
+        } else if (response && response.data) {
+          usersData = response.data;
+        }
+        
+        // Mapper les données backend vers le format frontend
+        this.users = usersData.map((user: BackendUser) => this.mapBackendUser(user));
+        
+        this.totalUsers = this.users.length;
         this.applyFilters();
         this.isLoading = false;
       },
       error: (error: any) => {
         console.error('Error loading users:', error);
+        this.handleApiError(error);
+        this.users = [];
+        this.filteredUsers = [];
         this.isLoading = false;
       }
     });
     this.subscriptions.push(usersSub);
   }
 
-  private applyFilters(): void {
-    this.filteredUsers = this.users.filter(user => {
-      const matchesSearch = !this.searchTerm || 
-        (user.nom && user.nom.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (user.prenom && user.prenom.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        user.email.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
-      const matchesRole = this.roleFilter === 'all' || user.role === this.roleFilter;
-      const matchesStatus = this.statusFilter === 'all' || user.status === this.statusFilter;
-      
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }
-
-  onSearchChange(): void {
-    this.currentPage = 1;
-    this.loadUsers();
-  }
-
-  onFilterChange(): void {
-    this.currentPage = 1;
-    this.loadUsers();
-  }
-
-  selectUser(user: AdminUserDTO): void {
-    this.selectedUser = user;
-  }
-
-  toggleUserStatus(user: AdminUserDTO): void {
-    const newStatus = user.status === 'active' ? 'inactive' : 'active';
-    
-    const toggleSub = this.adminService.updateUserStatus(user.id, newStatus).subscribe({
-      next: (updatedUser: AdminUserDTO) => {
-        const index = this.users.findIndex(u => u.id === user.id);
-        if (index !== -1) {
-          this.users[index] = updatedUser;
-          this.applyFilters();
-        }
-        if (this.selectedUser?.id === user.id) {
-          this.selectedUser = updatedUser;
-        }
-      },
-      error: (error: any) => {
-        console.error('Error updating user status:', error);
-      }
-    });
-    this.subscriptions.push(toggleSub);
-  }
-
-  resetPassword(user: AdminUserDTO): void {
-    if (confirm(`Réinitialiser le mot de passe de ${user.prenom || user.firstName} ${user.nom || user.lastName} ?`)) {
-      const resetSub = this.adminService.resetUserPassword(user.id).subscribe({
-        next: () => {
-          alert('Mot de passe réinitialisé avec succès');
-        },
-        error: (error: any) => {
-          console.error('Error resetting password:', error);
-          alert('Erreur lors de la réinitialisation');
-        }
-      });
-      this.subscriptions.push(resetSub);
+  private handleApiError(error: any): void {
+    if (error.status === 401) {
+      alert('Session expirée. Veuillez vous reconnecter.');
+      // Redirection vers login gérée par l'intercepteur
+    } else if (error.status === 403) {
+      alert('Accès non autorisé');
+    } else if (error.status === 404) {
+      alert('Utilisateur non trouvé');
+    } else if (error.status >= 500) {
+      alert('Erreur serveur, veuillez réessayer');
     }
   }
 
-  deleteUser(user: AdminUserDTO): void {
-    if (confirm(`Supprimer définitivement l'utilisateur ${user.prenom || user.firstName} ${user.nom || user.lastName} ?`)) {
-      const deleteSub = this.adminService.deleteUser(user.id).subscribe({
+  private applyFilters(): void {
+    let filtered = [...this.users];
+    
+    // Filtre par recherche (nom, prénom, email) - côté client
+    if (this.searchTerm && this.searchTerm.trim()) {
+      const searchLower = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(user => {
+        const nom = (user.nom || '').toLowerCase();
+        const prenom = (user.prenom || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const fullName = `${prenom} ${nom}`.toLowerCase();
+        const fullNameReverse = `${nom} ${prenom}`.toLowerCase();
+        
+        return nom.includes(searchLower) ||
+               prenom.includes(searchLower) ||
+               email.includes(searchLower) ||
+               fullName.includes(searchLower) ||
+               fullNameReverse.includes(searchLower);
+      });
+    }
+    
+    // Filtre par rôle - côté client
+    if (this.roleFilter && this.roleFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        const userRole = (user.role || '').toLowerCase();
+        return userRole.includes(this.roleFilter.toLowerCase());
+      });
+    }
+    
+    // Filtre par statut - côté client
+    if (this.statusFilter && this.statusFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        const userStatus = (user.status || '').toLowerCase();
+        return userStatus === this.statusFilter.toLowerCase();
+      });
+    }
+    
+    this.filteredUsers = filtered;
+    this.totalUsers = filtered.length;
+  }
+
+  onSearchChange(): void {
+    // Appliquer les filtres immédiatement côté client
+    this.applyFilters();
+  }
+
+  onFilterChange(): void {
+    // Appliquer les filtres côté client sans recharger
+    this.applyFilters();
+  }
+
+  selectUser(user: UserDTO): void {
+    this.selectedUser = user;
+  }
+
+  toggleUserStatus(user: UserDTO): void {
+    const newEnabled = user.status !== 'active';
+    const previousStatus = user.status;
+    
+    // Mise à jour locale optimiste
+    user.status = newEnabled ? 'active' : 'inactive';
+    
+    // Appel API vers /api/admin/users/{id}/status
+    const statusSub = this.jwtService.updateUserStatus(user.id, newEnabled).subscribe({
+      next: () => {
+        console.log(`Statut de l'utilisateur ${user.id} changé en ${user.status}`);
+        const index = this.users.findIndex(u => u.id === user.id);
+        if (index !== -1) {
+          this.users[index].status = user.status;
+        }
+        this.applyFilters();
+        
+        if (this.selectedUser?.id === user.id) {
+          this.selectedUser.status = user.status;
+        }
+      },
+      error: (error: any) => {
+        console.error('Erreur lors du changement de statut:', error);
+        // Revert en cas d'erreur
+        user.status = previousStatus;
+        const index = this.users.findIndex(u => u.id === user.id);
+        if (index !== -1) {
+          this.users[index].status = previousStatus;
+        }
+        if (this.selectedUser?.id === user.id) {
+          this.selectedUser.status = previousStatus;
+        }
+        this.handleApiError(error);
+      }
+    });
+    this.subscriptions.push(statusSub);
+  }
+
+  resetPassword(user: UserDTO): void {
+    if (confirm(`Réinitialiser le mot de passe de ${user.prenom} ${user.nom} ?`)) {
+      // Note: L'API de réinitialisation peut être ajoutée plus tard
+      alert('Fonctionnalité de réinitialisation de mot de passe à implémenter côté backend');
+    }
+  }
+
+  deleteUser(user: UserDTO): void {
+    if (confirm(`Supprimer définitivement l'utilisateur ${user.prenom} ${user.nom} ?`)) {
+      const deleteSub = this.jwtService.deleteUser(user.id).subscribe({
         next: () => {
+          // Le backend retourne 204 No Content - pas de body attendu
           this.users = this.users.filter(u => u.id !== user.id);
           this.totalUsers--;
           this.applyFilters();
           if (this.selectedUser?.id === user.id) {
             this.selectedUser = null;
           }
+          alert('Utilisateur supprimé avec succès');
         },
         error: (error: any) => {
           console.error('Error deleting user:', error);
-          alert('Erreur lors de la suppression');
+          this.handleApiError(error);
         }
       });
       this.subscriptions.push(deleteSub);

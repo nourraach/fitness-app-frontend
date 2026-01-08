@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FriendService } from '../../../services/friend.service';
-import { User, FriendRequest, SocialNotification } from '../../../models/friend.model';
+import { User, FriendRequest } from '../../../models/friend.model';
+import { UserSearchComponent } from '../user-search/user-search.component';
 
 @Component({
   selector: 'app-friends-manager',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UserSearchComponent],
   template: `
     <div class="friends-manager-container">
       <!-- Tab Navigation -->
@@ -31,10 +32,10 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
         </button>
         <button 
           class="tab-btn"
-          [class.active]="activeTab === 'suggestions'"
-          (click)="setActiveTab('suggestions')">
-          <i class="fas fa-user-plus"></i>
-          Suggestions
+          [class.active]="activeTab === 'search'"
+          (click)="setActiveTab('search')">
+          <i class="fas fa-search"></i>
+          Rechercher
         </button>
       </div>
 
@@ -56,7 +57,7 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
         <!-- Friends Grid -->
         <div *ngIf="friends.length > 0" class="friends-grid">
           <div 
-            *ngFor="let friend of friends; trackBy: trackByUserId"
+            *ngFor="let friend of friends; trackBy: trackByFriendId"
             class="friend-card">
             
             <!-- Friend Avatar -->
@@ -72,6 +73,7 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
             <!-- Friend Info -->
             <div class="friend-info">
               <h4 class="friend-name">{{ friend.nom }}</h4>
+              <p class="friend-email" *ngIf="friend.email">{{ friend.email }}</p>
               <p class="friend-status" *ngIf="friend.isOnline">En ligne</p>
               <p class="friend-status offline" *ngIf="!friend.isOnline && friend.lastSeen">
                 Vu {{ formatLastSeen(friend.lastSeen) }}
@@ -96,14 +98,9 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
 
             <!-- Friend Actions -->
             <div class="friend-actions">
-              <button class="action-btn message-btn" (click)="openMessage(friend.id)" title="Envoyer un message">
-                <i class="fas fa-comment"></i>
-              </button>
-              <button class="action-btn challenge-btn" (click)="createChallenge(friend.id)" title="Créer un défi">
-                <i class="fas fa-trophy"></i>
-              </button>
               <button class="action-btn remove-btn" (click)="removeFriend(friend.id)" title="Supprimer ami">
                 <i class="fas fa-user-minus"></i>
+                Supprimer
               </button>
             </div>
           </div>
@@ -185,48 +182,9 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
         </div>
       </div>
 
-      <!-- Suggestions Tab -->
-      <div *ngIf="activeTab === 'suggestions'" class="tab-content">
-        <div class="section-header">
-          <h3>
-            <i class="fas fa-user-plus"></i>
-            Suggestions d'amis
-          </h3>
-          <p class="section-description">Basées sur vos amis et vos intérêts fitness</p>
-        </div>
-
-        <!-- Suggestions Grid -->
-        <div class="suggestions-grid">
-          <div 
-            *ngFor="let suggestion of suggestions; trackBy: trackByUserId"
-            class="suggestion-card">
-            
-            <div class="suggestion-avatar">
-              <div class="avatar-circle" [style.background]="getAvatarColor(suggestion.nom)">
-                {{ suggestion.nom.charAt(0).toUpperCase() }}
-              </div>
-            </div>
-
-            <div class="suggestion-info">
-              <h4 class="suggestion-name">{{ suggestion.nom }}</h4>
-              <p class="suggestion-reason">{{ getSuggestionReason(suggestion) }}</p>
-              
-              <div class="suggestion-stats">
-                <span class="stat">{{ suggestion.totalWorkouts || 0 }} entraînements</span>
-              </div>
-            </div>
-
-            <div class="suggestion-actions">
-              <button 
-                class="action-btn add-btn"
-                (click)="sendFriendRequest(suggestion.id)"
-                [disabled]="isProcessing">
-                <i class="fas fa-user-plus"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
+      <!-- User Search Tab -->
+      <div *ngIf="activeTab === 'search'" class="tab-content">
+        <app-user-search></app-user-search>
       </div>
 
       <!-- Loading State -->
@@ -362,13 +320,13 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
       transform: translateY(-2px);
     }
 
-    .friends-grid, .suggestions-grid {
+    .friends-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1.5rem;
     }
 
-    .friend-card, .suggestion-card {
+    .friend-card {
       background: white;
       border-radius: 12px;
       padding: 1.5rem;
@@ -377,13 +335,13 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
       border: 2px solid transparent;
     }
 
-    .friend-card:hover, .suggestion-card:hover {
+    .friend-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       border-color: #007bff;
     }
 
-    .friend-avatar, .suggestion-avatar {
+    .friend-avatar {
       position: relative;
       margin-bottom: 1rem;
       text-align: center;
@@ -425,15 +383,21 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
       color: #6c757d;
     }
 
-    .friend-info, .suggestion-info {
+    .friend-info {
       text-align: center;
       margin-bottom: 1rem;
     }
 
-    .friend-name, .suggestion-name {
-      margin: 0 0 0.5rem 0;
+    .friend-name {
+      margin: 0 0 0.25rem 0;
       color: #2c3e50;
       font-size: 1.1rem;
+    }
+
+    .friend-email {
+      margin: 0 0 0.5rem 0;
+      color: #6c757d;
+      font-size: 0.85rem;
     }
 
     .friend-status {
@@ -447,7 +411,7 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
       color: #6c757d;
     }
 
-    .friend-stats, .suggestion-stats {
+    .friend-stats {
       display: flex;
       justify-content: center;
       gap: 1rem;
@@ -471,14 +435,14 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
       font-size: 0.85rem;
     }
 
-    .friend-actions, .suggestion-actions {
+    .friend-actions {
       display: flex;
       justify-content: center;
       gap: 0.5rem;
     }
 
     .action-btn {
-      padding: 0.75rem;
+      padding: 0.5rem 1rem;
       border: none;
       border-radius: 8px;
       cursor: pointer;
@@ -486,27 +450,8 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
       display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 44px;
-    }
-
-    .message-btn {
-      background: #007bff;
-      color: white;
-    }
-
-    .message-btn:hover {
-      background: #0056b3;
-      transform: scale(1.1);
-    }
-
-    .challenge-btn {
-      background: #ffc107;
-      color: #212529;
-    }
-
-    .challenge-btn:hover {
-      background: #e0a800;
-      transform: scale(1.1);
+      gap: 0.5rem;
+      font-size: 0.85rem;
     }
 
     .remove-btn {
@@ -516,7 +461,6 @@ import { User, FriendRequest, SocialNotification } from '../../../models/friend.
 
     .remove-btn:hover {
       background: #c82333;
-      transform: scale(1.1);
     }
 
     .add-btn {
@@ -692,7 +636,6 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
   activeTab: string = 'friends';
   friends: User[] = [];
   friendRequests: FriendRequest[] = [];
-  suggestions: User[] = [];
   isLoading: boolean = false;
   isProcessing: boolean = false;
 
@@ -711,18 +654,17 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: string): void {
     this.activeTab = tab;
-    if (tab === 'suggestions' && this.suggestions.length === 0) {
-      this.loadSuggestions();
-    }
   }
 
   private loadData(): void {
     this.isLoading = true;
+    console.log('=== FriendsManagerComponent.loadData() ===');
     
     // Load friends
     this.friendService.friends$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(friends => {
+      console.log('FriendsManager received friends:', friends.length, friends);
       this.friends = friends;
       this.isLoading = false;
     });
@@ -731,46 +673,28 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
     this.friendService.friendRequests$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(requests => {
+      console.log('FriendsManager received requests:', requests.length, requests);
       this.friendRequests = requests;
     });
   }
 
-  private loadSuggestions(): void {
-    // Mock suggestions - in real app, this would come from the service
-    this.suggestions = [
-      {
-        id: 6,
-        nom: 'Alex Rodriguez',
-        email: 'alex.rodriguez@email.com',
-        isOnline: false,
-        totalWorkouts: 28,
-        totalCalories: 7600,
-        joinDate: new Date('2024-03-10'),
-        isPublic: true
-      },
-      {
-        id: 7,
-        nom: 'Lisa Chen',
-        email: 'lisa.chen@email.com',
-        isOnline: true,
-        totalWorkouts: 52,
-        totalCalories: 14200,
-        joinDate: new Date('2023-12-05'),
-        isPublic: true
-      }
-    ];
-  }
-
   refreshFriends(): void {
-    this.loadData();
+    this.isLoading = true;
+    // Forcer le rechargement des données depuis le backend
+    this.friendService.refreshAllData();
   }
 
   acceptRequest(requestId: number): void {
     this.isProcessing = true;
     this.friendService.acceptFriendRequest(requestId).subscribe({
-      next: () => {
-        this.friendRequests = this.friendRequests.filter(r => r.id !== requestId);
-        this.refreshFriends();
+      next: (success) => {
+        if (success) {
+          console.log('Demande acceptée, rafraîchissement des listes...');
+          // Retirer la demande de la liste locale immédiatement
+          this.friendRequests = this.friendRequests.filter(r => r.id !== requestId);
+          // Forcer le rafraîchissement des amis depuis le backend
+          this.friendService.refreshAllData();
+        }
         this.isProcessing = false;
       },
       error: (error) => {
@@ -783,8 +707,11 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
   declineRequest(requestId: number): void {
     this.isProcessing = true;
     this.friendService.declineFriendRequest(requestId).subscribe({
-      next: () => {
-        this.friendRequests = this.friendRequests.filter(r => r.id !== requestId);
+      next: (success) => {
+        if (success) {
+          console.log('Demande refusée');
+          this.friendRequests = this.friendRequests.filter(r => r.id !== requestId);
+        }
         this.isProcessing = false;
       },
       error: (error) => {
@@ -798,7 +725,6 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
     this.isProcessing = true;
     this.friendService.sendFriendRequest(userId).subscribe({
       next: () => {
-        this.suggestions = this.suggestions.filter(s => s.id !== userId);
         this.isProcessing = false;
       },
       error: (error) => {
@@ -811,29 +737,26 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
   removeFriend(friendId: number): void {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet ami ?')) {
       this.friendService.removeFriend(friendId).subscribe({
-        next: () => {
-          this.friends = this.friends.filter(f => f.id !== friendId);
+        next: (success) => {
+          if (success) {
+            this.friends = this.friends.filter(f => f.id !== friendId);
+            console.log('Ami supprimé avec succès');
+          } else {
+            console.error('Échec de la suppression');
+            alert('Erreur lors de la suppression de l\'ami');
+          }
         },
         error: (error) => {
           console.error('Error removing friend:', error);
+          alert('Erreur lors de la suppression de l\'ami');
         }
       });
     }
   }
 
-  openMessage(friendId: number): void {
-    // Navigate to messaging with this friend
-    console.log('Open message with friend:', friendId);
-  }
-
-  createChallenge(friendId: number): void {
-    // Navigate to challenge creation with this friend
-    console.log('Create challenge with friend:', friendId);
-  }
-
   goToSearch(): void {
-    // Navigate to user search
-    console.log('Navigate to user search');
+    // Switch to search tab
+    this.activeTab = 'search';
   }
 
   getAvatarColor(name: string): string {
@@ -878,21 +801,11 @@ export class FriendsManagerComponent implements OnInit, OnDestroy {
     return `Il y a ${days} jour${days > 1 ? 's' : ''}`;
   }
 
-  getSuggestionReason(user: User): string {
-    const reasons = [
-      'Ami d\'un ami',
-      'Objectifs similaires',
-      'Même région',
-      'Activités communes'
-    ];
-    return reasons[user.id % reasons.length];
+  trackByFriendId(_: number, friend: User): number {
+    return friend.id;
   }
 
-  trackByUserId(index: number, user: User): number {
-    return user.id;
-  }
-
-  trackByRequestId(index: number, request: FriendRequest): number {
+  trackByRequestId(_: number, request: FriendRequest): number {
     return request.id;
   }
 }

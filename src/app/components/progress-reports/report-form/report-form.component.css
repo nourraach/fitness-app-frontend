@@ -1,7 +1,19 @@
+/* Variables - Same as User Theme */
+:root {
+  --primary-green: #84cabe;
+  --light-green: #a8ddd3;
+  --dark-green: #6bb5a7;
+  --text-dark: #2C3E50;
+  --text-light: #7F8C8D;
+  --bg-light: #F8F9FA;
+}
+
 .report-form-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 24px;
+  overflow-y: auto;
+  max-height: calc(100vh - 150px);
 }
 
 .report-form {
@@ -22,7 +34,7 @@
 
 .form-section h3 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 18px;
   display: flex;
   align-items: center;
@@ -48,7 +60,7 @@
 .form-group label {
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: #2C3E50;
   font-size: 14px;
 }
 
@@ -66,28 +78,28 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+  border-color: #84cabe;
+  box-shadow: 0 0 0 2px rgba(132, 202, 190, 0.1);
 }
 
 .generate-title-btn {
   margin-top: 8px;
   padding: 6px 12px;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
+  background: #e8f5f3;
+  border: 1px solid #84cabe;
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #666;
+  color: #6bb5a7;
   transition: all 0.2s ease;
 }
 
 .generate-title-btn:hover {
-  background: #e9ecef;
-  color: #333;
+  background: #84cabe;
+  color: white;
 }
 
 .quick-dates {
@@ -99,9 +111,9 @@
 
 .quick-date-btn {
   padding: 6px 12px;
-  background: #e3f2fd;
-  color: #007bff;
-  border: 1px solid #007bff;
+  background: #e8f5f3;
+  color: #6bb5a7;
+  border: 1px solid #84cabe;
   border-radius: 16px;
   font-size: 12px;
   cursor: pointer;
@@ -109,7 +121,7 @@
 }
 
 .quick-date-btn:hover {
-  background: #007bff;
+  background: #84cabe;
   color: white;
 }
 
@@ -132,7 +144,7 @@
 }
 
 .checkbox-item:hover {
-  border-color: #007bff;
+  border-color: #84cabe;
   background: #f8f9fa;
 }
 
@@ -152,8 +164,8 @@
 }
 
 .checkbox-item input:checked ~ .checkmark {
-  background: #007bff;
-  border-color: #007bff;
+  background: #84cabe;
+  border-color: #84cabe;
 }
 
 .checkbox-item input:checked ~ .checkmark::after {
@@ -176,13 +188,13 @@
 }
 
 .checkbox-content i {
-  color: #007bff;
+  color: #84cabe;
   font-size: 16px;
 }
 
 .checkbox-content span {
   font-weight: 500;
-  color: #333;
+  color: #2C3E50;
 }
 
 .error-message {
@@ -205,11 +217,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 24px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -224,13 +236,14 @@
 }
 
 .submit-btn {
-  background: #007bff;
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   color: white;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #0056b3;
+  background: linear-gradient(135deg, #6bb5a7 0%, #5aa396 100%);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(132, 202, 190, 0.4);
 }
 
 .submit-btn:disabled {

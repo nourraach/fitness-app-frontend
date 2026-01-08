@@ -3,13 +3,12 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from "./navbar/navbar.component";
 import { HomeComponent } from "./home/home.component";
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { MessageNotificationComponent } from './components/message-notification/message-notification.component';
 import { StorageService } from './service/storage-service.service';
 
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, NavbarComponent, TranslateModule, MessageNotificationComponent],
+    imports: [RouterOutlet, NavbarComponent, TranslateModule],
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css']
 })

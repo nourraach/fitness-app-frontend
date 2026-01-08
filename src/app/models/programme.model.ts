@@ -1,3 +1,57 @@
+// ============================================
+// MODÈLES CONFORMES AU CONTRAT BACKEND
+// ============================================
+
+// Statuts du programme (backend)
+export type ProgrammeStatut = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
+
+// Interface Exercice conforme au backend
+export interface Exercice {
+  nom: string;
+  series: number;
+  repetitions: number;
+  tempsRepos: number;  // en secondes
+  poids: number;       // en kg
+}
+
+// Request pour créer un programme (POST /api/programmes)
+export interface CreerProgrammeRequest {
+  clientId: number;
+  nom: string;
+  description?: string;
+  dateDebut: string;  // format: YYYY-MM-DD
+  dateFin: string;    // format: YYYY-MM-DD
+  exercices: Exercice[];
+  statut?: ProgrammeStatut;  // Optionnel, défaut 'ACTIVE'
+}
+
+// Response du backend après création/récupération
+export interface ProgrammeEntrainement {
+  id: number;
+  coachId: number;
+  clientId: number;
+  nomCoach?: string;
+  nomClient?: string;
+  nom: string;
+  description?: string;
+  dateDebut: string;
+  dateFin: string;
+  exercices: Exercice[];
+  statut: ProgrammeStatut;
+  isTemplate?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Request pour modifier le statut
+export interface UpdateStatutRequest {
+  statut: ProgrammeStatut;
+}
+
+// ============================================
+// ANCIENS MODÈLES (pour compatibilité)
+// ============================================
+
 export enum ProgramStatus {
   ACTIF = 'ACTIF',
   TERMINE = 'TERMINE',
@@ -24,16 +78,6 @@ export interface ExerciceDTO {
   completionDate?: Date;
 }
 
-export interface Exercice {
-  nom: string;
-  description?: string;
-  series?: number;
-  repetitions?: number;
-  dureeMinutes?: number;
-  intensite?: 'FAIBLE' | 'MOYENNE' | 'ELEVEE' | 'MAXIMALE';
-  notes?: string;
-}
-
 export interface ProgrammeEntrainementDTO {
   id?: number;
   coachId: number;
@@ -53,30 +97,6 @@ export interface ProgrammeEntrainementDTO {
   updatedAt?: Date;
 }
 
-export interface ProgrammeEntrainement {
-  id?: number;
-  coachId?: number;
-  nomCoach?: string;
-  clientId: number;
-  nomClient?: string;
-  nom: string;
-  description?: string;
-  dateDebut: string;
-  dateFin: string;
-  exercices: Exercice[];
-  statut?: 'ACTIF' | 'TERMINE' | 'SUSPENDU' | 'ANNULE';
-}
-
-export interface CreerProgrammeRequest {
-  clientId: number;
-  nom: string;
-  description?: string;
-  dateDebut: string;
-  dateFin: string;
-  exercices: Exercice[];
-}
-
-// Ancien modèle pour compatibilité avec le composant programmes existant
 export interface Programme {
   id?: number;
   nom: string;
@@ -89,6 +109,7 @@ export interface Programme {
   nomCoach?: string;
   nomClient?: string;
 }
+
 export interface ProgressDTO {
   programmeId: number;
   clientId: number;

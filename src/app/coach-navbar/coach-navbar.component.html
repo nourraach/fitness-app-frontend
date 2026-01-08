@@ -20,10 +20,24 @@
           <i class="pi pi-calendar"></i>
           <span>Programmes</span>
         </a>
+        <a routerLink="/messaging" routerLinkActive="active">
+          <i class="pi pi-comments"></i>
+          <span>Messagerie</span>
+        </a>
+        <a routerLink="/social" routerLinkActive="active">
+          <i class="pi pi-users"></i>
+          <span>Social</span>
+        </a>
       </div>
 
-      <!-- PROFIL -->
+      <!-- PROFIL + NOTIFICATIONS -->
       <div class="nav-right">
+        <!-- Notification Badge -->
+        <app-notification-badge 
+          [count]="notificationsCount"
+          (badgeClick)="toggleNotificationCenter()">
+        </app-notification-badge>
+
         <div class="user-dropdown">
           <button class="user-btn" (click)="toggleUserMenu()">
             <i class="pi pi-user"></i>
@@ -47,3 +61,9 @@
     </div>
   </div>
 </nav>
+
+<!-- Notification Center Panel -->
+<app-notification-center 
+  [isOpen]="showNotificationCenter"
+  (closed)="showNotificationCenter = false">
+</app-notification-center>

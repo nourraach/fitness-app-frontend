@@ -100,7 +100,14 @@ export class RealMessageService {
   sendMessage(request: EnvoyerMessageRequest): Observable<MessageDTO> {
     const headers = this.createAuthHeaders();
     
-    return this.http.post<MessageDTO>(`${this.apiUrl}/messages`, request, { headers })
+    // Transform request to match backend expected format
+    const backendRequest = {
+      receiverId: request.destinataireId,
+      content: request.contenu,
+      type: request.type || MessageType.TEXT
+    };
+    
+    return this.http.post<MessageDTO>(`${this.apiUrl}/messages`, backendRequest, { headers })
       .pipe(
         tap(message => {
           // Add message to local state
@@ -185,8 +192,8 @@ export class RealMessageService {
       conv.conversationId === conversationId 
         ? { 
             ...conv, 
-            dernierMessage: message.contenu,
-            dateDernierMessage: message.dateEnvoi
+            dernierMessage: message.content,
+            dateDernierMessage: new Date(message.timestamp)
           }
         : conv
     );
@@ -197,7 +204,7 @@ export class RealMessageService {
   getTotalUnreadCount(): Observable<number> {
     return this.conversations$.pipe(
       map(conversations => 
-        conversations.reduce((total, conv) => total + conv.messagesNonLus, 0)
+        conversations.reduce((total, conv) => total + (conv.messagesNonLus || 0), 0)
       )
     );
   }
@@ -207,8 +214,8 @@ export class RealMessageService {
     return this.conversations$.pipe(
       map(conversations => 
         conversations.filter(conv => 
-          conv.autreUtilisateurNom.toLowerCase().includes(query.toLowerCase()) ||
-          conv.dernierMessage.toLowerCase().includes(query.toLowerCase())
+          (conv.participantName || '').toLowerCase().includes(query.toLowerCase()) ||
+          (conv.dernierMessage || '').toLowerCase().includes(query.toLowerCase())
         )
       )
     );

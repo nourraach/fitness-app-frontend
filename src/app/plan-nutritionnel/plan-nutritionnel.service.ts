@@ -1,0 +1,421 @@
+import { Injectable } from '@angular/core';
+import { Meal, DailyPlan, WeeklyPlan, MealType, REPARTITION_CALORIES } from '../models/meal-plan.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PlanNutritionnelService {
+  private meals: Meal[] = [
+    {
+      id: 1,
+      name: "Ftayer aux épinards",
+      description: "Feuilletés tunisiens aux épinards et fromage",
+      calories: 280,
+      proteines: 10,
+      glucides: 30,
+      lipides: 14,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Halal"],
+      ingredients: ["Pâte feuilletée", "Épinards", "Fromage", "Œuf"],
+      image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 2,
+      name: "Lablabi",
+      description: "Soupe de pois chiches épicée traditionnelle",
+      calories: 350,
+      proteines: 15,
+      glucides: 45,
+      lipides: 12,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Végan", "Halal", "Sans lactose"],
+      ingredients: ["Pois chiches", "Pain rassis", "Harissa", "Cumin", "Ail"],
+      image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 3,
+      name: "Mlawi au miel",
+      description: "Crêpe feuilletée tunisienne avec miel",
+      calories: 320,
+      proteines: 6,
+      glucides: 48,
+      lipides: 12,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Halal"],
+      ingredients: ["Semoule", "Farine", "Huile", "Miel"],
+      image: "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 4,
+      name: "Shakshuka",
+      description: "Œufs pochés dans sauce tomate épicée",
+      calories: 290,
+      proteines: 14,
+      glucides: 18,
+      lipides: 18,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Halal", "Sans gluten"],
+      ingredients: ["Œufs", "Tomates", "Poivrons", "Oignon", "Harissa"],
+      image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 5,
+      name: "Yaourt aux fruits et granola",
+      description: "Yaourt nature avec fruits frais et céréales",
+      calories: 250,
+      proteines: 12,
+      glucides: 35,
+      lipides: 8,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Halal"],
+      ingredients: ["Yaourt", "Fruits de saison", "Granola", "Miel"],
+      image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 6,
+      name: "Couscous au poisson",
+      description: "Couscous traditionnel avec poisson et légumes",
+      calories: 520,
+      proteines: 35,
+      glucides: 55,
+      lipides: 18,
+      type: "Déjeuner",
+      tags: ["Halal", "Sans lactose"],
+      ingredients: ["Semoule", "Poisson", "Courgettes", "Carottes", "Pois chiches"],
+      image: "https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 7,
+      name: "Couscous aux légumes",
+      description: "Couscous végétarien aux 7 légumes",
+      calories: 420,
+      proteines: 14,
+      glucides: 65,
+      lipides: 12,
+      type: "Déjeuner",
+      tags: ["Végétarien", "Végan", "Halal", "Sans lactose"],
+      ingredients: ["Semoule", "Courgettes", "Carottes", "Navets", "Pois chiches", "Courge"],
+      image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 8,
+      name: "Salade de quinoa méditerranéenne",
+      description: "Quinoa avec légumes frais et feta",
+      calories: 350,
+      proteines: 14,
+      glucides: 42,
+      lipides: 14,
+      type: "Dîner",
+      tags: ["Végétarien", "Halal", "Sans gluten"],
+      ingredients: ["Quinoa", "Concombre", "Tomates", "Feta", "Olives"],
+      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 9,
+      name: "Poisson grillé aux herbes",
+      description: "Filet de poisson avec herbes méditerranéennes",
+      calories: 320,
+      proteines: 38,
+      glucides: 5,
+      lipides: 16,
+      type: "Dîner",
+      tags: ["Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Poisson blanc", "Citron", "Herbes", "Huile d'olive"],
+      image: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 10,
+      name: "Dattes et amandes",
+      description: "Collation énergétique traditionnelle",
+      calories: 180,
+      proteines: 4,
+      glucides: 32,
+      lipides: 6,
+      type: "Collation",
+      tags: ["Végétarien", "Végan", "Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Dattes", "Amandes"],
+      image: "https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 11,
+      name: "Yaourt grec aux noix",
+      description: "Yaourt protéiné avec noix et miel",
+      calories: 180,
+      proteines: 15,
+      glucides: 12,
+      lipides: 10,
+      type: "Collation",
+      tags: ["Végétarien", "Halal", "Sans gluten"],
+      ingredients: ["Yaourt grec", "Noix", "Miel", "Cannelle"],
+      image: "https://images.unsplash.com/photo-1571212515416-fca88c6e8b5c?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 12,
+      name: "Bowl protéiné au thon",
+      description: "Bowl healthy avec thon, avocat et légumes",
+      calories: 420,
+      proteines: 35,
+      glucides: 30,
+      lipides: 18,
+      type: "Déjeuner",
+      tags: ["Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Thon", "Avocat", "Riz complet", "Edamame", "Concombre"],
+      image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 13,
+      name: "Avocat toast aux œufs",
+      description: "Toast complet avec avocat et œuf poché",
+      calories: 380,
+      proteines: 16,
+      glucides: 32,
+      lipides: 22,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Halal"],
+      ingredients: ["Pain complet", "Avocat", "Œuf", "Graines de sésame"],
+      image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 14,
+      name: "Smoothie bowl protéiné",
+      description: "Bowl de smoothie épais garni de superfoods",
+      calories: 350,
+      proteines: 18,
+      glucides: 45,
+      lipides: 12,
+      type: "Petit-déjeuner",
+      tags: ["Végétarien", "Halal", "Sans gluten"],
+      ingredients: ["Banane", "Yaourt grec", "Graines de chia", "Granola", "Fruits"],
+      image: "https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 15,
+      name: "Saumon grillé et légumes vapeur",
+      description: "Saumon riche en oméga-3 avec légumes",
+      calories: 480,
+      proteines: 38,
+      glucides: 20,
+      lipides: 28,
+      type: "Déjeuner",
+      tags: ["Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Saumon", "Brocoli", "Carottes", "Haricots verts", "Citron"],
+      image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 16,
+      name: "Soupe de légumes",
+      description: "Soupe légère aux légumes de saison",
+      calories: 150,
+      proteines: 5,
+      glucides: 25,
+      lipides: 4,
+      type: "Dîner",
+      tags: ["Végétarien", "Végan", "Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Courgettes", "Carottes", "Pommes de terre", "Oignon"],
+      image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 17,
+      name: "Smoothie vert détox",
+      description: "Smoothie aux épinards et fruits",
+      calories: 160,
+      proteines: 5,
+      glucides: 30,
+      lipides: 3,
+      type: "Collation",
+      tags: ["Végétarien", "Végan", "Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Épinards", "Banane", "Pomme", "Gingembre", "Citron"],
+      image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 18,
+      name: "Salade César légère",
+      description: "Salade César avec poulet grillé sans croûtons",
+      calories: 320,
+      proteines: 28,
+      glucides: 12,
+      lipides: 18,
+      type: "Déjeuner",
+      tags: ["Halal", "Sans gluten"],
+      ingredients: ["Laitue romaine", "Poulet grillé", "Parmesan", "Sauce légère"],
+      image: "https://images.unsplash.com/photo-1551248429-40975aa4de74?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 19,
+      name: "Omelette aux légumes",
+      description: "Omelette garnie de légumes frais",
+      calories: 280,
+      proteines: 18,
+      glucides: 8,
+      lipides: 20,
+      type: "Dîner",
+      tags: ["Végétarien", "Halal", "Sans gluten"],
+      ingredients: ["Œufs", "Poivrons", "Tomates", "Oignon", "Fromage"],
+      image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop&crop=center"
+    },
+    {
+      id: 20,
+      name: "Fruits de saison",
+      description: "Assortiment de fruits frais",
+      calories: 120,
+      proteines: 2,
+      glucides: 28,
+      lipides: 1,
+      type: "Collation",
+      tags: ["Végétarien", "Végan", "Halal", "Sans gluten", "Sans lactose"],
+      ingredients: ["Oranges", "Pommes", "Bananes"],
+      image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop&crop=center"
+    }
+  ];
+
+  /**
+   * Génère un plan journalier basé sur les calories cibles et préférences
+   */
+  genererPlanJournalier(
+    caloriesCibles: number,
+    preferences: string[] = ['Tous'],
+    date: Date = new Date()
+  ): DailyPlan {
+    const petitDejeuner = this.selectionnerRepas('Petit-déjeuner', caloriesCibles * REPARTITION_CALORIES['Petit-déjeuner'], preferences);
+    const dejeuner = this.selectionnerRepas('Déjeuner', caloriesCibles * REPARTITION_CALORIES['Déjeuner'], preferences);
+    const diner = this.selectionnerRepas('Dîner', caloriesCibles * REPARTITION_CALORIES['Dîner'], preferences);
+    const collation = this.selectionnerRepas('Collation', caloriesCibles * REPARTITION_CALORIES['Collation'], preferences);
+
+    return {
+      date,
+      petitDejeuner,
+      dejeuner,
+      diner,
+      collation,
+      totalCalories: petitDejeuner.calories + dejeuner.calories + diner.calories + collation.calories,
+      totalProteines: petitDejeuner.proteines + dejeuner.proteines + diner.proteines + collation.proteines,
+      totalGlucides: petitDejeuner.glucides + dejeuner.glucides + diner.glucides + collation.glucides,
+      totalLipides: petitDejeuner.lipides + dejeuner.lipides + diner.lipides + collation.lipides
+    };
+  }
+
+  /**
+   * Génère un plan hebdomadaire (7 jours)
+   */
+  genererPlanHebdomadaire(
+    caloriesCibles: number,
+    preferences: string[] = ['Tous'],
+    startDate: Date = new Date()
+  ): WeeklyPlan {
+    const days: DailyPlan[] = [];
+    const usedMeals: Set<number> = new Set();
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      
+      // Réinitialiser les repas utilisés chaque 2 jours pour plus de variété
+      if (i % 2 === 0) usedMeals.clear();
+      
+      const dailyPlan = this.genererPlanJournalierAvecVariete(caloriesCibles, preferences, date, usedMeals);
+      days.push(dailyPlan);
+    }
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+
+    return {
+      startDate,
+      endDate,
+      days,
+      moyenneCalories: Math.round(days.reduce((sum, d) => sum + d.totalCalories, 0) / 7),
+      moyenneProteines: Math.round(days.reduce((sum, d) => sum + d.totalProteines, 0) / 7),
+      moyenneGlucides: Math.round(days.reduce((sum, d) => sum + d.totalGlucides, 0) / 7),
+      moyenneLipides: Math.round(days.reduce((sum, d) => sum + d.totalLipides, 0) / 7)
+    };
+  }
+
+  /**
+   * Sélectionne un repas selon le type, calories cibles et préférences
+   */
+  private selectionnerRepas(type: MealType, caloriesCibles: number, preferences: string[]): Meal {
+    let repasDisponibles = this.meals.filter(m => m.type === type);
+
+    // Filtrer par préférences si pas "Tous"
+    if (!preferences.includes('Tous') && preferences.length > 0) {
+      repasDisponibles = repasDisponibles.filter(m => 
+        preferences.every(pref => m.tags.includes(pref))
+      );
+    }
+
+    // Si aucun repas ne correspond, prendre tous les repas du type
+    if (repasDisponibles.length === 0) {
+      repasDisponibles = this.meals.filter(m => m.type === type);
+    }
+
+    // Trier par proximité aux calories cibles
+    repasDisponibles.sort((a, b) => 
+      Math.abs(a.calories - caloriesCibles) - Math.abs(b.calories - caloriesCibles)
+    );
+
+    // Sélection aléatoire parmi les 3 meilleurs choix
+    const topChoices = repasDisponibles.slice(0, Math.min(3, repasDisponibles.length));
+    return topChoices[Math.floor(Math.random() * topChoices.length)];
+  }
+
+  /**
+   * Génère un plan journalier en évitant les repas déjà utilisés
+   */
+  private genererPlanJournalierAvecVariete(
+    caloriesCibles: number,
+    preferences: string[],
+    date: Date,
+    usedMeals: Set<number>
+  ): DailyPlan {
+    const petitDejeuner = this.selectionnerRepasAvecVariete('Petit-déjeuner', caloriesCibles * REPARTITION_CALORIES['Petit-déjeuner'], preferences, usedMeals);
+    const dejeuner = this.selectionnerRepasAvecVariete('Déjeuner', caloriesCibles * REPARTITION_CALORIES['Déjeuner'], preferences, usedMeals);
+    const diner = this.selectionnerRepasAvecVariete('Dîner', caloriesCibles * REPARTITION_CALORIES['Dîner'], preferences, usedMeals);
+    const collation = this.selectionnerRepasAvecVariete('Collation', caloriesCibles * REPARTITION_CALORIES['Collation'], preferences, usedMeals);
+
+    return {
+      date,
+      petitDejeuner,
+      dejeuner,
+      diner,
+      collation,
+      totalCalories: petitDejeuner.calories + dejeuner.calories + diner.calories + collation.calories,
+      totalProteines: petitDejeuner.proteines + dejeuner.proteines + diner.proteines + collation.proteines,
+      totalGlucides: petitDejeuner.glucides + dejeuner.glucides + diner.glucides + collation.glucides,
+      totalLipides: petitDejeuner.lipides + dejeuner.lipides + diner.lipides + collation.lipides
+    };
+  }
+
+  private selectionnerRepasAvecVariete(type: MealType, caloriesCibles: number, preferences: string[], usedMeals: Set<number>): Meal {
+    let repasDisponibles = this.meals.filter(m => m.type === type && !usedMeals.has(m.id));
+
+    if (!preferences.includes('Tous') && preferences.length > 0) {
+      const filtered = repasDisponibles.filter(m => preferences.every(pref => m.tags.includes(pref)));
+      if (filtered.length > 0) repasDisponibles = filtered;
+    }
+
+    if (repasDisponibles.length === 0) {
+      repasDisponibles = this.meals.filter(m => m.type === type);
+    }
+
+    repasDisponibles.sort((a, b) => Math.abs(a.calories - caloriesCibles) - Math.abs(b.calories - caloriesCibles));
+    const topChoices = repasDisponibles.slice(0, Math.min(3, repasDisponibles.length));
+    const selected = topChoices[Math.floor(Math.random() * topChoices.length)];
+    
+    usedMeals.add(selected.id);
+    return selected;
+  }
+
+  /**
+   * Récupère tous les repas disponibles
+   */
+  getAllMeals(): Meal[] {
+    return this.meals;
+  }
+
+  /**
+   * Récupère les repas par type
+   */
+  getMealsByType(type: MealType): Meal[] {
+    return this.meals.filter(m => m.type === type);
+  }
+}

@@ -1,21 +1,32 @@
 @import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
 
+/* CSS Variables for consistency with the application */
+:root {
+  --primary-green: #84cabe;
+  --light-green: #a8ddd3;
+  --dark-green: #6bb5a7;
+  --text-dark: #2C3E50;
+  --text-light: #7F8C8D;
+  --bg-light: #F8F9FA;
+  --error-color: #e74c3c;
+  --success-color: #27ae60;
+}
+
 * {
     box-sizing: border-box;
 }
+
 .p-error {
-    color: red;
-    
-    
+    color: var(--error-color);
 }
 
 .button-72 {
   align-items: center;
   background-color: initial;
-  background-image: linear-gradient(rgba(179, 132, 201, .84), rgba(57, 31, 91, .84) 50%);
+  background-image: linear-gradient(var(--primary-green), var(--dark-green) 50%);
   border-radius: 42px;
   border-width: 0;
-  box-shadow: rgba(57, 31, 91, 0.24) 0 2px 2px,rgba(179, 132, 201, 0.4) 0 8px 12px;
+  box-shadow: rgba(107, 181, 167, 0.24) 0 2px 2px, rgba(132, 202, 190, 0.4) 0 8px 12px;
   color: #FFFFFF;
   cursor: pointer;
   display: flex;
@@ -29,15 +40,18 @@
   padding: 18px 18px;
   text-align: center;
   text-decoration: none;
-  text-shadow: rgba(255, 255, 255, 0.4) 0 0 4px,rgba(255, 255, 255, 0.2) 0 0 12px,rgba(57, 31, 91, 0.6) 1px 1px 4px,rgba(57, 31, 91, 0.32) 4px 4px 16px;
+  text-shadow: rgba(255, 255, 255, 0.4) 0 0 4px, rgba(255, 255, 255, 0.2) 0 0 12px, rgba(107, 181, 167, 0.6) 1px 1px 4px, rgba(107, 181, 167, 0.32) 4px 4px 16px;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
   vertical-align: baseline;
+  transition: all 0.3s ease;
 }
 
 .button-72:hover {
-  background-image: linear-gradient(#B384C9, #391F5B 50%);
+  background-image: linear-gradient(var(--dark-green), var(--primary-green) 50%);
+  transform: translateY(-2px);
+  box-shadow: rgba(107, 181, 167, 0.3) 0 4px 8px, rgba(132, 202, 190, 0.5) 0 12px 20px;
 }
 
 @media (min-width: 768px) {
@@ -48,34 +62,35 @@
 }
 
 .button-81 {
-  background-color: #F5EFFF;
-  border: 0 solid #e2e8f0;
+  background-color: var(--bg-light);
+  border: 2px solid var(--light-green);
   border-radius: 1.5rem;
   box-sizing: border-box;
-  color: #333;
+  color: var(--text-dark);
   cursor: pointer;
   display: inline-block;
   font-family: "Basier circle",-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1;
   padding: 1rem 1rem;
   text-align: center;
   margin-top: 10px;
-  text-decoration: none #0d172a solid;
-  text-decoration-thickness: auto;
-  transition: all .1s cubic-bezier(.4, 0, .2, 1);
-  box-shadow: 0px 1px 2px rgba(166, 175, 195, 0.25);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(.4, 0, .2, 1);
+  box-shadow: 0px 1px 2px rgba(132, 202, 190, 0.25);
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
 }
 
 .button-81:hover {
-  background-color:rgba(235, 219, 242, 0.84) ;
+  background-color: var(--primary-green);
   color: #fff;
+  border-color: var(--dark-green);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(132, 202, 190, 0.3);
 }
-
 
 @media (min-width: 768px) {
   .button-81 {
@@ -85,7 +100,7 @@
 }
 
 body {
-    background: #f6f5f7;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9f0 100%);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -98,14 +113,15 @@ body {
 h1 {
   margin-bottom: 100px;
   padding-bottom: 20px;
-    font-weight: bold;
-    margin: 0;
-    color: #441752;
+  font-weight: bold;
+  margin: 0;
+  color: var(--text-dark);
 }
+
 .h1{
   font-weight: bold;
-    margin: 0;
-    color: #EFB6C8;
+  margin: 0;
+  color: var(--primary-green);
 }
 
 h2 {
@@ -131,13 +147,7 @@ a {
     margin: 15px 0;
 }
 
-
-
-
-
-
 form {
- 
     background-color: #FFFFFF;
     display: flex;
     align-items: center;
@@ -149,26 +159,27 @@ form {
 }
 
 input {
-    
-    
-    
     padding: 12px 15px;
     margin: 8px 0;
     width: 100%;
 }
 
 .container {
-    
     background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 
-            0 10px 10px rgba(0,0,0,0.22);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(132, 202, 190, 0.15), 0 10px 20px rgba(0,0,0,0.1);
     position: relative;
     overflow: hidden;
     width: 768px;
     max-width: 100%;
     min-height: 480px;
     margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.container:hover {
+    box-shadow: 0 25px 50px rgba(132, 202, 190, 0.2), 0 15px 30px rgba(0,0,0,0.15);
+    transform: translateY(-5px);
 }
 
 .form-container {
@@ -230,9 +241,9 @@ input {
 }
 
 .overlay {
-    background: #441752;
-    background: -webkit-linear-gradient(to right, #441752, #EFB6C8);
-    background: linear-gradient(to right, #EFB6C8, #441752);
+    background: var(--primary-green);
+    background: -webkit-linear-gradient(to right, var(--primary-green), var(--light-green));
+    background: linear-gradient(to right, var(--light-green), var(--primary-green));
     background-repeat: no-repeat;
     background-size: cover;
     background-position: 0 0;
@@ -331,19 +342,24 @@ p-floatLabel {
 /* Style des inputs */
 input[pInputText] {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
   font-size: 14px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   outline: none;
+  background-color: #fafafa;
+}
+
+input[pInputText]:hover {
+  border-color: var(--light-green);
+  background-color: #ffffff;
 }
 
 /* Focus sur le champ */
 input[pInputText]:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
- 
+  border-color: var(--primary-green);
+  box-shadow: 0 0 5px rgba(132, 202, 190, 0.5);
 }
 
 /* Style des labels */
@@ -366,13 +382,13 @@ input[pInputText]:not(:placeholder-shown) + label {
   padding-top: 1px;
   left: 10px;
   font-size: 12px;
-  color: #441752;
+  color: var(--primary-green);
   background-color: white;
 }
 
 /* Messages d'erreur */
 .p-error {
-  color: #d9534f;
+  color: var(--error-color);
   font-size: 12px;
   margin-top: -5%;
   padding-left: 5px;

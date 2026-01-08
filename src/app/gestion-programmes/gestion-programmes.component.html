@@ -1,207 +1,293 @@
-<!-- Navbar conditionnelle -->
-<app-coach-navbar *ngIf="userRole === 'coach'"></app-coach-navbar>
-<app-navbar *ngIf="userRole !== 'coach'"></app-navbar>
+<!-- Navbar -->
+<app-coach-navbar></app-coach-navbar>
 
 <div class="programmes-container">
+  <!-- Header -->
   <div class="header">
-    <h1>{{ userRole === 'coach' ? 'Mes Programmes d\'Entraînement' : 'Mes Programmes' }}</h1>
+    <h1>{{ userRole === 'coach' ? '🏋️ Mes Programmes d\'Entraînement' : '📋 Mes Programmes' }}</h1>
     <button *ngIf="userRole === 'coach'" class="btn-primary" (click)="afficherFormulaire()">
-      <i class="fas fa-plus"></i> Créer un Programme
+      <i class="pi pi-plus"></i> Créer un Programme
     </button>
   </div>
 
   <!-- Messages -->
-  <div *ngIf="success" class="alert alert-success">{{ success }}</div>
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="success" class="alert alert-success">
+    <i class="pi pi-check-circle"></i> {{ success }}
+  </div>
+  <div *ngIf="error" class="alert alert-error">
+    <i class="pi pi-exclamation-triangle"></i> {{ error }}
+  </div>
 
-  <!-- Formulaire de création/modification -->
+  <!-- Modal Formulaire -->
   <div *ngIf="showForm" class="form-modal">
     <div class="form-container">
       <div class="form-header">
-        <h2>{{ isEditing ? 'Modifier le Programme' : 'Créer un Programme' }}</h2>
+        <h2>{{ isEditing ? '✏️ Modifier le Programme' : '➕ Créer un Programme' }}</h2>
         <button class="btn-close" (click)="annulerFormulaire()">×</button>
       </div>
 
       <form (ngSubmit)="soumettreProgramme()">
+        <!-- Sélection Client -->
         <div class="form-group">
-          <label>Client *</label>
-          <select [(ngModel)]="programme.clientId" name="clientId" required [disabled]="isEditing">
-            <option value="0">Sélectionner un client</option>
-            <option *ngFor="let client of clients" [value]="client.id">{{ client.name }}</option>
+          <label>👤 Client *</label>
+          <select [(ngModel)]="formData.clientId" name="clientId" required [disabled]="isEditing">
+            <option [value]="0">-- Sélectionner un client --</option>
+            <option *ngFor="let client of clients" [value]="client.id">
+              {{ client.name }} ({{ client.email }})
+            </option>
           </select>
+          <small class="hint">Le client doit être assigné à votre liste</small>
         </div>
 
+        <!-- Nom du Programme -->
         <div class="form-group">
-          <label>Nom du Programme *</label>
-          <input type="text" [(ngModel)]="programme.nom" name="nom" required placeholder="Ex: Programme Prise de Masse">
+          <label>📝 Nom du Programme *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.nom" 
+            name="nom" 
+            required 
+            placeholder="Ex: Programme Perte de Poids"
+            maxlength="100">
         </div>
 
+        <!-- Description -->
         <div class="form-group">
-          <label>Description</label>
-          <textarea [(ngModel)]="programme.description" name="description" rows="3" 
-                    placeholder="Décrivez les objectifs du programme..."></textarea>
+          <label>📄 Description</label>
+          <textarea 
+            [(ngModel)]="formData.description" 
+            name="description" 
+            rows="3" 
+            placeholder="Décrivez les objectifs du programme..."
+            maxlength="500"></textarea>
         </div>
 
+        <!-- Dates -->
         <div class="form-row">
           <div class="form-group">
-            <label>Date de Début *</label>
-            <input type="date" [(ngModel)]="programme.dateDebut" name="dateDebut" required>
+            <label>📅 Date de Début *</label>
+            <input type="date" [(ngModel)]="formData.dateDebut" name="dateDebut" required>
           </div>
           <div class="form-group">
-            <label>Date de Fin *</label>
-            <input type="date" [(ngModel)]="programme.dateFin" name="dateFin" required>
+            <label>📅 Date de Fin *</label>
+            <input type="date" [(ngModel)]="formData.dateFin" name="dateFin" required>
           </div>
         </div>
 
         <!-- Section Exercices -->
         <div class="exercices-section">
-          <h3>Exercices</h3>
+          <h3>💪 Exercices</h3>
           
+          <!-- Formulaire d'ajout d'exercice -->
           <div class="exercice-form">
-            <div class="form-row">
-              <div class="form-group">
-                <input type="text" [(ngModel)]="nouvelExercice.nom" name="exerciceNom" 
-                       placeholder="Nom de l'exercice">
-              </div>
-              <div class="form-group">
-                <input type="text" [(ngModel)]="nouvelExercice.description" name="exerciceDesc" 
-                       placeholder="Description">
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <input type="number" [(ngModel)]="nouvelExercice.series" name="series" 
-                       placeholder="Séries" min="0">
-              </div>
-              <div class="form-group">
-                <input type="number" [(ngModel)]="nouvelExercice.repetitions" name="repetitions" 
-                       placeholder="Répétitions" min="0">
-              </div>
-              <div class="form-group">
-                <input type="number" [(ngModel)]="nouvelExercice.dureeMinutes" name="duree" 
-                       placeholder="Durée (min)" min="0">
-              </div>
-              <div class="form-group">
-                <select [(ngModel)]="nouvelExercice.intensite" name="intensite">
-                  <option value="FAIBLE">Faible</option>
-                  <option value="MOYENNE">Moyenne</option>
-                  <option value="ELEVEE">Élevée</option>
-                  <option value="MAXIMALE">Maximale</option>
-                </select>
-              </div>
-            </div>
-
             <div class="form-group">
-              <input type="text" [(ngModel)]="nouvelExercice.notes" name="notes" 
-                     placeholder="Notes supplémentaires">
+              <label>Nom de l'exercice</label>
+              <input 
+                type="text" 
+                [(ngModel)]="nouvelExercice.nom" 
+                name="exerciceNom" 
+                placeholder="Ex: Squats">
+            </div>
+
+            <div class="form-row form-row-4">
+              <div class="form-group">
+                <label>Séries</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="nouvelExercice.series" 
+                  name="series" 
+                  min="1"
+                  (input)="forcePositive('series')"
+                  placeholder="4">
+              </div>
+              <div class="form-group">
+                <label>Répétitions</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="nouvelExercice.repetitions" 
+                  name="repetitions" 
+                  min="1"
+                  (input)="forcePositive('repetitions')"
+                  placeholder="12">
+              </div>
+              <div class="form-group">
+                <label>Repos (sec)</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="nouvelExercice.tempsRepos" 
+                  name="tempsRepos" 
+                  min="0"
+                  (input)="forceNonNegative('tempsRepos')"
+                  placeholder="60">
+              </div>
+              <div class="form-group">
+                <label>Poids (kg)</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="nouvelExercice.poids" 
+                  name="poids" 
+                  min="0" 
+                  step="0.5"
+                  (input)="forceNonNegative('poids')"
+                  placeholder="20">
+              </div>
             </div>
 
             <button type="button" class="btn-secondary" (click)="ajouterExercice()">
-              <i class="fas fa-plus"></i> Ajouter l'Exercice
+              <i class="pi pi-plus"></i> Ajouter l'Exercice
             </button>
           </div>
 
           <!-- Liste des exercices ajoutés -->
-          <div *ngIf="programme.exercices.length > 0" class="exercices-liste">
-            <h4>Exercices ajoutés ({{ programme.exercices.length }})</h4>
-            <div *ngFor="let exercice of programme.exercices; let i = index" class="exercice-item">
+          <div *ngIf="formData.exercices.length > 0" class="exercices-liste">
+            <h4>Exercices ajoutés ({{ formData.exercices.length }})</h4>
+            <div *ngFor="let exercice of formData.exercices; let i = index" class="exercice-item">
               <div class="exercice-info">
                 <strong>{{ exercice.nom }}</strong>
-                <span *ngIf="exercice.description"> - {{ exercice.description }}</span>
                 <div class="exercice-details">
-                  <span *ngIf="exercice.series">{{ exercice.series }} séries</span>
-                  <span *ngIf="exercice.repetitions">{{ exercice.repetitions }} rép.</span>
-                  <span *ngIf="exercice.dureeMinutes">{{ exercice.dureeMinutes }} min</span>
-                  <span class="intensite">{{ exercice.intensite }}</span>
+                  <span class="badge">{{ exercice.series }} séries</span>
+                  <span class="badge">{{ exercice.repetitions }} rép.</span>
+                  <span class="badge">{{ exercice.tempsRepos }}s repos</span>
+                  <span class="badge" *ngIf="exercice.poids > 0">{{ exercice.poids }} kg</span>
                 </div>
-                <small *ngIf="exercice.notes">{{ exercice.notes }}</small>
               </div>
-              <button type="button" class="btn-delete" (click)="retirerExercice(i)">
-                <i class="fas fa-trash"></i>
+              <button type="button" class="btn-delete" (click)="retirerExercice(i)" title="Supprimer">
+                <i class="pi pi-trash"></i>
               </button>
             </div>
           </div>
+
+          <div *ngIf="formData.exercices.length === 0" class="empty-exercices">
+            <i class="pi pi-info-circle"></i>
+            <span>Ajoutez au moins un exercice au programme</span>
+          </div>
         </div>
 
+        <!-- Actions -->
         <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="annulerFormulaire()">Annuler</button>
+          <button type="button" class="btn-secondary" (click)="annulerFormulaire()">
+            Annuler
+          </button>
           <button type="submit" class="btn-primary" [disabled]="loading">
-            {{ loading ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Créer') }}
+            <span *ngIf="loading"><i class="pi pi-spin pi-spinner"></i> Enregistrement...</span>
+            <span *ngIf="!loading">{{ isEditing ? 'Modifier' : 'Créer le Programme' }}</span>
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Liste des programmes -->
-  <div *ngIf="loading && !showForm" class="loading">Chargement...</div>
-
-  <div *ngIf="!loading && programmes.length === 0" class="empty-state">
-    <i class="fas fa-dumbbell"></i>
-    <p>{{ userRole === 'coach' ? 'Aucun programme créé' : 'Aucun programme assigné' }}</p>
+  <!-- Loading -->
+  <div *ngIf="loading && !showForm" class="loading">
+    <i class="pi pi-spin pi-spinner"></i> Chargement des programmes...
   </div>
 
-  <div class="programmes-grid">
+  <!-- État vide -->
+  <div *ngIf="!loading && programmes.length === 0" class="empty-state">
+    <i class="pi pi-calendar"></i>
+    <h3>{{ userRole === 'coach' ? 'Aucun programme créé' : 'Aucun programme assigné' }}</h3>
+    <p *ngIf="userRole === 'coach'">Créez votre premier programme d'entraînement</p>
+    <button *ngIf="userRole === 'coach'" class="btn-primary" (click)="afficherFormulaire()">
+      <i class="pi pi-plus"></i> Créer un Programme
+    </button>
+  </div>
+
+  <!-- Liste des programmes -->
+  <div class="programmes-grid" *ngIf="programmes.length > 0">
     <div *ngFor="let prog of programmes" class="programme-card">
       <div class="card-header">
         <h3>{{ prog.nom }}</h3>
-        <span class="statut-badge" [ngClass]="getStatutClass(prog.statut)">{{ prog.statut }}</span>
+        <span class="statut-badge" [ngClass]="getStatutClass(prog.statut)">
+          {{ getStatutLabel(prog.statut) }}
+        </span>
       </div>
 
       <div class="card-body">
         <p *ngIf="prog.description" class="description">{{ prog.description }}</p>
         
         <div class="info-row">
-          <span><i class="fas fa-user"></i> 
-            {{ userRole === 'coach' ? 'Client: ' + prog.nomClient : 'Coach: ' + prog.nomCoach }}
-          </span>
+          <i class="pi pi-user"></i>
+          <span>{{ userRole === 'coach' ? 'Client: ' + (prog.nomClient || 'N/A') : 'Coach: ' + (prog.nomCoach || 'N/A') }}</span>
         </div>
 
         <div class="info-row">
-          <span><i class="fas fa-calendar"></i> {{ prog.dateDebut | date:'dd/MM/yyyy' }} - {{ prog.dateFin | date:'dd/MM/yyyy' }}</span>
+          <i class="pi pi-calendar"></i>
+          <span>{{ prog.dateDebut | date:'dd/MM/yyyy' }} → {{ prog.dateFin | date:'dd/MM/yyyy' }}</span>
         </div>
 
         <div class="info-row">
-          <span><i class="fas fa-dumbbell"></i> {{ prog.exercices.length || 0 }} exercice(s)</span>
+          <i class="pi pi-list"></i>
+          <span>{{ prog.exercices ? prog.exercices.length : 0 }} exercice(s)</span>
         </div>
 
-        <!-- Détails des exercices -->
+        <!-- Aperçu des exercices -->
         <div *ngIf="prog.exercices && prog.exercices.length > 0" class="exercices-preview">
           <h4>Exercices:</h4>
           <ul>
-            <li *ngFor="let ex of prog.exercices">
+            <li *ngFor="let ex of prog.exercices.slice(0, 3)">
               <strong>{{ ex.nom }}</strong>
-              <span *ngIf="ex.series || ex.repetitions || ex.dureeMinutes">
-                - 
-                <span *ngIf="ex.series">{{ ex.series }}×{{ ex.repetitions }}</span>
-                <span *ngIf="ex.dureeMinutes">{{ ex.dureeMinutes }}min</span>
+              <span class="ex-details">
+                {{ ex.series }}×{{ ex.repetitions }}
+                <span *ngIf="ex.poids > 0"> - {{ ex.poids }}kg</span>
               </span>
+            </li>
+            <li *ngIf="prog.exercices.length > 3" class="more">
+              +{{ prog.exercices.length - 3 }} autres...
             </li>
           </ul>
         </div>
       </div>
 
+      <!-- Actions Coach -->
       <div *ngIf="userRole === 'coach'" class="card-actions">
         <button class="btn-icon" (click)="modifierProgramme(prog)" title="Modifier">
-          <i class="fas fa-edit"></i>
+          <i class="pi pi-pencil"></i>
         </button>
         
         <div class="statut-actions">
-          <button *ngIf="prog.statut === 'ACTIF'" class="btn-icon" (click)="changerStatut(prog.id!, 'TERMINE')" title="Terminer">
-            <i class="fas fa-check"></i>
+          <button 
+            *ngIf="isStatutActif(prog.statut)" 
+            class="btn-icon btn-success" 
+            (click)="changerStatut(prog.id, 'COMPLETED')" 
+            title="Marquer comme terminé">
+            <i class="pi pi-check"></i>
           </button>
-          <button *ngIf="prog.statut === 'ACTIF'" class="btn-icon" (click)="changerStatut(prog.id!, 'SUSPENDU')" title="Suspendre">
-            <i class="fas fa-pause"></i>
+          <button 
+            *ngIf="isStatutActif(prog.statut)" 
+            class="btn-icon btn-warning" 
+            (click)="changerStatut(prog.id, 'PAUSED')" 
+            title="Mettre en pause">
+            <i class="pi pi-pause"></i>
           </button>
-          <button *ngIf="prog.statut === 'SUSPENDU'" class="btn-icon" (click)="changerStatut(prog.id!, 'ACTIF')" title="Réactiver">
-            <i class="fas fa-play"></i>
+          <button 
+            *ngIf="isStatutPause(prog.statut)" 
+            class="btn-icon btn-info" 
+            (click)="changerStatut(prog.id, 'ACTIVE')" 
+            title="Réactiver">
+            <i class="pi pi-play"></i>
           </button>
         </div>
 
-        <button class="btn-icon btn-danger" (click)="supprimerProgramme(prog.id!)" title="Supprimer">
-          <i class="fas fa-trash"></i>
+        <button class="btn-icon btn-danger" (click)="supprimerProgramme(prog.id)" title="Supprimer">
+          <i class="pi pi-trash"></i>
         </button>
+      </div>
+
+      <!-- Actions Client -->
+      <div *ngIf="userRole !== 'coach'" class="card-actions client-actions">
+        <button 
+          *ngIf="isStatutActif(prog.statut)" 
+          class="btn-complete" 
+          (click)="marquerTermine(prog)"
+          title="Marquer comme terminé">
+          <i class="pi pi-check-circle"></i>
+          <span>J'ai terminé ce programme</span>
+        </button>
+        
+        <div *ngIf="prog.statut === 'COMPLETED'" class="completed-badge">
+          <i class="pi pi-check-circle"></i>
+          <span>Programme terminé ✓</span>
+        </div>
       </div>
     </div>
   </div>

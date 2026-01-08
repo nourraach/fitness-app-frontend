@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { JwtService } from '../service/jwt.service';
-import { NotificationService } from '../service/notification.service';
 import { StorageService } from '../service/storage-service.service';
 import { WebsocketService } from '../services/websocket.service';
+import { NotificationBadgeComponent } from '../components/notifications/notification-badge/notification-badge.component';
+import { NotificationCenterComponent } from '../components/notifications/notification-center/notification-center.component';
+import { NotificationStateService } from '../services/notification-state.service';
+import { InAppNotificationService } from '../services/in-app-notification.service';
 import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -14,7 +17,7 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule]
+  imports: [CommonModule, RouterModule, TranslateModule, NotificationBadgeComponent, NotificationCenterComponent]
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   isAdmin: boolean = false;
@@ -23,7 +26,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   userName: string = 'Admin';
   showUserMenu: boolean = false;
   showSuiviMenu: boolean = false;
-  showAdminMenu: boolean = false;  // NOUVEAU pour le menu admin
+  showAdminMenu: boolean = false;
+  showNutritionMenu: boolean = false;
+  showAnalyticsMenu: boolean = false;
+  showSocialMenu: boolean = false;
+  showNotificationCenter: boolean = false;
   isScrolled: boolean = false;
   private lastScrollTop: number = 0;
   notificationsCount: number = 0;
@@ -33,9 +40,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router, 
     private jwtService: JwtService,
-    private notificationService: NotificationService,
     private storageService: StorageService,
-    private websocketService: WebsocketService
+    private websocketService: WebsocketService,
+    private notificationStateService: NotificationStateService,
+    private inAppNotificationService: InAppNotificationService
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -46,7 +54,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.nav-dropdown')) {
       this.showSuiviMenu = false;
-      this.showAdminMenu = false;  // NOUVEAU
+      this.showAdminMenu = false;
+      this.showNutritionMenu = false;
+      this.showAnalyticsMenu = false;
+      this.showSocialMenu = false;
     }
   }
 
@@ -69,34 +80,58 @@ ngOnInit(): void {
   this.getUserName();
   this.updateNavbarVisibility();
   
-  // Charger les notifications seulement si connecté
   const token = this.storageService.getItem('jwt');
   if (token && this.showNavbar) {
-    this.chargerNotificationsCount();
     this.initializeMessageNotifications();
+    this.initializeInAppNotifications();
   }
 
   this.router.events.pipe(takeUntil(this.destroy$)).subscribe(() => {
     this.updateNavbarVisibility();
-    
-    // NOUVEAU: Vérifier et mettre à jour les rôles à chaque changement de route
     this.checkRole();
     this.getUserName();
-    
-    // Recharger le compteur lors du changement de route si connecté
-    const currentToken = this.storageService.getItem('jwt');
-    if (currentToken && this.showNavbar) {
-      this.chargerNotificationsCount();
-    }
+  });
+}
+
+private initializeInAppNotifications(): void {
+  // Connecter le WebSocket pour recevoir les notifications en temps réel
+  this.websocketService.connect();
+  console.log('🔔 WebSocket connexion initiée pour les notifications');
+
+  // Charger le compteur initial
+  this.loadNotificationCount();
+
+  // S'abonner aux changements du compteur
+  this.notificationStateService.unreadCount$.pipe(takeUntil(this.destroy$)).subscribe(count => {
+    this.notificationsCount = count;
   });
 
-  // Rafraîchir le compteur toutes les 30 secondes si connecté
+  // S'abonner aux nouvelles notifications WebSocket
+  this.websocketService.notifications$.pipe(takeUntil(this.destroy$)).subscribe(notification => {
+    console.log('🔔 Nouvelle notification reçue via WebSocket:', notification);
+    this.notificationStateService.addNotification(notification);
+  });
+
+  // Polling pour rafraîchir les notifications toutes les 30 secondes
   interval(30000).pipe(takeUntil(this.destroy$)).subscribe(() => {
-    const currentToken = this.storageService.getItem('jwt');
-    if (currentToken && this.showNavbar) {
-      this.chargerNotificationsCount();
+    this.loadNotificationCount();
+  });
+}
+
+private loadNotificationCount(): void {
+  this.inAppNotificationService.getUnreadCount().subscribe({
+    next: (count) => {
+      console.log('🔔 Notifications non lues:', count);
+      this.notificationStateService.setUnreadCount(count);
+    },
+    error: (err) => {
+      console.log('Erreur chargement notifications:', err);
     }
   });
+}
+
+toggleNotificationCenter(): void {
+  this.showNotificationCenter = !this.showNotificationCenter;
 }
 
 ngOnDestroy(): void {
@@ -108,7 +143,7 @@ private initializeMessageNotifications(): void {
   // S'abonner aux nouveaux messages pour les notifications
   this.websocketService.messages$.pipe(takeUntil(this.destroy$)).subscribe(message => {
     // Incrémenter le compteur si ce n'est pas notre message et qu'on n'est pas sur la page messaging
-    if (message.expediteurId !== this.jwtService.getUserId() && 
+    if (message.senderId !== this.jwtService.getUserId() && 
         !this.router.url.includes('/messaging')) {
       this.messageNotificationsCount++;
       this.notificationsCount = Math.max(this.notificationsCount, this.messageNotificationsCount);
@@ -123,30 +158,7 @@ private initializeMessageNotifications(): void {
   });
 }
 
-chargerNotificationsCount(): void {
-  // Vérifier si l'utilisateur est connecté
-  const token = this.storageService.getItem('jwt');
-  if (!token) {
-    this.notificationsCount = 0;
-    return;
-  }
 
-  this.notificationService.countNotificationsNonLues().subscribe({
-    next: (count) => {
-      this.notificationsCount = count || 0;
-    },
-    error: (err) => {
-      console.error('Erreur chargement compteur notifications:', err);
-      this.notificationsCount = 0;
-      
-      // Si erreur 403, le token est probablement invalide
-      if (err.status === 403) {
-        console.warn('Token invalide ou expiré, redirection vers login');
-        this.logout();
-      }
-    }
-  });
-}
 
 
   checkRole(): void {
@@ -201,6 +213,31 @@ chargerNotificationsCount(): void {
 
   closeAdminMenu(): void {
     this.showAdminMenu = false;
+  }
+
+  // NOUVELLES MÉTHODES pour les menus groupés USER
+  toggleNutritionMenu(): void {
+    this.showNutritionMenu = !this.showNutritionMenu;
+  }
+
+  closeNutritionMenu(): void {
+    this.showNutritionMenu = false;
+  }
+
+  toggleAnalyticsMenu(): void {
+    this.showAnalyticsMenu = !this.showAnalyticsMenu;
+  }
+
+  closeAnalyticsMenu(): void {
+    this.showAnalyticsMenu = false;
+  }
+
+  toggleSocialMenu(): void {
+    this.showSocialMenu = !this.showSocialMenu;
+  }
+
+  closeSocialMenu(): void {
+    this.showSocialMenu = false;
   }
 
   isRouteActive(route: string): boolean {

@@ -19,6 +19,7 @@ import {
 import { StorageService } from '../service/storage-service.service';
 import { JwtService } from '../service/jwt.service';
 import { ErrorHandlerService } from './error-handler.service';
+import { FriendService } from './friend.service';
 
 @Injectable({
   providedIn: 'root'
@@ -43,7 +44,8 @@ export class FriendChallengeService {
     private http: HttpClient,
     private storageService: StorageService,
     private jwtService: JwtService,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private friendService: FriendService
   ) {
     this.loadInitialData();
   }
@@ -69,13 +71,142 @@ export class FriendChallengeService {
   }
 
   /**
+   * Helper to extract data from ApiResponse wrapper
+   */
+  private extractData<T>(response: ApiResponse<T> | T): T {
+    if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+      return (response as ApiResponse<T>).data;
+    }
+    return response as T;
+  }
+
+  /**
+   * Get unit for challenge objective type
+   */
+  getChallengeTypeUnit(type: ChallengeObjectiveType): string {
+    const unitMap: Record<ChallengeObjectiveType, string> = {
+      [ChallengeObjectiveType.STEPS]: 'pas',
+      [ChallengeObjectiveType.CALORIES]: 'cal',
+      [ChallengeObjectiveType.DISTANCE]: 'km',
+      [ChallengeObjectiveType.WORKOUTS]: 'séances',
+      [ChallengeObjectiveType.DURATION]: 'min'
+    };
+    return unitMap[type] || '';
+  }
+
+  /**
+   * Get icon class for challenge objective type
+   */
+  getChallengeTypeIcon(type: ChallengeObjectiveType): string {
+    const iconMap: Record<ChallengeObjectiveType, string> = {
+      [ChallengeObjectiveType.STEPS]: 'fas fa-walking',
+      [ChallengeObjectiveType.CALORIES]: 'fas fa-fire',
+      [ChallengeObjectiveType.DISTANCE]: 'fas fa-route',
+      [ChallengeObjectiveType.WORKOUTS]: 'fas fa-dumbbell',
+      [ChallengeObjectiveType.DURATION]: 'fas fa-clock'
+    };
+    return iconMap[type] || 'fas fa-trophy';
+  }
+
+  /**
+   * Get color for challenge objective type
+   */
+  getChallengeTypeColor(type: ChallengeObjectiveType): string {
+    const colorMap: Record<ChallengeObjectiveType, string> = {
+      [ChallengeObjectiveType.STEPS]: '#4CAF50',
+      [ChallengeObjectiveType.CALORIES]: '#FF5722',
+      [ChallengeObjectiveType.DISTANCE]: '#2196F3',
+      [ChallengeObjectiveType.WORKOUTS]: '#9C27B0',
+      [ChallengeObjectiveType.DURATION]: '#FF9800'
+    };
+    return colorMap[type] || '#607D8B';
+  }
+
+  /**
+   * Get label for challenge status
+   */
+  getStatusLabel(status: ChallengeStatus): string {
+    const labelMap: Record<ChallengeStatus, string> = {
+      [ChallengeStatus.ACTIVE]: 'Actif',
+      [ChallengeStatus.COMPLETED]: 'Terminé',
+      [ChallengeStatus.CANCELLED]: 'Annulé'
+    };
+    return labelMap[status] || status;
+  }
+
+  /**
+   * Get CSS class for status badge
+   */
+  getStatusBadgeClass(status: ChallengeStatus): string {
+    const classMap: Record<ChallengeStatus, string> = {
+      [ChallengeStatus.ACTIVE]: 'status-active',
+      [ChallengeStatus.COMPLETED]: 'status-completed',
+      [ChallengeStatus.CANCELLED]: 'status-cancelled'
+    };
+    return classMap[status] || '';
+  }
+
+  /**
+   * Validate challenge dates (end must be after start)
+   */
+  validateChallengeDates(startDate: Date | string, endDate: Date | string): boolean {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return end > start;
+  }
+
+  /**
+   * Calculate remaining days for a challenge
+   */
+  calculateRemainingDays(endDate: Date | string): number {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  /**
+   * Check if remaining days are urgent (<=2)
+   */
+  isUrgentRemainingDays(joursRestants: number): boolean {
+    return joursRestants <= 2;
+  }
+
+  /**
+   * Check if user is participant in a challenge
+   */
+  isUserParticipant(challenge: FriendChallenge): boolean {
+    const userId = this.getCurrentUserId();
+    if (challenge.participants) {
+      return challenge.participants.some(p => p.userId === userId);
+    }
+    // Check in myChallenges
+    return this.myChallengesSubject.value.some(c => c.id === challenge.id);
+  }
+
+  /**
+   * Check if current user is the creator of a challenge
+   */
+  isUserCreator(challenge: FriendChallenge): boolean {
+    return challenge.createurId === this.getCurrentUserId();
+  }
+
+  /**
+   * Get current user ID (public accessor)
+   */
+  public getUserId(): number {
+    return this.getCurrentUserId();
+  }
+
+  /**
    * Create a new friend challenge
+   * Backend endpoint: POST /api/friend-challenges/create?createurId={id}
    */
   createChallenge(request: CreateFriendChallengeRequest): Observable<FriendChallenge> {
     const headers = this.createAuthHeaders();
     const userId = this.getCurrentUserId();
     
-    return this.http.post<ApiResponse<FriendChallenge>>(`${this.apiUrl}/create?userId=${userId}`, request, { headers })
+    return this.http.post<ApiResponse<FriendChallenge>>(`${this.apiUrl}/create?createurId=${userId}`, request, { headers })
       .pipe(
         map(response => response.data),
         tap(challenge => {
@@ -86,6 +217,9 @@ export class FriendChallengeService {
           // Add to my challenges
           const currentMy = this.myChallengesSubject.value;
           this.myChallengesSubject.next([challenge, ...currentMy]);
+          
+          // Refresh social feed to show the new CHALLENGE_JOINED activity
+          this.friendService.refreshSocialFeed();
         }),
         catchError(error => {
           this.errorHandler.logError('createChallenge', error);
@@ -111,6 +245,8 @@ export class FriendChallengeService {
             // Refresh challenges
             this.loadMyChallenges();
             this.loadActiveChallenges();
+            // Refresh social feed to show the new CHALLENGE_JOINED activity
+            this.friendService.refreshSocialFeed();
           }
         }),
         catchError(error => {
@@ -244,17 +380,30 @@ export class FriendChallengeService {
 
   /**
    * Update user progress in challenge
+   * Backend endpoint: POST /api/friend-challenges/{challengeId}/progress?userId={id}&progress={val}
    */
   updateProgress(challengeId: number, request: UpdateProgressRequest): Observable<boolean> {
     const headers = this.createAuthHeaders();
+    const userId = request.userId || this.getCurrentUserId();
     
-    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/${challengeId}/progress`, request, { headers })
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/${challengeId}/progress?userId=${userId}&progress=${request.progression}`, 
+      {}, 
+      { headers }
+    )
       .pipe(
         map(response => response.success),
         tap(success => {
           if (success) {
             // Refresh leaderboard
-            this.getChallengeLeaderboard(challengeId).subscribe();
+            this.getChallengeLeaderboard(challengeId).subscribe(leaderboard => {
+              // Check if user reached 100% completion
+              const userProgress = leaderboard.participants.find(p => p.userId === userId);
+              if (userProgress && userProgress.pourcentageCompletion >= 100) {
+                // Refresh social feed to show CHALLENGE_COMPLETED activity
+                this.friendService.refreshSocialFeed();
+              }
+            });
           }
         }),
         catchError(error => {

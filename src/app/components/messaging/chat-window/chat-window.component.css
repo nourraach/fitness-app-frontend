@@ -30,6 +30,23 @@
   border: 2px solid #e0e0e0;
 }
 
+/* Avatar with initials (fallback) */
+.participant-avatar-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(132, 202, 190, 0.3);
+  margin-right: 12px;
+  border: 2px solid #e0e0e0;
+}
+
 .participant-details {
   display: flex;
   flex-direction: column;

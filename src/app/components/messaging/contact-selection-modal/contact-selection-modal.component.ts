@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ContactDTO } from '../../../models/contact.model';
-import { EnhancedMessagingService } from '../../../services/enhanced-messaging.service';
+import { FriendService } from '../../../services/friend.service';
 
 @Component({
   selector: 'app-contact-selection-modal',
@@ -25,7 +25,7 @@ import { EnhancedMessagingService } from '../../../services/enhanced-messaging.s
             type="text" 
             [(ngModel)]="searchQuery"
             (input)="onSearchInput()"
-            placeholder="Rechercher un contact..."
+            placeholder="Rechercher un ami..."
             class="search-input">
         </div>
         
@@ -35,34 +35,36 @@ import { EnhancedMessagingService } from '../../../services/enhanced-messaging.s
             class="contact-item"
             (click)="selectContact(contact)">
             <div class="contact-avatar">
-              <div class="avatar-circle" [style.background]="contact.role === 'Coach' ? '#4facfe' : '#43e97b'">
+              <div class="avatar-circle" [style.background]="'#43e97b'">
                 {{ contact.name.charAt(0).toUpperCase() }}
               </div>
               <div class="online-indicator" *ngIf="contact.isOnline"></div>
             </div>
             <div class="contact-info">
               <div class="contact-name">{{ contact.name }}</div>
-              <div class="contact-role">{{ contact.role }}</div>
-              <div class="contact-status" *ngIf="!contact.isOnline && contact.lastSeen">
-                Vu {{ formatLastSeen(contact.lastSeen) }}
-              </div>
+              <div class="contact-email">{{ contact.email }}</div>
             </div>
             <div class="contact-badges">
-              <span class="badge friend" *ngIf="contact.isFriend">Ami</span>
-              <span class="badge coach" *ngIf="contact.isCoach">Coach</span>
+              <span class="badge friend">Ami</span>
             </div>
           </div>
           
-          <div *ngIf="filteredContacts.length === 0" class="no-contacts">
-            <i class="fas fa-users fa-2x"></i>
-            <p>Aucun contact trouvé</p>
+          <div *ngIf="filteredContacts.length === 0 && !searchQuery" class="no-contacts">
+            <i class="fas fa-user-friends fa-2x"></i>
+            <p>Aucun ami trouvé</p>
+            <small>Ajoutez des amis dans l'espace social pour leur envoyer des messages</small>
+          </div>
+          
+          <div *ngIf="filteredContacts.length === 0 && searchQuery" class="no-contacts">
+            <i class="fas fa-search fa-2x"></i>
+            <p>Aucun ami correspondant</p>
             <small>Essayez un autre terme de recherche</small>
           </div>
         </div>
         
         <div class="loading" *ngIf="isLoading">
           <i class="fas fa-spinner fa-spin"></i>
-          <span>Chargement des contacts...</span>
+          <span>Chargement de vos amis...</span>
         </div>
       </div>
     </div>
@@ -183,14 +185,9 @@ import { EnhancedMessagingService } from '../../../services/enhanced-messaging.s
       margin-bottom: 2px;
     }
 
-    .contact-role {
+    .contact-email {
       font-size: 12px;
       color: #666;
-    }
-
-    .contact-status {
-      font-size: 11px;
-      color: #999;
     }
 
     .contact-badges {
@@ -208,11 +205,6 @@ import { EnhancedMessagingService } from '../../../services/enhanced-messaging.s
     .badge.friend {
       background: #e3f2fd;
       color: #1976d2;
-    }
-
-    .badge.coach {
-      background: #e8f5e8;
-      color: #2e7d32;
     }
 
     .no-contacts {
@@ -249,11 +241,11 @@ export class ContactSelectionModalComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
-  constructor(private messagingService: EnhancedMessagingService) {}
+  constructor(private friendService: FriendService) {}
 
   ngOnInit(): void {
     this.setupSearchDebounce();
-    this.loadContacts();
+    this.loadFriends();
   }
 
   ngOnDestroy(): void {
@@ -271,18 +263,33 @@ export class ContactSelectionModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadContacts(): void {
+  private loadFriends(): void {
     this.isLoading = true;
-    this.messagingService.loadAvailableContacts().subscribe({
-      next: (contacts) => {
-        this.contacts = contacts;
-        this.filteredContacts = contacts;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
+    
+    // S'abonner à la liste des amis du FriendService
+    this.friendService.friends$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(friends => {
+      console.log('📱 Amis chargés pour messagerie:', friends);
+      
+      // Convertir les amis en ContactDTO
+      this.contacts = friends.map(friend => ({
+        id: friend.id,
+        name: friend.nom || friend.email?.split('@')[0] || 'Utilisateur',
+        email: friend.email || '',
+        role: 'Client' as const,
+        isOnline: friend.isOnline || false,
+        lastSeen: friend.lastSeen,
+        isFriend: true,
+        isCoach: false
+      }));
+      
+      this.filteredContacts = [...this.contacts];
+      this.isLoading = false;
     });
+    
+    // Rafraîchir les données
+    this.friendService.refreshAllData();
   }
 
   onSearchInput(): void {
@@ -298,7 +305,7 @@ export class ContactSelectionModalComponent implements OnInit, OnDestroy {
     const searchTerm = query.toLowerCase();
     this.filteredContacts = this.contacts.filter(contact =>
       contact.name.toLowerCase().includes(searchTerm) ||
-      contact.role.toLowerCase().includes(searchTerm)
+      (contact.email && contact.email.toLowerCase().includes(searchTerm))
     );
   }
 
@@ -308,6 +315,8 @@ export class ContactSelectionModalComponent implements OnInit, OnDestroy {
   }
 
   closeModal(): void {
+    this.searchQuery = '';
+    this.filteredContacts = [...this.contacts];
     this.modalClosed.emit();
   }
 

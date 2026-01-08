@@ -1,3 +1,13 @@
+/* Variables - Same as User Theme */
+:root {
+  --primary-green: #84cabe;
+  --light-green: #a8ddd3;
+  --dark-green: #6bb5a7;
+  --text-dark: #2C3E50;
+  --text-light: #7F8C8D;
+  --bg-light: #F8F9FA;
+}
+
 .coach-home-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -10,15 +20,15 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Hero Section */
+/* Hero Section - Green Theme */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   border-radius: 20px;
   padding: 50px 40px;
   margin-bottom: 30px;
   color: white;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 30px rgba(132, 202, 190, 0.3);
 }
 
 .hero-content h1 {
@@ -32,6 +42,29 @@
   opacity: 0.95;
   margin: 0;
   text-transform: capitalize;
+}
+
+/* Tips Card - Moved after hero */
+.tips-card {
+  background: linear-gradient(135deg, #e8f5f3 0%, #d4ede8 100%);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(132, 202, 190, 0.15);
+  border-left: 4px solid #84cabe;
+}
+
+.tips-card h2 {
+  margin: 0 0 15px 0;
+  font-size: 20px;
+  color: #2C3E50;
+}
+
+.tip-text {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+  font-size: 15px;
 }
 
 /* Stats Section */
@@ -50,7 +83,7 @@
   border-radius: 12px;
   padding: 25px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #84cabe;
   display: flex;
   gap: 20px;
   align-items: center;
@@ -59,7 +92,7 @@
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(132, 202, 190, 0.2);
 }
 
 .stat-icon {
@@ -72,6 +105,7 @@
   font-size: 28px;
   color: white;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
 }
 
 .stat-content {
@@ -81,7 +115,7 @@
 .stat-content h3 {
   margin: 0 0 8px 0;
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -90,20 +124,20 @@
 .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: #333;
+  color: #2C3E50;
   margin-bottom: 5px;
 }
 
 .stat-trend {
   font-size: 13px;
-  color: #666;
+  color: #7F8C8D;
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
 .stat-trend.trend-up {
-  color: #28a745;
+  color: #6bb5a7;
 }
 
 .stat-trend i {
@@ -128,10 +162,10 @@
 .card h2 {
   margin: 0 0 20px 0;
   font-size: 20px;
-  color: #333;
+  color: #2C3E50;
 }
 
-/* Quick Actions */
+/* Quick Actions - Green Theme */
 .quick-actions-list {
   display: flex;
   flex-direction: column;
@@ -139,7 +173,7 @@
 }
 
 .action-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   color: white;
   border: none;
   padding: 16px 20px;
@@ -155,14 +189,15 @@
 
 .action-btn:hover {
   transform: translateX(5px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(132, 202, 190, 0.4);
+  background: linear-gradient(135deg, #6bb5a7 0%, #5aa396 100%);
 }
 
 .action-btn i {
   font-size: 20px;
 }
 
-/* Activities */
+/* Activities - Green Theme */
 .activities-list {
   display: flex;
   flex-direction: column;
@@ -179,14 +214,14 @@
 }
 
 .activity-item:hover {
-  background: #e9ecef;
+  background: #e8f5f3;
 }
 
 .activity-icon {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,43 +236,21 @@
 
 .activity-text {
   margin: 0 0 5px 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 14px;
   line-height: 1.4;
 }
 
 .activity-text strong {
-  color: #667eea;
+  color: #84cabe;
 }
 
 .activity-time {
   font-size: 12px;
-  color: #999;
+  color: #7F8C8D;
 }
 
-/* Tips Card */
-.tips-card {
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.tips-card h2 {
-  margin: 0 0 15px 0;
-  font-size: 20px;
-  color: #333;
-}
-
-.tip-text {
-  margin: 0;
-  color: #555;
-  line-height: 1.6;
-  font-size: 15px;
-}
-
-/* Performance Section */
+/* Performance Section - Green Theme */
 .performance-section {
   background: white;
   border-radius: 12px;
@@ -248,7 +261,7 @@
 .performance-section h2 {
   margin: 0 0 25px 0;
   font-size: 22px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .performance-grid {
@@ -269,7 +282,7 @@
 .performance-item h4 {
   margin: 0 0 15px 0;
   font-size: 18px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .performance-bar {
@@ -283,14 +296,14 @@
 
 .performance-fill {
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #84cabe 0%, #6bb5a7 100%);
   border-radius: 6px;
   transition: width 1s ease-in-out;
 }
 
 .performance-item p {
   margin: 0;
-  color: #666;
+  color: #7F8C8D;
   font-size: 14px;
   line-height: 1.5;
 }

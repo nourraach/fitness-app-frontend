@@ -54,7 +54,7 @@ export interface UserSearchResult {
 export interface SocialActivity {
   id: number;
   userId: number;
-  type: 'workout' | 'achievement' | 'challenge_completed' | 'friend_added';
+  type: 'workout' | 'achievement' | 'challenge_completed' | 'challenge_joined' | 'friend_added' | 'goal_achieved' | 'program_started' | 'program_completed' | 'weight_milestone';
   title: string;
   description: string;
   createdAt: Date;
@@ -62,17 +62,23 @@ export interface SocialActivity {
   likes: number;
   hasLiked: boolean;
   comments: number;
+  // Optional fields for challenge-related activities
+  relatedEntityId?: number;
+  relatedEntityType?: string;
 }
 
-export interface SocialNotification {
-  id: number;
-  userId: number;
-  type: 'friend_request' | 'friend_accepted' | 'challenge_invite' | 'activity_like' | 'challenge_completed';
-  title: string;
-  message: string;
-  isRead: boolean;
-  createdAt: Date;
-  relatedUserId?: number;
-  relatedUserInfo?: User;
-  actionUrl?: string;
+// Mapping function for backend activity types to frontend types
+export function mapBackendActivityType(backendType: string): SocialActivity['type'] {
+  const typeMap: Record<string, SocialActivity['type']> = {
+    'WORKOUT_COMPLETED': 'workout',
+    'CHALLENGE_JOINED': 'challenge_joined',
+    'CHALLENGE_COMPLETED': 'challenge_completed',
+    'GOAL_ACHIEVED': 'goal_achieved',
+    'PROGRAM_STARTED': 'program_started',
+    'PROGRAM_COMPLETED': 'program_completed',
+    'WEIGHT_MILESTONE': 'weight_milestone',
+    'FRIEND_JOINED': 'friend_added',
+    'ACHIEVEMENT_UNLOCKED': 'achievement'
+  };
+  return typeMap[backendType] || 'workout';
 }

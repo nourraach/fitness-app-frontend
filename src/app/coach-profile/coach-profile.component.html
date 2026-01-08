@@ -20,10 +20,6 @@
       <div class="avatar">
         <i class="pi pi-user"></i>
       </div>
-      <button class="btn-change-photo" *ngIf="isEditing">
-        <i class="pi pi-camera"></i>
-        Changer la photo
-      </button>
     </div>
 
     <!-- Profile Form -->
@@ -142,31 +138,6 @@
         <button class="btn-save" (click)="saveProfile()" [disabled]="loading">
           <span *ngIf="!loading">Enregistrer</span>
           <span *ngIf="loading">Enregistrement...</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Additional Actions -->
-  <div class="additional-actions">
-    <div class="action-card">
-      <div class="action-icon">🔒</div>
-      <div class="action-content">
-        <h3>Sécurité</h3>
-        <p>Modifiez votre mot de passe pour sécuriser votre compte</p>
-        <button class="btn-action" (click)="changePassword()">
-          Changer le mot de passe
-        </button>
-      </div>
-    </div>
-
-    <div class="action-card danger">
-      <div class="action-icon">⚠️</div>
-      <div class="action-content">
-        <h3>Zone Dangereuse</h3>
-        <p>Supprimez définitivement votre compte et toutes vos données</p>
-        <button class="btn-action btn-danger" (click)="deleteAccount()">
-          Supprimer le compte
         </button>
       </div>
     </div>

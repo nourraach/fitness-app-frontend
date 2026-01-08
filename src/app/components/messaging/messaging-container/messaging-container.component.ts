@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Subject, BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { takeUntil, map, distinctUntilChanged } from 'rxjs/operators';
 
 import { WebsocketService, MessageStatus } from '../../../services/websocket.service';
 import { EnhancedMessagingService } from '../../../services/enhanced-messaging.service';
+import { FriendService, FriendItem } from '../../../services/friend.service';
 import { JwtService } from '../../../service/jwt.service';
 import { 
   MessageDTO, 
@@ -16,9 +17,8 @@ import {
   Message
 } from '../../../models/message.model';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble.component';
-import { ChatWindowComponent } from '../chat-window/chat-window.component';
-import { ContactSelectionModalComponent } from '../contact-selection-modal/contact-selection-modal.component';
 import { ContactDTO, ConversationCreationRequest } from '../../../models/contact.model';
+import { User } from '../../../models/friend.model';
 
 interface MessagingState {
   conversations: ConversationDTO[];
@@ -37,7 +37,7 @@ interface NotificationState {
 @Component({
   selector: 'app-messaging-container',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MessageBubbleComponent, ChatWindowComponent, ContactSelectionModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, MessageBubbleComponent],
   templateUrl: './messaging-container.component.html',
   styleUrls: ['./messaging-container.component.css']
 })
@@ -79,6 +79,16 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   showConversationList = true;
   showContactSelection = false;
   
+  // Friend search state
+  friendSearchQuery = '';
+  showFriendsList = true;
+  filteredFriends: User[] = [];
+  allFriends: User[] = [];
+  isLoadingFriends = false;
+  
+  // Message input
+  messageInput = '';
+  
   // Current user (get from JWT service)
   get currentUserId(): number {
     return this.jwtService.getUserId() || 1;
@@ -87,24 +97,29 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   constructor(
     public websocketService: WebsocketService,
     private enhancedMessagingService: EnhancedMessagingService,
+    private friendService: FriendService,
     private jwtService: JwtService
   ) {
-    this.setupDerivedObservables();
-    this.setupMessageHandling();
-    this.setupTypingHandling();
-    this.setupMessageStatusHandling();
+    // Only setup derived observables that don't depend on WebSocket observables
   }
 
   ngOnInit(): void {
-    // Initialize WebSocket observables
+    // Initialize WebSocket observables FIRST
     this.connectionStatus$ = this.websocketService.connectionStatus$;
     this.messages$ = this.websocketService.messages$;
     this.typingIndicators$ = this.websocketService.typingIndicators$;
     this.messageStatus$ = this.websocketService.messageStatus$;
     
+    // Now setup handlers that depend on these observables
+    this.setupDerivedObservables();
+    this.setupMessageHandling();
+    this.setupTypingHandling();
+    this.setupMessageStatusHandling();
+    
     this.connectWebSocket();
     this.loadConversations();
     this.setupResponsiveHandling();
+    this.loadFriends();
   }
 
   ngOnDestroy(): void {
@@ -123,29 +138,26 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       distinctUntilChanged()
     );
     
-    // Messages for selected conversation
-    this.conversationMessages$ = combineLatest([
-      this.state$,
-      this.messages$
-    ]).pipe(
-      map(([state, newMessage]) => {
-        let messages = [...state.messages];
+    // Messages for selected conversation - simplified to use only state messages
+    this.conversationMessages$ = this.state$.pipe(
+      map(state => {
+        if (!state.selectedConversationId) return [];
         
-        // Add new message if it belongs to selected conversation
-        if (newMessage && state.selectedConversationId && 
-            newMessage.conversationId === state.selectedConversationId) {
-          messages = [...messages, newMessage];
-        }
+        // Filter messages for the selected conversation
+        const filteredMessages = state.messages.filter(
+          msg => msg.conversationId === state.selectedConversationId
+        );
         
-        return messages
-          .filter(msg => msg.conversationId === state.selectedConversationId)
-          .sort((a, b) => new Date(a.dateEnvoi).getTime() - new Date(b.dateEnvoi).getTime());
+        // Sort by timestamp
+        return filteredMessages.sort((a, b) => 
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
       })
     );
     
     // Total unread count
     this.unreadCount$ = this.state$.pipe(
-      map(state => state.conversations.reduce((total, conv) => total + conv.messagesNonLus, 0))
+      map(state => state.conversations.reduce((total, conv) => total + (conv.messagesNonLus || 0), 0))
     );
   }
 
@@ -224,7 +236,25 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     // Use enhanced messaging service to load conversations
     this.enhancedMessagingService.loadConversations().subscribe({
       next: (conversations) => {
-        this.updateState({ conversations });
+        console.log('📋 Conversations loaded:', conversations?.length || 0, conversations);
+        if (conversations && conversations.length > 0) {
+          // Mapper les conversations pour s'assurer que tous les champs sont présents
+          const mappedConversations = conversations.map(conv => ({
+            ...conv,
+            conversationId: conv.conversationId || `conv-${conv.id}`,
+            autreUtilisateurNom: conv.autreUtilisateurNom || conv.participantName || conv.coachName || conv.userName || 'Utilisateur',
+            autreUtilisateurId: conv.autreUtilisateurId || conv.coachId || conv.userId,
+            dernierMessage: conv.dernierMessage || conv.lastMessageContent || '',
+            dateDernierMessage: conv.dateDernierMessage || (conv.lastMessageAt ? new Date(conv.lastMessageAt) : new Date()),
+            messagesNonLus: conv.messagesNonLus || conv.unreadMessageCount || 0
+          }));
+          this.updateState({ conversations: mappedConversations });
+          this.showFriendsList = false; // Afficher les conversations si on en a
+        } else {
+          // Pas de conversations, afficher la liste d'amis
+          this.showFriendsList = true;
+          this.loadMockConversations();
+        }
       },
       error: (error) => {
         console.error('Error loading conversations:', error);
@@ -238,6 +268,12 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     // Enhanced mock data with more realistic conversations
     const mockConversations: ConversationDTO[] = [
       {
+        id: 1,
+        userId: this.currentUserId,
+        userName: 'Vous',
+        lastMessageContent: 'Comment se passe votre entraînement cette semaine ?',
+        lastMessageAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        unreadMessageCount: 2,
         conversationId: 'conv-1',
         autreUtilisateurId: 2,
         autreUtilisateurNom: 'Dr. Martin',
@@ -247,6 +283,12 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         messagesNonLus: 2
       },
       {
+        id: 2,
+        userId: this.currentUserId,
+        userName: 'Vous',
+        lastMessageContent: 'Merci pour le programme personnalisé !',
+        lastMessageAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        unreadMessageCount: 0,
         conversationId: 'conv-2',
         autreUtilisateurId: 3,
         autreUtilisateurNom: 'Sarah Johnson',
@@ -256,6 +298,12 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         messagesNonLus: 0
       },
       {
+        id: 3,
+        userId: this.currentUserId,
+        userName: 'Vous',
+        lastMessageContent: 'J\'ai une question sur les exercices de cardio',
+        lastMessageAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        unreadMessageCount: 1,
         conversationId: 'conv-3',
         autreUtilisateurId: 4,
         autreUtilisateurNom: 'Mike Thompson',
@@ -265,6 +313,12 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
         messagesNonLus: 1
       },
       {
+        id: 4,
+        userId: this.currentUserId,
+        userName: 'Vous',
+        lastMessageContent: 'Votre progression est excellente !',
+        lastMessageAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        unreadMessageCount: 0,
         conversationId: 'conv-4',
         autreUtilisateurId: 5,
         autreUtilisateurNom: 'Emma Wilson',
@@ -279,9 +333,15 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   }
 
   selectConversation(conversationId: string): void {
+    console.log('🔵 selectConversation called with:', conversationId);
     const currentState = this.getCurrentState();
+    console.log('🔵 Current state:', { 
+      selectedConversationId: currentState.selectedConversationId,
+      conversationsCount: currentState.conversations.length 
+    });
     
     if (currentState.selectedConversationId === conversationId) {
+      console.log('🔵 Same conversation already selected, skipping');
       return;
     }
     
@@ -303,26 +363,39 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
   }
 
   private loadMessagesForConversation(conversationId: string): void {
+    console.log('📨 loadMessagesForConversation called with:', conversationId);
     // Try to load from enhanced messaging service first
     const conversation = this.getCurrentState().conversations.find(c => c.conversationId === conversationId);
+    console.log('📨 Found conversation:', conversation);
+    
     if (conversation) {
-      this.enhancedMessagingService.loadConversationHistory(conversation.autreUtilisateurId).subscribe({
+      const otherUserId = conversation.autreUtilisateurId || conversation.coachId || conversation.userId;
+      console.log('📨 Loading messages for conversation:', conversationId, 'with user:', otherUserId);
+      
+      this.enhancedMessagingService.loadConversationHistory(otherUserId).subscribe({
         next: (messages) => {
-          if (messages.length > 0) {
-            this.updateState({ messages });
+          console.log('📨 Messages loaded from API:', messages?.length || 0, messages);
+          if (messages && messages.length > 0) {
+            // Map messages to ensure correct conversationId
+            const mappedMessages = messages.map(msg => ({
+              ...msg,
+              conversationId: conversationId
+            }));
+            this.updateState({ messages: mappedMessages });
             setTimeout(() => this.scrollToBottom(), 100);
-            return;
+          } else {
+            console.log('📨 No messages from API, keeping empty');
+            this.updateState({ messages: [] });
           }
-          // Fallback to mock data if no messages from service
-          this.loadMockMessagesForConversation(conversationId);
         },
-        error: () => {
-          // Fallback to mock data on error
-          this.loadMockMessagesForConversation(conversationId);
+        error: (error) => {
+          console.error('📨 Error loading messages:', error);
+          this.updateState({ messages: [] });
         }
       });
     } else {
-      this.loadMockMessagesForConversation(conversationId);
+      console.log('📨 No conversation found for:', conversationId);
+      this.updateState({ messages: [] });
     }
   }
 
@@ -332,128 +405,128 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       'conv-1': [
         {
           id: 1,
-          expediteurId: 2,
-          expediteurNom: 'Dr. Martin',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'Bonjour ! Comment allez-vous aujourd\'hui ?',
-          dateEnvoi: new Date(Date.now() - 3 * 60 * 60 * 1000),
+          senderId: 2,
+          senderName: 'Dr. Martin',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'Bonjour ! Comment allez-vous aujourd\'hui ?',
+          timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         },
         {
           id: 2,
-          expediteurId: this.currentUserId,
-          expediteurNom: 'Vous',
-          destinataireId: 2,
-          destinataireNom: 'Dr. Martin',
-          contenu: 'Bonjour ! Ça va bien, merci. J\'ai terminé mon entraînement ce matin.',
-          dateEnvoi: new Date(Date.now() - 2.5 * 60 * 60 * 1000),
+          senderId: this.currentUserId,
+          senderName: 'Vous',
+          receiverId: 2,
+          receiverName: 'Dr. Martin',
+          content: 'Bonjour ! Ça va bien, merci. J\'ai terminé mon entraînement ce matin.',
+          timestamp: new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         },
         {
           id: 3,
-          expediteurId: 2,
-          expediteurNom: 'Dr. Martin',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'Parfait ! Comment vous sentez-vous après les exercices de cardio ?',
-          dateEnvoi: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          senderId: 2,
+          senderName: 'Dr. Martin',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'Parfait ! Comment vous sentez-vous après les exercices de cardio ?',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: false,
+          isRead: false,
           type: MessageType.TEXT
         },
         {
           id: 4,
-          expediteurId: 2,
-          expediteurNom: 'Dr. Martin',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'N\'hésitez pas si vous avez des questions sur votre programme !',
-          dateEnvoi: new Date(Date.now() - 1.5 * 60 * 60 * 1000),
+          senderId: 2,
+          senderName: 'Dr. Martin',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'N\'hésitez pas si vous avez des questions sur votre programme !',
+          timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: false,
+          isRead: false,
           type: MessageType.TEXT
         }
       ],
       'conv-2': [
         {
           id: 5,
-          expediteurId: 3,
-          expediteurNom: 'Sarah Johnson',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'Salut ! J\'ai commencé le nouveau programme que vous m\'avez donné.',
-          dateEnvoi: new Date(Date.now() - 25 * 60 * 60 * 1000),
+          senderId: 3,
+          senderName: 'Sarah Johnson',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'Salut ! J\'ai commencé le nouveau programme que vous m\'avez donné.',
+          timestamp: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         },
         {
           id: 6,
-          expediteurId: this.currentUserId,
-          expediteurNom: 'Vous',
-          destinataireId: 3,
-          destinataireNom: 'Sarah Johnson',
-          contenu: 'Excellent ! Comment ça se passe ? Pas trop difficile ?',
-          dateEnvoi: new Date(Date.now() - 24.5 * 60 * 60 * 1000),
+          senderId: this.currentUserId,
+          senderName: 'Vous',
+          receiverId: 3,
+          receiverName: 'Sarah Johnson',
+          content: 'Excellent ! Comment ça se passe ? Pas trop difficile ?',
+          timestamp: new Date(Date.now() - 24.5 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         },
         {
           id: 7,
-          expediteurId: 3,
-          expediteurNom: 'Sarah Johnson',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'C\'est parfait ! Merci pour le programme personnalisé !',
-          dateEnvoi: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          senderId: 3,
+          senderName: 'Sarah Johnson',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'C\'est parfait ! Merci pour le programme personnalisé !',
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         }
       ],
       'conv-3': [
         {
           id: 8,
-          expediteurId: 4,
-          expediteurNom: 'Mike Thompson',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'Bonjour, j\'ai une question sur les exercices de cardio que vous m\'avez recommandés.',
-          dateEnvoi: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          senderId: 4,
+          senderName: 'Mike Thompson',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'Bonjour, j\'ai une question sur les exercices de cardio que vous m\'avez recommandés.',
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: false,
+          isRead: false,
           type: MessageType.TEXT
         }
       ],
       'conv-4': [
         {
           id: 9,
-          expediteurId: 5,
-          expediteurNom: 'Emma Wilson',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'Félicitations pour vos progrès cette semaine !',
-          dateEnvoi: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          senderId: 5,
+          senderName: 'Emma Wilson',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'Félicitations pour vos progrès cette semaine !',
+          timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         },
         {
           id: 10,
-          expediteurId: 5,
-          expediteurNom: 'Emma Wilson',
-          destinataireId: this.currentUserId,
-          destinataireNom: 'Vous',
-          contenu: 'Votre progression est excellente ! Continuez comme ça.',
-          dateEnvoi: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          senderId: 5,
+          senderName: 'Emma Wilson',
+          receiverId: this.currentUserId,
+          receiverName: 'Vous',
+          content: 'Votre progression est excellente ! Continuez comme ça.',
+          timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
           conversationId,
-          lu: true,
+          isRead: true,
           type: MessageType.TEXT
         }
       ]
@@ -488,9 +561,11 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
 
   // Message sending
   sendMessage(content: string, type: MessageType = MessageType.TEXT): void {
+    console.log('📤 sendMessage called with:', { content, type });
     const currentState = this.getCurrentState();
     
     if (!currentState.selectedConversationId || !content.trim()) {
+      console.log('📤 Pas de conversation sélectionnée ou contenu vide');
       return;
     }
     
@@ -499,28 +574,42 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     );
     
     if (!selectedConversation) {
+      console.log('📤 Conversation non trouvée');
       return;
     }
     
     // Create the message request for enhanced messaging service
     const messageRequest: EnvoyerMessageRequest = {
-      destinataireId: selectedConversation.autreUtilisateurId,
+      destinataireId: selectedConversation.autreUtilisateurId || selectedConversation.coachId || selectedConversation.userId,
       contenu: content.trim(),
       type,
       conversationId: currentState.selectedConversationId
     };
     
+    console.log('📤 Envoi du message via enhancedMessagingService:', messageRequest);
+    
+    // Store the conversationId to use after async response
+    const targetConversationId = currentState.selectedConversationId;
+    
     // Try to send via enhanced messaging service first
     this.enhancedMessagingService.sendMessage(messageRequest).subscribe({
       next: (message) => {
+        console.log('📤 Message envoyé avec succès:', message);
+        // Ensure the message has the correct conversationId for UI display
+        const messageWithCorrectConversationId: MessageDTO = {
+          ...message,
+          conversationId: targetConversationId
+        };
+        console.log('📤 Message avec conversationId corrigé:', messageWithCorrectConversationId);
         // Message sent successfully via service
-        this.addMessageToUI(message);
-        this.updateConversationLastMessage(currentState.selectedConversationId!, content.trim());
+        this.addMessageToUI(messageWithCorrectConversationId);
+        this.updateConversationLastMessage(targetConversationId!, content.trim());
         this.showNotification('Message envoyé', 'success');
       },
-      error: () => {
+      error: (error) => {
+        console.log('📤 Erreur envoi, fallback mock mode:', error);
         // Fallback to local UI update (mock mode)
-        this.sendMessageMockMode(content, type, selectedConversation, currentState.selectedConversationId!);
+        this.sendMessageMockMode(content, type, selectedConversation, targetConversationId!);
       }
     });
     
@@ -534,14 +623,14 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     // Create the new message for mock mode
     const newMessage: MessageDTO = {
       id: Date.now(), // Temporary ID
-      expediteurId: this.currentUserId,
-      expediteurNom: 'Vous',
-      destinataireId: selectedConversation.autreUtilisateurId,
-      destinataireNom: selectedConversation.autreUtilisateurNom,
-      contenu: content.trim(),
-      dateEnvoi: new Date(),
+      senderId: this.currentUserId,
+      senderName: 'Vous',
+      receiverId: selectedConversation.autreUtilisateurId || selectedConversation.coachId || selectedConversation.userId,
+      receiverName: selectedConversation.autreUtilisateurNom || selectedConversation.coachName || selectedConversation.userName,
+      content: content.trim(),
+      timestamp: new Date().toISOString(),
       conversationId: conversationId,
-      lu: false,
+      isRead: false,
       type
     };
     
@@ -589,14 +678,14 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     
     const autoReplyMessage: MessageDTO = {
       id: Date.now() + 1,
-      expediteurId: conversation.autreUtilisateurId,
-      expediteurNom: conversation.autreUtilisateurNom,
-      destinataireId: this.currentUserId,
-      destinataireNom: 'Vous',
-      contenu: randomReply,
-      dateEnvoi: new Date(),
+      senderId: conversation.autreUtilisateurId || conversation.coachId || 0,
+      senderName: conversation.autreUtilisateurNom || conversation.coachName || 'Unknown',
+      receiverId: this.currentUserId,
+      receiverName: 'Vous',
+      content: randomReply,
+      timestamp: new Date().toISOString(),
       conversationId: conversationId,
-      lu: false,
+      isRead: false,
       type: MessageType.TEXT
     };
     
@@ -607,7 +696,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     this.updateConversationLastMessage(conversationId, randomReply);
     
     // Show notification
-    this.showNotification(`Nouveau message de ${conversation.autreUtilisateurNom}`, 'info');
+    this.showNotification(`Nouveau message de ${conversation.autreUtilisateurNom || conversation.coachName}`, 'info');
     
     // Scroll to bottom
     setTimeout(() => {
@@ -655,11 +744,11 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
       if (conv.conversationId === message.conversationId) {
         return {
           ...conv,
-          dernierMessage: message.contenu,
-          dateDernierMessage: message.dateEnvoi,
-          messagesNonLus: message.expediteurId !== this.currentUserId 
-            ? conv.messagesNonLus + 1 
-            : conv.messagesNonLus
+          dernierMessage: message.content,
+          dateDernierMessage: new Date(message.timestamp),
+          messagesNonLus: message.senderId !== this.currentUserId 
+            ? (conv.messagesNonLus || 0) + 1 
+            : (conv.messagesNonLus || 0)
         };
       }
       return conv;
@@ -668,17 +757,17 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     this.updateState({ conversations: updatedConversations });
     
     // Show notification for new messages (if not in current conversation)
-    if (message.expediteurId !== this.currentUserId && 
+    if (message.senderId !== this.currentUserId && 
         message.conversationId !== currentState.selectedConversationId) {
       this.showNotification(
-        `Nouveau message de ${message.expediteurNom}`, 
+        `Nouveau message de ${message.senderName}`, 
         'info'
       );
     }
     
     // Mark message as read if conversation is selected
     if (message.conversationId === currentState.selectedConversationId && 
-        message.expediteurId !== this.currentUserId) {
+        message.senderId !== this.currentUserId) {
       this.websocketService.markMessageAsRead(message.id?.toString() || '');
     }
   }
@@ -736,7 +825,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
 
     this.enhancedMessagingService.createConversation(request).subscribe({
       next: (response) => {
-        if (response.success) {
+        if (response.success && response.conversation.conversationId) {
           this.selectConversation(response.conversation.conversationId);
           this.showNotification(`Conversation créée avec ${contact.name}`, 'success');
         } else {
@@ -775,7 +864,7 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
 
   // Template trackBy functions
   trackByConversationId(index: number, conversation: ConversationDTO): string {
-    return conversation.conversationId;
+    return conversation.conversationId || conversation.id?.toString() || '';
   }
 
   trackByMessageId(index: number, message: MessageDTO): number {
@@ -787,12 +876,141 @@ export class MessagingContainerComponent implements OnInit, OnDestroy {
     return {
       id: messageDTO.id,
       conversationId: messageDTO.conversationId ? parseInt(messageDTO.conversationId) : 0,
-      senderId: messageDTO.expediteurId,
-      receiverId: messageDTO.destinataireId,
-      content: messageDTO.contenu,
-      timestamp: new Date(messageDTO.dateEnvoi),
-      isRead: messageDTO.lu,
+      senderId: messageDTO.senderId,
+      receiverId: messageDTO.receiverId,
+      content: messageDTO.content,
+      timestamp: new Date(messageDTO.timestamp),
+      isRead: messageDTO.isRead,
       type: messageDTO.type
     };
+  }
+
+  // Friend search methods
+  private loadFriends(): void {
+    this.isLoadingFriends = true;
+    
+    // S'abonner aux changements de la liste d'amis
+    this.friendService.friends$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(friends => {
+      console.log('📋 Friends loaded in messaging:', friends?.length || 0, friends);
+      this.allFriends = friends || [];
+      this.filteredFriends = friends || [];
+      this.isLoadingFriends = false;
+    });
+    
+    // Forcer le rechargement des amis depuis l'API
+    this.friendService.getFriendsList().subscribe({
+      next: (response) => {
+        console.log('📋 Friends API response:', response);
+        if (response.friends && response.friends.length > 0) {
+          // Mapper les données pour le format attendu
+          const mappedFriends = response.friends.map((f: any) => ({
+            id: f.friendId || f.id,
+            nom: f.friendName || f.nom || f.name || 'Utilisateur',
+            email: f.friendEmail || f.email || '',
+            photo: f.friendPhoto || f.photo
+          }));
+          this.allFriends = mappedFriends;
+          this.filteredFriends = mappedFriends;
+        }
+        this.isLoadingFriends = false;
+      },
+      error: (err) => {
+        console.error('📋 Error loading friends:', err);
+        this.isLoadingFriends = false;
+      }
+    });
+  }
+
+  onFriendSearch(): void {
+    const query = this.friendSearchQuery.toLowerCase().trim();
+    if (!query) {
+      this.filteredFriends = this.allFriends;
+      this.showFriendsList = true;
+      return;
+    }
+    
+    this.filteredFriends = this.allFriends.filter(friend => 
+      (friend.nom?.toLowerCase().includes(query)) ||
+      (friend.email?.toLowerCase().includes(query))
+    );
+    this.showFriendsList = true;
+  }
+
+  clearSearch(): void {
+    this.friendSearchQuery = '';
+    this.filteredFriends = this.allFriends;
+    this.showFriendsList = true;
+  }
+
+  startConversationWithFriend(friend: User): void {
+    console.log('🚀 Starting conversation with friend:', friend);
+    
+    // Check if conversation already exists
+    const existingConv = this.getCurrentState().conversations.find(
+      conv => conv.autreUtilisateurId === friend.id
+    );
+    
+    if (existingConv && existingConv.conversationId) {
+      console.log('🚀 Existing conversation found:', existingConv.conversationId);
+      this.selectConversation(existingConv.conversationId);
+      this.showFriendsList = false;
+      return;
+    }
+    
+    // Create new conversation
+    const conversationId = `conv-${this.currentUserId}-${friend.id}-${Date.now()}`;
+    const newConversation: ConversationDTO = {
+      id: Date.now(),
+      conversationId: conversationId,
+      userId: this.currentUserId,
+      userName: 'Vous',
+      autreUtilisateurId: friend.id,
+      autreUtilisateurNom: friend.nom || 'Utilisateur',
+      autreUtilisateurRole: 'Ami',
+      dernierMessage: '',
+      dateDernierMessage: new Date(),
+      messagesNonLus: 0,
+      lastMessageContent: '',
+      lastMessageAt: new Date().toISOString(),
+      unreadMessageCount: 0
+    };
+    
+    console.log('🚀 Creating new conversation:', newConversation);
+    
+    const currentState = this.getCurrentState();
+    this.updateState({ 
+      conversations: [newConversation, ...currentState.conversations],
+      selectedConversationId: conversationId,
+      messages: []
+    });
+    
+    this.showFriendsList = false;
+    this.friendSearchQuery = '';
+    
+    if (this.isMobileView) {
+      this.showConversationList = false;
+    }
+    
+    this.showNotification(`Conversation avec ${friend.nom || 'Utilisateur'} créée`, 'success');
+  }
+
+  // Send message from input
+  onSendMessage(): void {
+    console.log('📤 onSendMessage called, messageInput:', this.messageInput);
+    if (!this.messageInput?.trim()) {
+      console.log('📤 Message vide, annulation');
+      return;
+    }
+    
+    const currentState = this.getCurrentState();
+    console.log('📤 Current state:', {
+      selectedConversationId: currentState.selectedConversationId,
+      conversationsCount: currentState.conversations.length
+    });
+    
+    this.sendMessage(this.messageInput.trim(), MessageType.TEXT);
+    this.messageInput = '';
   }
 }

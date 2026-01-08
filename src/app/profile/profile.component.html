@@ -108,24 +108,29 @@
                   id="age-slider"
                   [(ngModel)]="profile.age" 
                   name="age-slider"
-                  [disabled]="!isEditing"
                   min="15" 
                   max="100"
                   class="range-slider"
-                  (input)="onAgeChange()">
+                  (input)="onAgeChange()"
+                  [disabled]="!isEditing">
                 <input 
                   type="number" 
                   id="age" 
                   [(ngModel)]="profile.age" 
                   name="age"
-                  [disabled]="!isEditing"
                   min="15" 
                   max="100" 
                   placeholder="25"
                   class="number-input"
+                  [class.error]="hasFieldError('age')"
+                  (blur)="onAgeChange()"
+                  [disabled]="!isEditing"
                   required>
               </div>
-              
+              <div class="field-error" *ngIf="hasFieldError('age')">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>{{ getFieldError('age') }}</span>
+              </div>
             </div>
 
             <!-- Sexe avec cartes sélectionnables -->
@@ -155,6 +160,10 @@
                 </div>
               </div>
               <input type="hidden" [(ngModel)]="profile.sexe" name="sexe" required>
+              <div class="field-error" *ngIf="hasFieldError('sexe')">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>{{ getFieldError('sexe') }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -187,26 +196,32 @@
                   id="taille-slider"
                   [(ngModel)]="profile.taille" 
                   name="taille-slider"
-                  [disabled]="!isEditing"
                   min="140" 
                   max="220"
-                  class="range-slider teal-slider">
+                  class="range-slider teal-slider"
+                  (input)="onTailleChange()"
+                  [disabled]="!isEditing">
                 <input 
                   type="number" 
                   id="taille" 
                   [(ngModel)]="profile.taille" 
                   name="taille"
-                  [disabled]="!isEditing"
                   min="140" 
                   max="220"
                   placeholder="170"
                   class="number-input"
+                  [class.error]="hasFieldError('taille')"
+                  (blur)="onTailleChange()"
+                  [disabled]="!isEditing"
                   required>
               </div>
               <div class="measurement-visual">
                 <div class="visual-bar teal-bar" [style.height.%]="(profile.taille - 140) / 80 * 100"></div>
               </div>
-              
+              <div class="field-error" *ngIf="hasFieldError('taille')">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>{{ getFieldError('taille') }}</span>
+              </div>
             </div>
 
             <!-- Poids avec slider et visualisation -->
@@ -224,28 +239,34 @@
                   id="poids-slider"
                   [(ngModel)]="profile.poids" 
                   name="poids-slider"
-                  [disabled]="!isEditing"
                   min="40" 
                   max="150"
                   step="0.5"
-                  class="range-slider pink-slider">
+                  class="range-slider pink-slider"
+                  (input)="onPoidsChange()"
+                  [disabled]="!isEditing">
                 <input 
                   type="number" 
                   id="poids" 
                   [(ngModel)]="profile.poids" 
                   name="poids"
-                  [disabled]="!isEditing"
                   min="40" 
                   max="150" 
                   step="0.1"
                   placeholder="70"
                   class="number-input"
+                  [class.error]="hasFieldError('poids')"
+                  (blur)="onPoidsChange()"
+                  [disabled]="!isEditing"
                   required>
               </div>
               <div class="measurement-visual">
                 <div class="visual-bar pink-bar" [style.height.%]="(profile.poids - 40) / 110 * 100"></div>
               </div>
-              
+              <div class="field-error" *ngIf="hasFieldError('poids')">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>{{ getFieldError('poids') }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -286,7 +307,6 @@
                 (click)="isEditing && selectObjective('PRISE_MASSE')">
                 <div class="card-icon">💪</div>
                 <div class="card-title">Prise de masse</div>
-  
               </div>
               <div 
                 class="objective-card"
@@ -306,6 +326,10 @@
               </div>
             </div>
             <input type="hidden" [(ngModel)]="profile.objectif" name="objectif" required>
+            <div class="field-error" *ngIf="hasFieldError('objectif')">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ getFieldError('objectif') }}</span>
+            </div>
           </div>
 
           <!-- Niveau d'activité avec cartes -->
@@ -359,6 +383,10 @@
               </div>
             </div>
             <input type="hidden" [(ngModel)]="profile.niveauActivite" name="niveauActivite" required>
+            <div class="field-error" *ngIf="hasFieldError('niveauActivite')">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ getFieldError('niveauActivite') }}</span>
+            </div>
           </div>
         </div>
 
@@ -406,9 +434,18 @@
         <i class="pi pi-times"></i>
         <span>Annuler</span>
       </button>
-      <button type="button" class="btn-save-modern" (click)="saveAndCalculate()" *ngIf="isEditing">
+      <button 
+        type="button" 
+        class="btn-save-modern" 
+        [class.disabled]="!isSaveButtonEnabled()"
+        [disabled]="!isSaveButtonEnabled()"
+        (click)="saveAndCalculate()" 
+        *ngIf="isEditing">
         <i class="pi pi-check"></i>
         <span>Enregistrer et Calculer</span>
+        <div class="validation-indicator" *ngIf="!isFormValid">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
       </button>
       <button type="button" class="btn-calculate-modern" (click)="saveAndCalculate()" *ngIf="!isEditing && hasProfile">
         <i class="pi pi-calculator"></i>
@@ -417,42 +454,74 @@
     </div>
 
     <!-- Résultats IMC et Calories - En pleine largeur -->
-    <div class="results-section" *ngIf="(imcResult || besoinsCaloriquesResult) && !isEditing"></div>
+    <div class="results-section" *ngIf="(imcResult || resultatCalories) && !isEditing">
       <h2 class="results-title">Vos Indicateurs de Santé</h2>
       <div class="results-grid">
-      <!-- Carte IMC -->
-      <div class="result-card-modern imc-card">
-        <div class="card-image-header">
-          <div class="card-overlay"></div>
-        </div>
-        <div class="card-icon">
-          <i class="pi pi-chart-line"></i>
-        </div>
-        <div class="card-content">
-          <h3>Indice de Masse Corporelle</h3>
-          <div class="result-main" *ngIf="imcResult">
-            <div class="result-number" [style.color]="getImcColor(imcResult.imc)">
-              {{ imcResult.imc | number:'1.1-1' }}
+        <!-- Carte IMC -->
+        <div class="result-card-modern imc-card" *ngIf="imcResult">
+          <div class="card-image-header">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="card-icon">
+            <i class="pi pi-chart-line"></i>
+          </div>
+          <div class="card-content">
+            <div class="result-main">
+              <div class="result-number" [style.color]="getImcColor(imcResult.imc)">
+                {{ imcResult.imc | number:'1.1-1' }}
+              </div>
+              <div class="result-badge" [style.background]="getImcColor(imcResult.imc)">
+                {{ imcResult.categorie }}
+              </div>
             </div>
-            <div class="result-badge" [style.background]="getImcColor(imcResult.imc)">
-              {{ imcResult.categorie }}
+            <p class="result-description">
+              {{ imcResult.interpretation }}
+            </p>
+            <div class="imc-scale">
+              <div class="scale-bar">
+                <div class="scale-indicator" [style.left.%]="(imcResult.imc || 0) * 3"></div>
+              </div>
+              <div class="scale-labels">
+                <span>18.5</span>
+                <span>25</span>
+                <span>30</span>
+              </div>
             </div>
           </div>
-          <p class="result-description" *ngIf="imcResult">
-            {{ imcResult.interpretation }}
-          </p>
-          <div class="imc-scale">
-            <div class="scale-bar">
-              <div class="scale-indicator" [style.left.%]="(imcResult?.imc || 0) * 3"></div>
-            </div>
-            <div class="scale-labels">
-              <span>18.5</span>
-              <span>25</span>
-              <span>30</span>
-            </div>
-          </div>
         </div>
-      </div>
 
+        <!-- Carte Besoins Caloriques -->
+        <div class="result-card-modern calories-card" *ngIf="resultatCalories">
+          <div class="card-image-header calories-header">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="card-icon calories-icon">
+            <i class="pi pi-bolt"></i>
+          </div>
+          <div class="card-content">
+            <h3>Vos Besoins Caloriques</h3>
+            <div class="calorie-results">
+              <div class="calorie-item">
+                <span class="calorie-label">Métabolisme de base (BMR)</span>
+                <span class="calorie-value">{{ resultatCalories.bmr | number:'1.0-0' }} kcal</span>
+              </div>
+              <div class="calorie-item main-calorie">
+                <span class="calorie-label">Besoins quotidiens</span>
+                <span class="calorie-value highlight">{{ resultatCalories.tdee | number:'1.0-0' }} kcal</span>
+              </div>
+              <div class="calorie-item">
+                <span class="calorie-label">🔥 Perte de poids</span>
+                <span class="calorie-value loss">{{ resultatCalories.pertePoids | number:'1.0-0' }} kcal</span>
+              </div>
+              <div class="calorie-item">
+                <span class="calorie-label">💪 Prise de masse</span>
+                <span class="calorie-value gain">{{ resultatCalories.priseMasse | number:'1.0-0' }} kcal</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
+  </div>
+</div>

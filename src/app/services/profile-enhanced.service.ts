@@ -43,7 +43,8 @@ export class ProfileEnhancedService {
    */
   calculerIMC(): Observable<IMCResponse> {
     return this.errorHandler.executeWithRetry(
-      () => this.http.get<IMCResponse>(`${this.apiUrl}/imc`, { headers: this.getHeaders() }),
+      // CORRECTION: Utilise l'endpoint backend existant (choix anglais pour cohérence)
+      () => this.http.get<IMCResponse>(`${this.apiUrl}/bmi`, { headers: this.getHeaders() }),
       3,
       'profile-imc'
     );
@@ -54,7 +55,8 @@ export class ProfileEnhancedService {
    */
   calculerBesoinsCaloriques(request: BesoinsCaloriquesRequest): Observable<BesoinsCaloriquesResponse> {
     return this.errorHandler.executeWithRetry(
-      () => this.http.post<BesoinsCaloriquesResponse>(`${this.apiUrl}/besoins-caloriques`, request, { headers: this.getHeaders() }),
+      // CORRECTION: Utilise l'endpoint backend existant (choix anglais pour cohérence)
+      () => this.http.post<BesoinsCaloriquesResponse>(`${this.apiUrl}/caloric-needs`, request, { headers: this.getHeaders() }),
       3,
       'profile-besoins-caloriques'
     );
@@ -65,7 +67,8 @@ export class ProfileEnhancedService {
    */
   obtenirBesoinsCaloriques(): Observable<BesoinsCaloriquesResponse> {
     return this.errorHandler.executeWithRetry(
-      () => this.http.get<BesoinsCaloriquesResponse>(`${this.apiUrl}/besoins-caloriques`, { headers: this.getHeaders() }),
+      // CORRECTION: Utilise l'endpoint backend existant (choix anglais pour cohérence)
+      () => this.http.get<BesoinsCaloriquesResponse>(`${this.apiUrl}/caloric-needs`, { headers: this.getHeaders() }),
       3,
       'profile-besoins-caloriques'
     );

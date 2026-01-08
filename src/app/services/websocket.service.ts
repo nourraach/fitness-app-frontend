@@ -1,9 +1,9 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { Subject, Observable, BehaviorSubject, timer, interval } from 'rxjs';
-import { takeWhile, retry, catchError } from 'rxjs/operators';
+import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { MessageDTO, TypingIndicatorDTO } from '../models/message.model';
 import { StorageService } from '../service/storage-service.service';
+import { InAppNotification } from '../models/in-app-notification.model';
 
 export interface MessageStatus {
   messageId: string;
@@ -18,6 +18,11 @@ export interface QueuedMessage {
   retryCount: number;
 }
 
+export interface WebSocketNotification {
+  type: 'notification';
+  payload: InAppNotification;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,6 +32,7 @@ export class WebsocketService {
   private connectionSubject = new BehaviorSubject<boolean>(false);
   private typingSubject = new Subject<TypingIndicatorDTO>();
   private messageStatusSubject = new Subject<MessageStatus>();
+  private notificationSubject = new Subject<InAppNotification>();
   
   private wsUrl = 'ws://localhost:8095/ws/messaging';
   private reconnectAttempts = 0;
@@ -96,6 +102,11 @@ export class WebsocketService {
     return this.messageStatusSubject.asObservable();
   }
 
+  // Observable pour les notifications in-app temps réel
+  get notifications$(): Observable<InAppNotification> {
+    return this.notificationSubject.asObservable();
+  }
+
   // Get current connection status
   get isConnected(): boolean {
     return this.connectionSubject.value;
@@ -152,6 +163,10 @@ export class WebsocketService {
           } else if (data.type === 'messageStatus') {
             const status: MessageStatus = data.payload;
             this.messageStatusSubject.next(status);
+          } else if (data.type === 'notification') {
+            // Handle in-app notification
+            const notification = data.payload;
+            this.notificationSubject.next(notification);
           } else if (data.type === 'pong') {
             // Handle heartbeat response
             this.handleHeartbeatResponse();
@@ -408,7 +423,7 @@ export class WebsocketService {
   private handleTypingIndicator(indicator: TypingIndicatorDTO): void {
     const key = `${indicator.userId}-${indicator.conversationId || 'global'}`;
     
-    if (indicator.isTyping) {
+    if (indicator.typing) {
       this.typingUsers.set(key, new Date());
     } else {
       this.typingUsers.delete(key);
@@ -434,10 +449,11 @@ export class WebsocketService {
         const [userId, conversationId] = key.split('-');
         this.typingSubject.next({
           userId: parseInt(userId),
+          username: '',
           conversationId: conversationId === 'global' ? undefined : conversationId,
-          isTyping: false,
+          typing: false,
           timestamp: now
-        } as TypingIndicatorDTO);
+        });
       });
     }, 1000); // Check every second
   }
@@ -461,7 +477,7 @@ export class WebsocketService {
   }
 
   private generateMessageId(): string {
-    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
   // Utility methods

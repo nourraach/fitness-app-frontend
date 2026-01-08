@@ -128,14 +128,67 @@ export class JwtService {
     if (token) {
       try {
         const decodedToken: any = jwtDecode(token);
-        console.log('ID utilisateur du token :', decodedToken.id || decodedToken.userId || decodedToken.sub);
-        return decodedToken.id || decodedToken.userId || decodedToken.sub || null;
+        console.log('🔍 Token décodé pour getUserId:', decodedToken);
+        console.log('🔍 Champs disponibles:', Object.keys(decodedToken));
+        
+        // Chercher l'ID utilisateur dans différents champs possibles
+        // Priorité : userId > id > user_id (éviter sub qui contient l'email)
+        let userId = decodedToken.userId || decodedToken.id || decodedToken.user_id;
+        
+        console.log('🔍 Valeur brute userId:', userId, typeof userId);
+        
+        // Si c'est un email, chercher dans d'autres champs
+        if (typeof userId === 'string' && userId.includes('@')) {
+          console.log('⚠️ userId contient un email, recherche d\'alternatives...');
+          // Chercher d'autres champs qui pourraient contenir l'ID numérique
+          userId = decodedToken.user_id || decodedToken.uid || decodedToken.userId;
+          console.log('🔍 Alternative trouvée:', userId, typeof userId);
+        }
+        
+        // Conversion en nombre
+        if (userId && typeof userId === 'number') {
+          console.log('✅ ID utilisateur numérique trouvé:', userId);
+          return userId;
+        } else if (userId && typeof userId === 'string') {
+          // Tenter de convertir en nombre si c'est une string numérique
+          const numericId = parseInt(userId, 10);
+          if (!isNaN(numericId) && numericId > 0) {
+            console.log('✅ ID utilisateur converti:', numericId);
+            return numericId;
+          } else {
+            console.error('❌ Impossible de convertir en nombre:', userId);
+          }
+        }
+        
+        console.error('❌ Aucun ID utilisateur numérique trouvé dans le token');
+        console.error('❌ Contenu du token:', JSON.stringify(decodedToken, null, 2));
+        return null;
       } catch (error) {
-        console.error('Erreur lors du décodage du token JWT', error);
+        console.error('❌ Erreur lors du décodage du token JWT:', error);
         return null;
       }
     }
+    console.error('❌ Aucun token JWT trouvé');
     return null;
+  }
+
+  // Méthode de debug pour inspecter le JWT
+  debugJWT(): void {
+    const token = this.storageService.getItem('jwt');
+    if (token) {
+      try {
+        const decodedToken: any = jwtDecode(token);
+        console.log('🔍 DEBUG JWT - Contenu complet du token:', decodedToken);
+        console.log('🔍 DEBUG JWT - Champs disponibles:', Object.keys(decodedToken));
+        console.log('🔍 DEBUG JWT - id:', decodedToken.id, typeof decodedToken.id);
+        console.log('🔍 DEBUG JWT - userId:', decodedToken.userId, typeof decodedToken.userId);
+        console.log('🔍 DEBUG JWT - sub:', decodedToken.sub, typeof decodedToken.sub);
+      } catch (error) {
+        console.error('❌ Erreur lors du debug du JWT:', error);
+      }
+    } else {
+      console.error('❌ Aucun token JWT trouvé');
+    }
   }
 
   getUserName(): string | null {
@@ -179,7 +232,21 @@ export class JwtService {
     if (!headers) {
       return throwError(() => new Error('Aucun JWT trouvé.'));
     }
-    return this.http.delete(BASE_URL + `api/users/${userId}`, { headers });
+    // Le backend retourne 204 No Content, pas de body
+    return this.http.delete(BASE_URL + `api/users/${userId}`, { headers, responseType: 'text' });
+  }
+
+  /**
+   * Met à jour le statut d'activation d'un utilisateur
+   * Endpoint: PUT /api/admin/users/{userId}/status
+   * Body: { "enabled": boolean }
+   */
+  updateUserStatus(userId: number, enabled: boolean): Observable<any> {
+    const headers = this.createAuthorizationHeader();
+    if (!headers) {
+      return throwError(() => new Error('Aucun JWT trouvé.'));
+    }
+    return this.http.put(BASE_URL + `api/admin/users/${userId}/status`, { enabled }, { headers });
   }
 
   getUserById(userId: number): Observable<any> {

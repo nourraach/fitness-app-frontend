@@ -16,7 +16,7 @@
 .report-title-section h2 {
   margin: 0 0 12px 0;
   font-size: 28px;
-  color: #333;
+  color: #2C3E50;
 }
 
 .report-meta {
@@ -31,11 +31,11 @@
   align-items: center;
   gap: 6px;
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
 }
 
 .report-meta i {
-  color: #007bff;
+  color: #84cabe;
 }
 
 .status-badge {
@@ -48,7 +48,7 @@
 
 .status-completed { background: #d4edda; color: #155724; }
 .status-draft { background: #fff3cd; color: #856404; }
-.status-shared { background: #d1ecf1; color: #0c5460; }
+.status-shared { background: #e8f5f3; color: #6bb5a7; }
 
 .report-actions {
   display: flex;
@@ -68,18 +68,18 @@
 }
 
 .export-btn {
-  background: #dc3545;
+  background: #84cabe;
   color: white;
 }
 
 .share-btn {
-  background: #28a745;
+  background: #6bb5a7;
   color: white;
 }
 
 .action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(132, 202, 190, 0.4);
 }
 
 .report-summary {
@@ -87,12 +87,12 @@
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 32px;
-  border-left: 4px solid #007bff;
+  border-left: 4px solid #84cabe;
 }
 
 .report-summary h3 {
   margin: 0 0 12px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .metrics-section {
@@ -101,7 +101,7 @@
 
 .metrics-section h3 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .metrics-grid {
@@ -132,21 +132,21 @@
   color: white;
 }
 
-.metric-icon.weight { background: #007bff; }
-.metric-icon.programs { background: #28a745; }
-.metric-icon.nutrition { background: #ffc107; }
-.metric-icon.activity { background: #dc3545; }
+.metric-icon.weight { background: #84cabe; }
+.metric-icon.programs { background: #6bb5a7; }
+.metric-icon.nutrition { background: #a8ddd3; }
+.metric-icon.activity { background: #5aa396; }
 
 .metric-value {
   font-size: 24px;
   font-weight: bold;
-  color: #333;
+  color: #2C3E50;
   line-height: 1;
 }
 
 .metric-label {
   font-size: 14px;
-  color: #666;
+  color: #7F8C8D;
   margin-top: 4px;
 }
 
@@ -156,7 +156,7 @@
 
 .charts-section h3 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .charts-loading {
@@ -172,7 +172,7 @@
   width: 24px;
   height: 24px;
   border: 3px solid #f3f3f3;
-  border-top: 3px solid #007bff;
+  border-top: 3px solid #84cabe;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -202,7 +202,7 @@
 
 .chart-container h4 {
   margin: 0 0 16px 0;
-  color: #333;
+  color: #2C3E50;
   font-size: 16px;
 }
 
@@ -229,7 +229,7 @@
 
 .recommendations-section h3 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .recommendations-list {
@@ -251,12 +251,12 @@
 .recommendation-icon {
   width: 40px;
   height: 40px;
-  background: #fff3cd;
+  background: #e8f5f3;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #856404;
+  color: #6bb5a7;
   flex-shrink: 0;
 }
 
@@ -266,12 +266,12 @@
 
 .recommendation-content h5 {
   margin: 0 0 8px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .recommendation-content p {
   margin: 0 0 8px 0;
-  color: #666;
+  color: #7F8C8D;
   line-height: 1.4;
 }
 
@@ -294,14 +294,14 @@
 
 .notes-section h3 {
   margin: 0 0 16px 0;
-  color: #333;
+  color: #2C3E50;
 }
 
 .notes-content {
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
-  border-left: 4px solid #6c757d;
+  border-left: 4px solid #84cabe;
 }
 
 .notes-content p {

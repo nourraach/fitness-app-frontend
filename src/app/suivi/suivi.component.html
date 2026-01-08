@@ -254,6 +254,11 @@
             <option *ngFor="let int of intensites" [value]="int.value">{{ int.label }}</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <label>Notes (optionnel)</label>
+          <textarea [(ngModel)]="notesActivite" class="form-control" rows="2" placeholder="Ajoutez des notes sur votre activité..."></textarea>
+        </div>
       </div>
 
       <div class="modal-footer">

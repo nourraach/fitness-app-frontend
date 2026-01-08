@@ -5,7 +5,59 @@ export enum MessageType {
   SYSTEM = 'SYSTEM'
 }
 
+// ============================================
+// Backend API Response DTOs (from API Guide)
+// ============================================
+
+/**
+ * Message response from backend API
+ * Matches: POST /api/messages response
+ */
+export interface MessageDTO {
+  id: number;
+  senderId: number;
+  senderName: string;
+  receiverId: number;
+  receiverName: string;
+  content: string;
+  timestamp: string; // ISO 8601 format
+  type: MessageType;
+  isRead: boolean;
+  conversationId: string;
+}
+
+/**
+ * Conversation response from backend API
+ * Matches: GET /api/messages/conversations response
+ */
 export interface ConversationDTO {
+  id: number;
+  userId: number;
+  userName: string;
+  coachId?: number;
+  coachName?: string;
+  lastMessageContent: string;
+  lastMessageAt: string; // ISO 8601 format
+  unreadMessageCount: number;
+  // UI-specific properties
+  conversationId?: string;
+  isActive?: boolean;
+  isOnline?: boolean;
+  participantName?: string;
+  participantAvatar?: string;
+  // Legacy properties for backward compatibility
+  autreUtilisateurId?: number;
+  autreUtilisateurNom?: string;
+  autreUtilisateurRole?: string;
+  dernierMessage?: string;
+  dateDernierMessage?: Date;
+  messagesNonLus?: number;
+}
+
+/**
+ * Legacy ConversationDTO for backward compatibility
+ */
+export interface LegacyConversationDTO {
   conversationId: string;
   autreUtilisateurId: number;
   autreUtilisateurNom: string;
@@ -16,19 +68,82 @@ export interface ConversationDTO {
   isActive?: boolean;
 }
 
-export interface MessageDTO {
-  id?: number;
-  expediteurId: number;
-  expediteurNom: string;
+// ============================================
+// Request DTOs (for sending to backend)
+// ============================================
+
+/**
+ * Send message request
+ * Matches: POST /api/messages body
+ */
+export interface SendMessageRequest {
   destinataireId: number;
-  destinataireNom: string;
   contenu: string;
-  dateEnvoi: Date;
-  dateLecture?: Date;
-  conversationId: string;
-  lu: boolean; // Changed from estLu to lu for backend compatibility
   type: MessageType;
 }
+
+/**
+ * Typing indicator request via WebSocket
+ * Destination: /app/typing
+ */
+export interface TypingIndicatorRequest {
+  destinataireId: number;
+  typing: boolean;
+}
+
+/**
+ * Mark message as read request via WebSocket
+ * Destination: /app/message.read
+ */
+export interface MessageReadRequest {
+  messageId: number;
+  expediteurId: number;
+}
+
+// ============================================
+// WebSocket DTOs
+// ============================================
+
+/**
+ * Typing indicator received via WebSocket
+ * Source: /user/{userId}/queue/typing
+ */
+export interface TypingIndicatorDTO {
+  userId: number;
+  username: string;
+  typing: boolean;
+  conversationId?: string;
+  timestamp?: Date;
+}
+
+/**
+ * Read receipt received via WebSocket
+ * Source: /user/{userId}/queue/message-read
+ */
+export interface ReadReceiptDTO {
+  messageId: number;
+  readBy: number;
+  readAt: string;
+}
+
+// ============================================
+// Pagination
+// ============================================
+
+/**
+ * Paginated response wrapper
+ */
+export interface PagedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+// ============================================
+// Notification DTOs
+// ============================================
 
 export interface NotificationDTO {
   type: string;
@@ -49,23 +164,17 @@ export interface GroupedNotificationDTO {
   timestamp: Date;
 }
 
-export interface TypingIndicatorDTO {
-  userId: number;
-  username?: string;
-  conversationId?: string;
-  isTyping: boolean;
-  timestamp?: Date;
+// ============================================
+// Unread Count Response
+// ============================================
+
+export interface UnreadCountResponse {
+  count: number;
 }
 
-export interface TypingRequest {
-  conversationId: string;
-  isTyping: boolean;
-}
-
-export interface MessageReadRequest {
-  messageId: number;
-  conversationId: string;
-}
+// ============================================
+// Coach Availability
+// ============================================
 
 export interface CoachAvailabilityDTO {
   coachId: number;
@@ -73,6 +182,10 @@ export interface CoachAvailabilityDTO {
   status: string;
   lastUpdated: Date;
 }
+
+// ============================================
+// Legacy interfaces for backward compatibility
+// ============================================
 
 export interface Message {
   id?: number;
@@ -85,17 +198,21 @@ export interface Message {
   type: MessageType;
   isRead: boolean;
   conversationId?: number;
-  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed'; // Message status
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 }
 
 export interface EnvoyerMessageRequest {
-  destinataireId: number; // Changed from receiverId to destinataireId for backend compatibility
-  contenu: string; // Changed from content to contenu for backend compatibility
+  destinataireId: number;
+  contenu: string;
   type?: MessageType;
   conversationId?: string;
 }
 
-// Extended conversation interface for compatibility
+export interface TypingRequest {
+  conversationId: string;
+  isTyping: boolean;
+}
+
 export interface ConversationExtendedDTO {
   id: number;
   userId: number;

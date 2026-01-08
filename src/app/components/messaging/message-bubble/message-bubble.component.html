@@ -11,14 +11,11 @@
 
 <!-- Regular Message -->
 <div *ngIf="!isSystemMessage()" class="message-bubble-container" [class.own-message]="isOwnMessage">
-  <!-- Avatar (for received messages) -->
+  <!-- Avatar (for received messages) - Using initials instead of image -->
   <div *ngIf="showAvatar && !isOwnMessage" class="message-avatar">
-    <img
-      [src]="participantAvatar || '/assets/images/default-avatar.png'"
-      alt="Avatar"
-      class="avatar-image"
-      onerror="this.src='/assets/images/default-avatar.png'"
-    />
+    <div class="avatar-initials">
+      {{ getInitials() }}
+    </div>
   </div>
 
   <!-- Message Content -->

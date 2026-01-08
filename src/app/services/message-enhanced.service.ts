@@ -88,7 +88,8 @@ export class MessageEnhancedService {
    */
   markMessageAsRead(messageId: number): Observable<any> {
     return this.errorHandler.executeWithRetry(
-      () => this.http.put(`${this.apiUrl}/${messageId}/read`, {}, { headers: this.getHeaders() }),
+      // CORRECTION: Utilise l'endpoint backend existant
+      () => this.http.put(`${this.apiUrl}/${messageId}/lire`, {}, { headers: this.getHeaders() }),
       3,
       'messages-mark-read'
     );
@@ -99,7 +100,8 @@ export class MessageEnhancedService {
    */
   markConversationAsRead(conversationId: number): Observable<any> {
     return this.errorHandler.executeWithRetry(
-      () => this.http.put(`${this.apiUrl}/conversation/${conversationId}/read-all`, {}, { headers: this.getHeaders() }),
+      // CORRECTION: Utilise l'endpoint backend existant
+      () => this.http.put(`http://localhost:8095/api/messages/conversation/${conversationId}/lire`, {}, { headers: this.getHeaders() }),
       3,
       'messages-mark-conversation-read'
     );
